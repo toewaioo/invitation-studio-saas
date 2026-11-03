@@ -3,11 +3,12 @@ import { LOVE_GALAXY_PHOTO_COUNT, normalizeLoveGalaxyInput, publishedLoveGalaxyU
 
 const input = { title:'Our Universe', ring_text_one:'ပထမစာသားကွင်း', ring_text_two:'Second orbit phrase', music_track:'cosmic-orbit' as const };
 
-test('Love Galaxy input trims personal ring text, enforces clear field limits, and keeps a separate soundtrack choice', () => {
+test('Love Galaxy input trims text, validates fields, and defaults journey consent to off', () => {
   expect(LOVE_GALAXY_PHOTO_COUNT).toBe(4);
   expect(normalizeLoveGalaxyInput({ ...input, title:'  Our Universe  ', ring_text_one:'  Memories are ours  ' })).toEqual({
-    title:'Our Universe', ring_text_one:'Memories are ours', ring_text_two:'Second orbit phrase', music_track:'cosmic-orbit',
+    title:'Our Universe', ring_text_one:'Memories are ours', ring_text_two:'Second orbit phrase', music_track:'cosmic-orbit', journey_discovery_enabled:false,
   });
+  expect(normalizeLoveGalaxyInput({ ...input, journey_discovery_enabled:true }).journey_discovery_enabled).toBe(true);
   expect(() => normalizeLoveGalaxyInput({ ...input, ring_text_one:'x'.repeat(65) })).toThrow('64 characters or fewer');
   expect(() => normalizeLoveGalaxyInput({ ...input, music_track:'external-url' as never })).toThrow('Choose a supported music option');
 });

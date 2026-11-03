@@ -85,7 +85,7 @@ function hasMagic(mime: string, bytes: Uint8Array) {
 function safeInput(value: unknown) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid Love Galaxy input')
   const source = value as Record<string, unknown>
-  if (Object.keys(source).some(key => !['title','ring_text_one','ring_text_two','music_track'].includes(key))) throw new Error('Unexpected Love Galaxy fields')
+  if (Object.keys(source).some(key => !['title','ring_text_one','ring_text_two','music_track','journey_discovery_enabled'].includes(key))) throw new Error('Unexpected Love Galaxy fields')
   const field = (key: string, max: number) => {
     const text = source[key]
     if (typeof text !== 'string' || !text.trim() || text.trim().length > max) throw new Error(`Invalid ${key}`)
@@ -93,7 +93,8 @@ function safeInput(value: unknown) {
   }
   const musicTrack = source.music_track
   if (musicTrack !== 'cosmic-orbit' && musicTrack !== 'custom') throw new Error('Invalid music choice')
-  return { title: field('title', 120), ring_text_one: field('ring_text_one', 64), ring_text_two: field('ring_text_two', 64), music_track: musicTrack }
+  if (source.journey_discovery_enabled !== undefined && typeof source.journey_discovery_enabled !== 'boolean') throw new Error('Invalid journey discovery choice')
+  return { title: field('title', 120), ring_text_one: field('ring_text_one', 64), ring_text_two: field('ring_text_two', 64), music_track: musicTrack, journey_discovery_enabled: source.journey_discovery_enabled === true }
 }
 function validFileList(files: unknown) {
   if (!Array.isArray(files) || ![4,5].includes(files.length)) throw new Error('Choose exactly four photos')
@@ -272,6 +273,11 @@ async function callAction(service: any, action: string, body: Record<string, unk
     const galaxy = await publishedByLink(service, body.username, body.key)
     if (!galaxy) throw Object.assign(new Error('Love Galaxy not found or unavailable'), { status: 404 })
     return { galaxy }
+  }
+  if (action === 'discoverable') {
+    const result = await service.rpc('list_discoverable_love_galaxies')
+    if (result.error || !Array.isArray(result.data)) throw new Error('Unable to load journey worlds')
+    return { worlds: result.data }
   }
   if (action === 'media') return { media: await publicMedia(service, body) }
   throw new Error('Invalid Love Galaxy action')

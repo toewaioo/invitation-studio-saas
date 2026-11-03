@@ -28,6 +28,7 @@ export default function LoveGalaxyPublic() {
   }, []);
   useEffect(() => { document.documentElement.lang = 'en'; }, []);
   const story = useMemo(() => galaxy ? {
+    username: galaxy.username,
     title: galaxy.title,
     ringTextOne: galaxy.ring_text_one,
     ringTextTwo: galaxy.ring_text_two,

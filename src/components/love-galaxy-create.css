@@ -17,8 +17,8 @@ html:has(.lg-creator-page), body:has(.lg-creator-page), #root:has(.lg-creator-pa
 .lg-creator-eyebrow { display:inline-flex; align-items:center; gap:7px; color:#f5aeda; font-size:11px; font-weight:600; letter-spacing:.45px; }
 .lg-creator-intro h1 { margin:10px 0 7px; font:500 clamp(26px,5vw,37px)/1.2 Georgia,'Noto Serif Myanmar',serif; letter-spacing:-.4px; }
 .lg-creator-intro p { max-width:610px; color:#c7bacb; font-size:13px; line-height:1.8; }
-.lg-creator-form { display:grid; gap:14px; }
-.lg-creator-card { padding:21px 22px; border:1px solid #ffffff19; border-radius:16px; background:linear-gradient(135deg,#181222e8,#100c17f0); box-shadow:0 16px 38px #0003; }
+.lg-creator-form { display:grid; grid-template-columns:minmax(0,1fr); gap:14px; }
+.lg-creator-card { min-width:0; padding:21px 22px; border:1px solid #ffffff19; border-radius:16px; background:linear-gradient(135deg,#181222e8,#100c17f0); box-shadow:0 16px 38px #0003; }
 .lg-creator-step { display:flex; align-items:flex-start; gap:12px; margin-bottom:17px; }
 .lg-creator-step>span { flex:none; display:grid; place-items:center; width:29px; height:29px; border:1px solid #ed9dce67; border-radius:10px; color:#ffd5eb; background:#e882b21a; font-size:11px; font-weight:700; }
 .lg-creator-step h2 { margin:2px 0 2px; font:600 15px/1.5 Inter,sans-serif; }
@@ -55,6 +55,12 @@ html:has(.lg-creator-page), body:has(.lg-creator-page), #root:has(.lg-creator-pa
 .lg-creator-review { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:16px; align-items:center; padding:20px 22px; border:1px solid #f0a8d53b; border-radius:15px; background:linear-gradient(120deg,#2b142a,#130d1c); }
 .lg-creator-review h2 { margin-bottom:4px; font-size:14px; }.lg-creator-review p { color:#c6b5c9; font-size:10px; line-height:1.7; max-width:390px; }
 .lg-consent { display:flex; align-items:flex-start; gap:8px; margin-top:10px; color:#e9ddea; font-size:10px; line-height:1.6; cursor:pointer; }.lg-consent input { accent-color:#df8dbb; margin:2px 0 0; }
+.lg-journey-consent { display:flex; align-items:flex-start; gap:9px; margin-top:11px; padding:11px; border:1px solid #f0a8d53b; border-radius:10px; color:#f1e3f0; background:#e88db30b; font-size:10px; line-height:1.65; cursor:pointer; }
+.lg-journey-consent input { flex:none; width:16px; height:16px; margin:2px 0 0; accent-color:#df8dbb; }
+.lg-journey-consent input:focus-visible { outline:2px solid #ffd0e9; outline-offset:2px; }
+.lg-journey-consent span { display:grid; gap:4px; min-width:0; }
+.lg-journey-consent strong { color:#fff0f8; font-size:10px; font-weight:600; line-height:1.65; }
+.lg-journey-consent small { color:#c6b5c9; font-size:9px; line-height:1.7; }
 .lg-review-actions { display:grid; gap:8px; }
 .lg-preview-button,.lg-publish-button { display:flex; min-height:40px; align-items:center; justify-content:center; gap:7px; padding:0 13px; border-radius:8px; font-size:11px; font-weight:600; cursor:pointer; white-space:nowrap; }
 .lg-preview-button { border:1px solid #ffffff32; color:#f7eaf3; background:#ffffff0a; }.lg-preview-button:hover:not(:disabled) { background:#ffffff16; }
@@ -85,7 +91,7 @@ html:has(.lg-creator-page), body:has(.lg-creator-page), #root:has(.lg-creator-pa
   .lg-creator-wrap { width:calc(100% - 24px); }.lg-creator-intro { padding:26px 0 19px; }.lg-creator-intro h1 { font-size:28px; }.lg-creator-intro p { font-size:12px; }
   .lg-creator-card { padding:17px 14px; border-radius:13px; }.lg-creator-step { gap:9px; margin-bottom:14px; }.lg-creator-step h2 { font-size:13px; }.lg-creator-step p { font-size:10px; }
   .lg-photo-slots { gap:6px; }.lg-photo-slot { border-radius:8px; }.lg-ring-field { grid-template-columns:1fr 40px; gap:7px; }.lg-ring-field>span { grid-column:1/-1; }.lg-ring-field input { grid-column:1; grid-row:2; min-height:42px; font-size:12px; }.lg-ring-field small { grid-column:2; grid-row:2; }
-  .lg-creator-review { grid-template-columns:1fr; gap:13px; padding:17px 14px; }.lg-review-actions { grid-template-columns:1fr 1.35fr; }.lg-preview-button,.lg-publish-button { padding:0 8px; font-size:10px; }
+  .lg-creator-review { grid-template-columns:minmax(0,1fr); gap:13px; padding:17px 14px; }.lg-review-actions { min-width:0; grid-template-columns:minmax(0,1fr) minmax(0,1.35fr); }.lg-preview-button,.lg-publish-button { min-width:0; padding:0 8px; font-size:10px; white-space:normal; }
   .lg-published-card { padding:23px 17px; }.lg-published-card h1 { font-size:22px; }
 }
 @media(prefers-reduced-motion:reduce) { .lg-spin { animation-duration:2s; } }

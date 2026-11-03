@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { ArrowLeft, ArrowRight, Volume2, VolumeX, X } from "lucide-react";
 import { addSharedJourneyEnvironment, createPublishedSharedJourneyLayout, createSharedJourneyLayout, normalizeSharedJourneySampleId, SHARED_JOURNEY_DURATION_SECONDS, SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS, SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR, SHARED_JOURNEY_START_DISTANCE, SHARED_JOURNEY_WORLD_COUNT, type SharedJourneyWorldTarget } from "./love-galaxy-shared-journey";
+import { fetchDiscoverableLoveGalaxies, type DiscoverableLoveGalaxy } from "../lib/loveGalaxy";
 import backgroundMusic from "./love-galaxy-bg.mp3";
 import "./love-galaxy.css";
 
@@ -14,6 +15,7 @@ const PHOTO_STREAM_ROWS_ABOVE_BELOW = 3;
 const PHOTO_STREAM_ROW_SPACING = 0.68;
 const SHOOTING_STAR_COUNT = 3;
 export type LoveGalaxyStory = {
+  username?: string;
   title?: string;
   ringTextOne?: string;
   ringTextTwo?: string;
@@ -68,7 +70,8 @@ type MountedScene = {
   dispose: () => void;
 };
 
-type SharedJourneyTravelTarget = Pick<SharedJourneyWorldTarget, "id" | "label"> & { radius: number };
+type SharedJourneyWorldStatus = { label: string; phase: "traveling" | "arrived"; href?: string };
+type SharedJourneyTravelTarget = Pick<SharedJourneyWorldTarget, "id" | "label" | "href"> & { radius: number };
 
 type RingGlyphSlice = {
   character: string;
@@ -313,9 +316,10 @@ function mountGalaxy(
   sharedJourneyEnabled: boolean,
   reviewSharedJourneyPrototypeEnabled: boolean,
   reviewSampleId: string,
+  discoverableWorlds: readonly DiscoverableLoveGalaxy[],
   reportReviewArrival: () => void,
   worldTooltipElement: HTMLButtonElement | null,
-  reportWorldStatus: (label: string, phase: "traveling" | "arrived") => void,
+  reportWorldStatus: (label: string, phase: "traveling" | "arrived", href?: string) => void,
 ): MountedScene {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const random = seeded(20261030);
@@ -324,7 +328,7 @@ function mountGalaxy(
   else visitSeedBuffer[0] = Math.floor(Math.random() * 0xffffffff);
   const reviewLayout = reviewSharedJourneyPrototypeEnabled
     ? createSharedJourneyLayout(reviewSampleId, visitSeedBuffer[0])
-    : sharedJourneyEnabled ? createPublishedSharedJourneyLayout(visitSeedBuffer[0]) : null;
+    : sharedJourneyEnabled ? createPublishedSharedJourneyLayout(visitSeedBuffer[0], discoverableWorlds) : null;
   const destinationAnchor = new THREE.Vector3(reviewLayout?.destination[0] ?? 0, reviewLayout?.destination[1] ?? 0, reviewLayout?.destination[2] ?? 0);
   const sharedJourneyClearColor = sharedJourneyEnabled ? "#080614" : "#03040a";
   const scene = new THREE.Scene();
@@ -412,6 +416,7 @@ function mountGalaxy(
   const sharedJourneyWorldTargets = sharedJourneyEnvironment?.worldTargets ?? [];
   const sharedJourneyLocalSpaces = sharedJourneyEnvironment?.localSpaces ?? [];
   canvas.dataset.sharedJourneyWorldCount = String(sharedJourneyEnvironment?.worldCount ?? 0);
+  canvas.dataset.sharedJourneyDiscoverableWorldCount = String(reviewSharedJourneyPrototypeEnabled ? 0 : discoverableWorlds.length);
   canvas.dataset.sharedJourneyGalaxyCount = String(sharedJourneyEnvironment?.galaxyCount ?? 0);
   canvas.dataset.sharedJourneyGalaxyPointCount = String(sharedJourneyEnvironment?.galaxyPointCount ?? 0);
   canvas.dataset.sharedJourneyNebulaPointCount = String(sharedJourneyEnvironment?.nebulaPointCount ?? 0);
@@ -1108,7 +1113,7 @@ function mountGalaxy(
   };
 
   const updateCamera = (delta: number) => {
-    if (sharedJourneyWorldTravel && reviewSharedJourneyPrototypeEnabled) {
+    if (sharedJourneyWorldTravel && sharedJourneyEnabled) {
       const travel = sharedJourneyWorldTravel;
       travel.elapsed += delta;
       const progress = THREE.MathUtils.clamp(travel.elapsed / travel.duration, 0, 1);
@@ -1132,7 +1137,7 @@ function mountGalaxy(
         canvas.dataset.sharedJourneySelectedWorldLabel = travel.target.label;
         canvas.dataset.sharedJourneyTooltipWorldId = "none";
         if (worldTooltipElement) worldTooltipElement.hidden = true;
-        reportWorldStatus(travel.target.label, "arrived");
+        reportWorldStatus(travel.target.label, "arrived", travel.target.href);
       }
     } else if (!manualCamera && sharedJourneyEnabled) {
       if (journeyStarted && !reducedMotion.matches) cinematicElapsed += delta;
@@ -1439,7 +1444,7 @@ function mountGalaxy(
     atmosphereMaterial.opacity = 0.19 * (1 - intensity * 0.22);
   };
   const updateSharedJourneyWorldAppearance = () => {
-    if (!reviewSharedJourneyPrototypeEnabled) return;
+    if (!sharedJourneyEnabled) return;
     let visibleCount = 0;
     const scales: string[] = [];
     const opacities: string[] = [];
@@ -1546,7 +1551,7 @@ function mountGalaxy(
   const updateSharedWorldTooltip = () => {
     const tooltip = worldTooltipElement;
     if (!tooltip) return;
-    if (!reviewSharedJourneyPrototypeEnabled || !reviewJourneyArrived || sharedJourneyWorldTravel || !journeyStarted) {
+    if (!sharedJourneyEnabled || !reviewJourneyArrived || sharedJourneyWorldTravel || !journeyStarted) {
       tooltip.hidden = true;
       canvas.dataset.sharedJourneyTooltipWorldId = "none";
       return;
@@ -1699,7 +1704,7 @@ function mountGalaxy(
     }
   };
   const startTravelToTarget = (target: SharedJourneyTravelTarget, targetPosition: THREE.Vector3, cameraOffset: number) => {
-    if (!reviewSharedJourneyPrototypeEnabled || !reviewJourneyArrived || sharedJourneyWorldTravel) return;
+    if (!sharedJourneyEnabled || !reviewJourneyArrived || sharedJourneyWorldTravel) return;
     const startPosition = camera.position.clone();
     const endPosition = targetPosition.clone().add(new THREE.Vector3(0, 0, cameraOffset));
     sharedJourneyWorldTravel = { target, startPosition, endPosition, targetPosition, elapsed: 0, duration: 5.2 };
@@ -1711,11 +1716,11 @@ function mountGalaxy(
     canvas.dataset.sharedJourneyTargetPosition = targetPosition.toArray().map(value => value.toFixed(2)).join(",");
     canvas.dataset.sharedJourneyPhase = "world-hop";
     canvas.dataset.sharedJourneyHopProgress = "0";
-    reportWorldStatus(target.label, "traveling");
+    reportWorldStatus(target.label, "traveling", target.href);
     wakeRenderer();
   };
   const travelToWorld = (worldId: string) => {
-    if (!reviewSharedJourneyPrototypeEnabled || !reviewJourneyArrived || sharedJourneyWorldTravel) return;
+    if (!sharedJourneyEnabled || !reviewJourneyArrived || sharedJourneyWorldTravel) return;
     const target = sharedJourneyWorldTargets.find(world => world.id === worldId);
     if (!target) return;
     target.group.updateWorldMatrix(true, false);
@@ -1723,7 +1728,7 @@ function mountGalaxy(
     startTravelToTarget(target, targetPosition, Math.max(84, target.radius * 8.4));
   };
   const returnToHome = () => {
-    if (!reviewSharedJourneyPrototypeEnabled || !reviewJourneyArrived || sharedJourneyWorldTravel || !currentSharedJourneyWorldId) return;
+    if (!sharedJourneyEnabled || !reviewJourneyArrived || sharedJourneyWorldTravel || !currentSharedJourneyWorldId) return;
     startTravelToTarget(placeholderTravelTarget, destinationAnchor.clone(), getZoomBounds().home);
   };
   const resize = () => {
@@ -1857,7 +1862,7 @@ function mountGalaxy(
     }
     if (event.pointerType !== "mouse") return;
     const hit = intersect(event);
-    const worldHit = reviewSharedJourneyPrototypeEnabled && reviewJourneyArrived ? intersectSharedJourneyWorld(event) : undefined;
+    const worldHit = sharedJourneyEnabled && reviewJourneyArrived ? intersectSharedJourneyWorld(event) : undefined;
     canvas.style.cursor = hit || worldHit ? "pointer" : "grab";
   };
   const onPointerUp = (event: PointerEvent) => {
@@ -1915,7 +1920,7 @@ function mountGalaxy(
   };
   const onClick = (event: PointerEvent) => {
     if (pointerPositions.size || performance.now() < ignoreClickUntil) return;
-    if (reviewSharedJourneyPrototypeEnabled && reviewJourneyArrived && !sharedJourneyWorldTravel) {
+    if (sharedJourneyEnabled && reviewJourneyArrived && !sharedJourneyWorldTravel) {
       const worldHit = intersectSharedJourneyWorld(event);
       const worldId = worldHit?.object.userData.sharedJourneyWorldId;
       if (typeof worldId === "string") {
@@ -2020,22 +2025,46 @@ export default function LoveGalaxyExperience({ story, onBack, journeyEnabled = f
   const [entering, setEntering] = useState(false);
   const [entryError, setEntryError] = useState(false);
   const [sharedJourneyArrived, setSharedJourneyArrived] = useState(false);
-  const [sharedJourneyWorldStatus, setSharedJourneyWorldStatus] = useState<{ label: string; phase: "traveling" | "arrived" } | null>(null);
+  const [sharedJourneyWorldStatus, setSharedJourneyWorldStatus] = useState<SharedJourneyWorldStatus | null>(null);
   const sharedJourneyQuery = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const reviewSharedJourneyPrototypeEnabled = import.meta.env.VITE_LOVE_GALAXY_SHARED_JOURNEY === "true"
     && sharedJourneyQuery?.get("review") === "shared-journey";
   const sharedJourneyEnabled = journeyEnabled || reviewSharedJourneyPrototypeEnabled;
+  const [discoverableWorlds, setDiscoverableWorlds] = useState<DiscoverableLoveGalaxy[]>([]);
+  const [discoverableWorldsLoaded, setDiscoverableWorldsLoaded] = useState(!journeyEnabled);
   const rawSampleNumber = sharedJourneyQuery?.get("sample");
   const reviewSampleId = normalizeSharedJourneySampleId(rawSampleNumber === "2" ? "demo-share-2" : rawSampleNumber === "3" ? "demo-share-3" : "demo-share-1");
   const reviewMotionPrototypeEnabled = import.meta.env.VITE_LOVE_GALAXY_REVIEW_MOTION === "true"
     && typeof window !== "undefined"
     && new URLSearchParams(window.location.search).get("review") === "motion";
+  useEffect(() => {
+    let active = true;
+    if (!journeyEnabled || reviewSharedJourneyPrototypeEnabled) {
+      setDiscoverableWorlds([]);
+      setDiscoverableWorldsLoaded(true);
+      return () => { active = false; };
+    }
+    setDiscoverableWorldsLoaded(false);
+    fetchDiscoverableLoveGalaxies()
+      .then(value => {
+        const safe = value.filter(world => !!world
+          && typeof world.username === "string" && /^galaxy-[a-z0-9-]{8,39}$/.test(world.username)
+          && typeof world.title === "string" && !!world.title.trim() && world.title.trim().length <= 120
+          && typeof world.public_key === "string" && /^[0-9a-f]{64}$/.test(world.public_key)
+          && world.username !== story?.username).slice(0, SHARED_JOURNEY_WORLD_COUNT);
+        if (active) setDiscoverableWorlds(safe);
+      })
+      .catch(() => { if (active) setDiscoverableWorlds([]); })
+      .finally(() => { if (active) setDiscoverableWorldsLoaded(true); });
+    return () => { active = false; };
+  }, [journeyEnabled, reviewSharedJourneyPrototypeEnabled, story?.username]);
   const images = reviewSharedJourneyPrototypeEnabled ? DEMO_IMAGES : story?.photos?.length === 4 ? story.photos : DEMO_IMAGES;
   const ringPhrases: readonly [string, string] = reviewSharedJourneyPrototypeEnabled
     ? [DEFAULT_RING_TEXT_ONE, DEFAULT_RING_TEXT_TWO]
     : [story?.ringTextOne?.trim() || DEFAULT_RING_TEXT_ONE, story?.ringTextTwo?.trim() || DEFAULT_RING_TEXT_TWO];
   const musicSource = reviewSharedJourneyPrototypeEnabled ? backgroundMusic : story?.musicSrc || backgroundMusic;
   const memories = images === DEMO_IMAGES ? MEMORIES : Array.from({ length: MEMORY_COUNT }, (_, id) => ({ id, ...images[id % images.length] }));
+  const showSharedWorldInteractions = sharedJourneyEnabled && (reviewSharedJourneyPrototypeEnabled || discoverableWorlds.length > 0);
 
   const readMusicLevel = useCallback(() => {
     const audio = music.current;
@@ -2050,8 +2079,8 @@ export default function LoveGalaxyExperience({ story, onBack, journeyEnabled = f
     return lastBin > firstBin ? Math.min(1, (total / ((lastBin - firstBin) * 255)) * 3.2) : 0;
   }, []);
 
-  const reportSharedJourneyWorldStatus = useCallback((label: string, phase: "traveling" | "arrived") => {
-    setSharedJourneyWorldStatus({ label, phase });
+  const reportSharedJourneyWorldStatus = useCallback((label: string, phase: "traveling" | "arrived", href?: string) => {
+    setSharedJourneyWorldStatus({ label, phase, href });
   }, []);
 
   const connectMusicAnalyser = useCallback((audio: HTMLAudioElement) => {
@@ -2095,19 +2124,19 @@ export default function LoveGalaxyExperience({ story, onBack, journeyEnabled = f
 
   useEffect(() => {
     const node = canvas.current;
-    if (!node) return;
+    if (!node || (journeyEnabled && !reviewSharedJourneyPrototypeEnabled && !discoverableWorldsLoaded)) return;
     try {
       const mounted = mountGalaxy(node, images, ringPhrases, setActiveMemory, ready => {
         setRendererReady(ready);
         setRendererFailed(!ready);
-      }, setCameraStop, readMusicLevel, reviewMotionPrototypeEnabled, sharedJourneyEnabled, reviewSharedJourneyPrototypeEnabled, reviewSampleId, () => setSharedJourneyArrived(true), sharedWorldTooltip.current, reportSharedJourneyWorldStatus);
+      }, setCameraStop, readMusicLevel, reviewMotionPrototypeEnabled, sharedJourneyEnabled, reviewSharedJourneyPrototypeEnabled, reviewSampleId, reviewSharedJourneyPrototypeEnabled ? [] : discoverableWorlds, () => setSharedJourneyArrived(true), sharedWorldTooltip.current, reportSharedJourneyWorldStatus);
       mountedScene.current = mounted;
       return () => { mountedScene.current = null; mounted.dispose(); };
     } catch {
       setRendererFailed(true);
       return undefined;
     }
-  }, [images, ringPhrases[0], ringPhrases[1], readMusicLevel, reviewMotionPrototypeEnabled, sharedJourneyEnabled, reviewSharedJourneyPrototypeEnabled, reviewSampleId, reportSharedJourneyWorldStatus]);
+  }, [images, ringPhrases[0], ringPhrases[1], readMusicLevel, reviewMotionPrototypeEnabled, sharedJourneyEnabled, reviewSharedJourneyPrototypeEnabled, reviewSampleId, discoverableWorlds, discoverableWorldsLoaded, journeyEnabled, reportSharedJourneyWorldStatus]);
 
   useEffect(() => {
     const node = dialog.current;
@@ -2164,27 +2193,28 @@ export default function LoveGalaxyExperience({ story, onBack, journeyEnabled = f
     data-shared-journey-review={reviewSharedJourneyPrototypeEnabled ? "enabled" : "disabled"}
     data-shared-journey-enabled={sharedJourneyEnabled ? "enabled" : "disabled"}
     data-shared-journey-sample={reviewSharedJourneyPrototypeEnabled ? reviewSampleId : "none"}
+    data-shared-journey-opted-in-world-count={discoverableWorlds.length}
   >
     <audio ref={music} src={musicSource} loop preload="auto" onPlay={() => setMusicEnabled(true)} onPause={() => setMusicEnabled(false)} aria-hidden="true" />
     <div className="lg-three-stage" aria-label="Interactive full-screen Three.js 3D galaxy">
       <canvas ref={canvas} className="lg-three-canvas" tabIndex={journeyStarted ? 0 : -1} onKeyDown={event => { if (journeyStarted && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); setActiveMemory(0); } }} aria-label="Memory galaxy. Drag to orbit; pinch or scroll to zoom. Click a photo or press Enter to view it. Arrow keys orbit; plus and minus zoom." />
       <div className="lg-stage-vignette" aria-hidden="true" />
-      {reviewSharedJourneyPrototypeEnabled && <button
+      {showSharedWorldInteractions && <button
         ref={sharedWorldTooltip}
         className="lg-shared-world-tooltip"
         type="button"
         hidden
-        aria-label="Fictional test world in view. Tap to travel there."
+        aria-label={reviewSharedJourneyPrototypeEnabled ? "Fictional test world in view. Tap to travel there." : "Opted-in Love Galaxy in view. Tap to travel there."}
         onClick={() => {
           const worldId = sharedWorldTooltip.current?.dataset.worldId;
           if (worldId) mountedScene.current?.travelToWorld(worldId);
         }}
       >
-        <span className="lg-shared-world-tooltip-eyebrow">IN VIEW · FICTIONAL TEST WORLD</span>
-        <strong className="lg-shared-world-tooltip-label">TEST WORLD</strong>
+        <span className="lg-shared-world-tooltip-eyebrow">{reviewSharedJourneyPrototypeEnabled ? "IN VIEW · FICTIONAL TEST WORLD" : "IN VIEW · OPTED-IN GALAXY"}</span>
+        <strong className="lg-shared-world-tooltip-label">{reviewSharedJourneyPrototypeEnabled ? "TEST WORLD" : "Love Galaxy"}</strong>
         <small>Tap to travel here</small>
       </button>}
-      {reviewSharedJourneyPrototypeEnabled && sharedJourneyWorldStatus?.phase === "arrived" && sharedJourneyWorldStatus.label.startsWith("TEST WORLD ") && <button
+      {sharedJourneyEnabled && sharedJourneyWorldStatus?.phase === "arrived" && (reviewSharedJourneyPrototypeEnabled ? sharedJourneyWorldStatus.label.startsWith("TEST WORLD ") : !!sharedJourneyWorldStatus.href) && <button
         className="lg-return-home-button"
         type="button"
         data-shared-return-home="true"
@@ -2214,13 +2244,14 @@ export default function LoveGalaxyExperience({ story, onBack, journeyEnabled = f
     {onBack && <button className="lg-back-button" type="button" onClick={onBack} aria-label="Back to Love Galaxy creation"><ArrowLeft size={17}/><span>Back</span></button>}
 
     {journeyStarted && <header className="lg-hud-top">
-      {reviewSharedJourneyPrototypeEnabled && <div className="lg-shared-journey-status" role="status" aria-live="polite">
-        <span>FICTIONAL TEST RUN · {reviewSampleId.toUpperCase()}</span>
+      {(reviewSharedJourneyPrototypeEnabled || (journeyEnabled && (discoverableWorlds.length > 0 || !!sharedJourneyWorldStatus))) && <div className="lg-shared-journey-status" role="status" aria-live="polite">
+        <span>{reviewSharedJourneyPrototypeEnabled ? `FICTIONAL TEST RUN · ${reviewSampleId.toUpperCase()}` : "SHARED JOURNEY · OPTED-IN PLANETS"}</span>
         <strong>{sharedJourneyWorldStatus?.phase === "traveling"
           ? `TRAVELLING TO ${sharedJourneyWorldStatus.label}`
           : sharedJourneyWorldStatus
             ? `ARRIVED AT ${sharedJourneyWorldStatus.label}`
-            : sharedJourneyArrived ? "ARRIVED AT PLACEHOLDER DESTINATION" : `PASSING ${SHARED_JOURNEY_WORLD_COUNT} FICTIONAL TEST WORLDS`}</strong>
+            : reviewSharedJourneyPrototypeEnabled ? sharedJourneyArrived ? "ARRIVED AT PLACEHOLDER DESTINATION" : `PASSING ${SHARED_JOURNEY_WORLD_COUNT} FICTIONAL TEST WORLDS` : `PASSING ${discoverableWorlds.length} OPTED-IN PLANETS`}</strong>
+        {!reviewSharedJourneyPrototypeEnabled && sharedJourneyWorldStatus?.phase === "arrived" && sharedJourneyWorldStatus.href && <a className="lg-open-journey-world" href={sharedJourneyWorldStatus.href} target="_blank" rel="noreferrer">Open {sharedJourneyWorldStatus.label}</a>}
         {(sharedJourneyWorldStatus?.phase === "arrived" || sharedJourneyArrived) && <small>LOCAL SPACE · {SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS} LY RADIUS</small>}
       </div>}
       <div className="lg-hud-actions">

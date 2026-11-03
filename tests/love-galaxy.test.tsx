@@ -315,13 +315,27 @@ describe("standalone Love Galaxy experience", () => {
     expect(html).not.toContain("TEST WORLD");
     expect(publishedLayout.worlds).toHaveLength(0);
     expect(publishedLayout.galaxies).toHaveLength(0);
+    const optedInLayout = createPublishedSharedJourneyLayout(12345, [
+      { username: "galaxy-opted00001", title: "Only the title is public", public_key: "a".repeat(64) },
+      { username: "invalid", title: "Not a world", public_key: "b".repeat(64) },
+    ]);
+    expect(optedInLayout.worlds).toHaveLength(1);
+    expect(optedInLayout.worlds[0]).toMatchObject({ id: "galaxy-opted00001", label: "Only the title is public", source: "owner-opted-in", href: `/love/galaxy-opted00001?key=${"a".repeat(64)}` });
+    expect(optedInLayout.worlds[0]).not.toHaveProperty("photos");
+    expect(optedInLayout.worlds[0]).not.toHaveProperty("ringTextOne");
+    expect(optedInLayout.worlds[0]).not.toHaveProperty("musicSrc");
+    expect(optedInLayout.worlds[0].position.every(Number.isFinite)).toBe(true);
     expect(homeSpaces).toHaveLength(1);
     expect(homeSpaces[0]).toMatchObject({ id: "local-home-published", destinationId: "published-love-galaxy", label: "YOUR HOME" });
     expect(source).toContain('const images = reviewSharedJourneyPrototypeEnabled ? DEMO_IMAGES : story?.photos?.length === 4 ? story.photos : DEMO_IMAGES');
     expect(source).toContain('rendererReady ? "BEGIN JOURNEY" : "PREPARE GALAXY"');
     expect(source).toContain('createSharedJourneyLayout(reviewSampleId, visitSeedBuffer[0])');
-    expect(source).toContain('sharedJourneyEnabled ? createPublishedSharedJourneyLayout(visitSeedBuffer[0]) : null');
+    expect(source).toContain('sharedJourneyEnabled ? createPublishedSharedJourneyLayout(visitSeedBuffer[0], discoverableWorlds) : null');
+    expect(source).toContain('fetchDiscoverableLoveGalaxies()');
+    expect(source).toContain('world.username !== story?.username');
+    expect(source).toContain('journeyEnabled && !reviewSharedJourneyPrototypeEnabled && !discoverableWorldsLoaded');
     expect(publicSource).toContain("value.photos.length !== 4");
+    expect(publicSource).toContain("username: galaxy.username");
     expect(publicSource).toContain("<LoveGalaxyExperience story={story} journeyEnabled />");
   });
 
@@ -357,7 +371,7 @@ describe("standalone Love Galaxy experience", () => {
     expect(helper).toContain("const localGalaxiesPerSpace = 2");
     expect(helper).toContain("const hazeCount = 320");
     expect(helper).toContain("volumetric colored nebula dust");
-    expect(helper).toContain('worldTargets.push({ id: spec.id, label: spec.label, group: world, surface, radius: spec.radius })');
+    expect(helper).toContain('worldTargets.push({ id: spec.id, label: spec.label, href: spec.href, group: world, surface, radius: spec.radius })');
     expect(helper).toContain('surface.userData.sharedJourneyWorldId = spec.id');
   });
 

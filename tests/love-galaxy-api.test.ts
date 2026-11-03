@@ -16,6 +16,7 @@ function mockFetch(input:RequestInfo|URL,init:RequestInit={}) {
   const body=init.body instanceof Buffer ? null : JSON.parse(String(init.body||'{}'));
   if (headers.get('x-love-galaxy-action')==='upload') return Promise.resolve(new Response(JSON.stringify({uploaded:true}),{status:201,headers:{'content-type':'application/json'}}));
   if (body.action==='start') return Promise.resolve(new Response(JSON.stringify({upload:{sessionId,sessionToken:'b'.repeat(64),expiresAt:'2030-01-01T00:00:00Z',uploads:body.files.map((file:any,index:number)=>({fileId:fileIds[index],kind:file.kind,contentType:file.type,size:file.size}))}}),{status:201,headers:{'content-type':'application/json'}}));
+  if (body.action==='discoverable') return Promise.resolve(new Response(JSON.stringify({worlds:[{username:'galaxy-0123456789abcdef',title:'Our Day',public_key:pubKey,photos:['private-photo'],ring_text_one:'private ring',ring_text_two:'private ring two',music_path:'private-music',journey_discovery_enabled:false},{username:'invalid',title:'Bad row',public_key:pubKey}]}),{headers:{'content-type':'application/json'}}));
   if (body.action==='public') return Promise.resolve(new Response(JSON.stringify({galaxy:{id:'galaxy-row',username:'galaxy-0123456789abcdef',title:'Our Day',ring_text_one:'first orbit',ring_text_two:'second orbit',music_track:'cosmic-orbit',photos:fileIds.map((id,position)=>({id,storage_path:`love-galaxy-staging/private/${id}.jpg`,position})),status:'published',created_at:'2030-01-01T00:00:00Z'}}),{headers:{'content-type':'application/json'}}));
   if (body.action==='media') return Promise.resolve(new Response(new Uint8Array([0xff,0xd8,0xff,0x00]),{headers:{'content-type':'image/jpeg'}}));
   if (body.action==='finalize') return Promise.resolve(new Response(JSON.stringify({galaxy:{id:'galaxy-row',username:'galaxy-0123456789abcdef',public_key:pubKey,title:'Our Day',ring_text_one:'first orbit',ring_text_two:'second orbit',music_track:'cosmic-orbit',photos:fileIds.map((id,position)=>({id,storage_path:`love-galaxy-staging/private/${id}.jpg`,position})),status:'published',created_at:'2030-01-01T00:00:00Z'}}),{headers:{'content-type':'application/json'}}));
@@ -56,7 +57,16 @@ describe('dedicated Vercel Love Galaxy gateway',()=>{
     expect(upstream.url).toBe('https://supabase.example/functions/v1/love-galaxy');
     expect(new Headers(upstream.init.headers).get('x-invitation-upload-bridge')).toBe(process.env.GUEST_UPLOAD_BRIDGE_SECRET!);
     expect(new Headers(upstream.init.headers).get('apikey')).toBe('public-anon-key');
-    expect(JSON.parse(String(upstream.init.body)).action).toBe('start');
+    const upstreamBody=JSON.parse(String(upstream.init.body));
+    expect(upstreamBody.action).toBe('start');
+    expect(upstreamBody.input.journey_discovery_enabled).toBe(false);
+    const optedIn=await call('start',{input:{title:'Our Day',ring_text_one:'first orbit',ring_text_two:'second orbit',music_track:'cosmic-orbit',journey_discovery_enabled:true},files});
+    expect(optedIn.response.status).toBe(201);
+    expect(JSON.parse(String(calls.at(-1)!.init.body)).input.journey_discovery_enabled).toBe(true);
+    const callsBeforeInvalid=calls.length;
+    const invalid=await call('start',{input:{title:'Our Day',ring_text_one:'first orbit',ring_text_two:'second orbit',music_track:'cosmic-orbit',journey_discovery_enabled:'true'},files});
+    expect(invalid.response.status).toBe(400);
+    expect(calls).toHaveLength(callsBeforeInvalid);
   });
 
   test('proxies raw photo bytes through the Vercel endpoint and does not return private path data',async()=>{
@@ -88,12 +98,27 @@ describe('dedicated Vercel Love Galaxy gateway',()=>{
     expect(new Uint8Array(await photo.arrayBuffer())).toEqual(new Uint8Array([0xff,0xd8,0xff,0x00]));
   });
 
+  test('isolated discovery route exposes only validated title and share identifiers',async()=>{
+    const response=await fetch(`${origin}/api/love-galaxy?action=discoverable`);
+    expect(response.status).toBe(200);
+    const result=await response.json() as any;
+    expect(result.data.worlds).toEqual([{username:'galaxy-0123456789abcdef',title:'Our Day',public_key:pubKey}]);
+    expect(JSON.stringify(result)).not.toContain('private-photo');
+    expect(JSON.stringify(result)).not.toContain('private ring');
+    expect(JSON.stringify(result)).not.toContain('private-music');
+    expect(JSON.stringify(result)).not.toContain('journey_discovery_enabled');
+    expect(calls.at(-1)?.url).toBe('https://supabase.example/functions/v1/love-galaxy');
+    expect(JSON.parse(String(calls.at(-1)?.init.body)).action).toBe('discoverable');
+  });
+
   test('blocks cross-origin mutation and rejects a wrong photo count before contacting Supabase',async()=>{
     const upstreamCalls=calls.length;
     const denied=await fetch(`${origin}/api/love-galaxy?action=start`,{method:'POST',headers:{origin:'https://attacker.example','sec-fetch-site':'cross-site','content-type':'application/json'},body:'{}'});
     expect(denied.status).toBe(403);
     const {response}=await call('start',{input:{title:'Our Day',ring_text_one:'a',ring_text_two:'b',music_track:'cosmic-orbit'},files:[{kind:'photo',size:10,type:'image/jpeg'}]});
     expect(response.status).toBe(400);
+    const publicKeyConsent=await call('consent',{username:'galaxy-0123456789abcdef',key:pubKey,journey_discovery_enabled:true});
+    expect(publicKeyConsent.response.status).toBe(404);
     expect(calls).toHaveLength(upstreamCalls);
   });
 });

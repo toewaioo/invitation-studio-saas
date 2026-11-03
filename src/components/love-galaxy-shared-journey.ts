@@ -11,7 +11,8 @@ export type SharedJourneyPlanetPattern = "banded" | "islands" | "cratered" | "cr
 export type SharedJourneyPlanetSpec = {
   id: string;
   label: string;
-  source: "fictional-review-test-only";
+  source: "fictional-review-test-only" | "owner-opted-in";
+  href?: string;
   position: readonly [number, number, number];
   radius: number;
   color: number;
@@ -38,6 +39,7 @@ export type SharedJourneyLayout = {
 export type SharedJourneyWorldTarget = {
   id: string;
   label: string;
+  href?: string;
   group: THREE.Group;
   surface: THREE.Mesh;
   radius: number;
@@ -168,8 +170,35 @@ export function createSharedJourneyLayout(sampleId: string, visitSeed: number): 
   return { sampleId: safeId, destination: [destinationX, destinationY, 0], worlds, galaxies, visitSeed: visitSeed >>> 0 };
 }
 
-export function createPublishedSharedJourneyLayout(visitSeed: number): SharedJourneyLayout {
-  return { sampleId: "published", destination: [0, 0, 0], worlds: [], galaxies: [], visitSeed: visitSeed >>> 0 };
+export function createPublishedSharedJourneyLayout(visitSeed: number, discoverableWorlds: readonly { username: string; title: string; public_key: string }[] = []): SharedJourneyLayout {
+  const seen = new Set<string>();
+  const worlds = discoverableWorlds.flatMap((world, index): SharedJourneyPlanetSpec[] => {
+    if (!world || typeof world.username !== "string" || !/^galaxy-[a-z0-9-]{8,39}$/.test(world.username) || typeof world.title !== "string" || !world.title.trim() || world.title.trim().length > 120 || typeof world.public_key !== "string" || !/^[0-9a-f]{64}$/.test(world.public_key) || seen.has(world.username)) return [];
+    seen.add(world.username);
+    if (index >= SHARED_JOURNEY_WORLD_COUNT) return [];
+    const style = TEST_WORLD_STYLES[index % TEST_WORLD_STYLES.length];
+    const worldSeed = hashString(`${world.username}:${world.public_key}`);
+    const random = seeded((visitSeed ^ worldSeed) >>> 0);
+    const angle = ((index % 4) + random()) * Math.PI / 2;
+    const radiusFromRoute = 52 + random() * 220;
+    const shareUrl = new URL(`/love/${world.username}`, "https://love.invalid");
+    shareUrl.searchParams.set("key", world.public_key);
+    return [{
+      id: world.username,
+      label: world.title.trim(),
+      source: "owner-opted-in",
+      href: `${shareUrl.pathname}${shareUrl.search}`,
+      position: [Math.cos(angle) * radiusFromRoute, Math.sin(angle) * radiusFromRoute, WORLD_DEPTH_START - index * WORLD_DEPTH_GAP + (random() - 0.5) * 18],
+      radius: style.radius * (0.94 + random() * 0.12),
+      color: style.color,
+      accentColor: style.accentColor,
+      shadowColor: style.shadowColor,
+      pattern: style.pattern,
+      seed: worldSeed,
+      ringed: style.ringed,
+    }];
+  });
+  return { sampleId: "published", destination: [0, 0, 0], worlds, galaxies: [], visitSeed: visitSeed >>> 0 };
 }
 
 export function createSharedJourneyLocalSpaceSpecs(layout: SharedJourneyLayout): SharedJourneyLocalSpaceSpec[] {
@@ -438,11 +467,11 @@ export function addSharedJourneyEnvironment(
       register(new THREE.SphereGeometry(spec.radius, 40, 32)),
       surfaceMaterial,
     );
-    surface.name = `${spec.label} · OPAQUE 3D TEST PLANET`;
+    surface.name = spec.source === "fictional-review-test-only" ? `${spec.label} · OPAQUE 3D TEST PLANET` : `${spec.label} · GENERATED OPTED-IN PLANET`;
     surface.userData.sharedJourneyWorldId = spec.id;
     surface.userData.sharedJourneyWorldLabel = spec.label;
     world.add(surface);
-    worldTargets.push({ id: spec.id, label: spec.label, group: world, surface, radius: spec.radius });
+    worldTargets.push({ id: spec.id, label: spec.label, href: spec.href, group: world, surface, radius: spec.radius });
     const atmosphereMaterial = register(new THREE.MeshBasicMaterial({ color: spec.color, side: THREE.BackSide, transparent: true, opacity: 0.12, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
     world.userData.sharedJourneyRevealMaterials.push({ material: atmosphereMaterial, baseOpacity: 0.12, depthWrite: false });
     const atmosphere = new THREE.Mesh(register(new THREE.SphereGeometry(spec.radius * 1.07, 28, 20)), atmosphereMaterial);

@@ -59,6 +59,13 @@ function publicGalaxy(row: any, key: string | null, origin: string, linkKey: str
     photos, created_at: String(row.created_at || ''),
   }
 }
+function publicJourneyWorlds(rows: unknown) {
+  if (!Array.isArray(rows)) throw new Error('Unable to load journey worlds')
+  return rows.slice(0, 20).flatMap((row: any) => {
+    if (!row || typeof row.username !== 'string' || !/^galaxy-[a-z0-9-]{8,39}$/.test(row.username) || typeof row.title !== 'string' || !row.title.trim() || row.title.trim().length > 120 || typeof row.public_key !== 'string' || !/^[0-9a-f]{64}$/.test(row.public_key)) return []
+    return [{ username: row.username, title: row.title.trim(), public_key: row.public_key }]
+  })
+}
 function statusError(status: number, text: string) {
   if (status === 429) return 'Rate limit exceeded'
   try {
@@ -124,7 +131,7 @@ export function createLoveGalaxyHandler(deps: { fetch?: typeof fetch } = {}) {
   const action = url.searchParams.get('action') || ''
   try {
     if (req.method === 'OPTIONS') { res.writeHead(204, JSON_HEADERS); res.end(); return }
-    const methods: Record<string,string> = { start:'POST', upload:'POST', finalize:'POST', cancel:'POST', public:'GET', photo:'GET', music:'GET' }
+    const methods: Record<string,string> = { start:'POST', upload:'POST', finalize:'POST', cancel:'POST', public:'GET', discoverable:'GET', photo:'GET', music:'GET' }
     if (!methods[action]) { send(res,404,{error:'Not found'}); return }
     if (req.method !== methods[action]) { res.setHeader('Allow',methods[action]); send(res,405,{error:'Method not allowed'}); return }
     if (req.method !== 'GET' && !originAllowed(req)) { send(res,403,{error:'Origin not allowed'}); return }
@@ -168,6 +175,13 @@ export function createLoveGalaxyHandler(deps: { fetch?: typeof fetch } = {}) {
       const value:any = JSON.parse(text); const payload = publicGalaxy(value?.galaxy,null,`${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`,key)
       send(res,200,{data:payload}); return
     }
+    if (action === 'discoverable') {
+      const upstream = await edgeRequest(fetcher,req,'discoverable',{})
+      const text = await upstream.text()
+      if (!upstream.ok) { send(res,upstream.status,{error:statusError(upstream.status,text)}); return }
+      const value:any = JSON.parse(text)
+      send(res,200,{data:{worlds:publicJourneyWorlds(value?.worlds)}}); return
+    }
     const body = await readJson(req)
     if (action === 'start') {
       const input = body.input
@@ -185,7 +199,9 @@ export function createLoveGalaxyHandler(deps: { fetch?: typeof fetch } = {}) {
         ring_text_one: String((input as any).ring_text_one || '').trim(),
         ring_text_two: String((input as any).ring_text_two || '').trim(),
         music_track: (input as any).music_track,
+        journey_discovery_enabled: (input as any).journey_discovery_enabled === true,
       }
+      if ((input as any).journey_discovery_enabled !== undefined && typeof (input as any).journey_discovery_enabled !== 'boolean') throw Object.assign(new Error('Invalid Love Galaxy input'),{status:400})
       if (!cleanedInput.title || cleanedInput.title.length>120 || !cleanedInput.ring_text_one || cleanedInput.ring_text_one.length>64 || !cleanedInput.ring_text_two || cleanedInput.ring_text_two.length>64 || !['cosmic-orbit','custom'].includes(String(cleanedInput.music_track))) throw Object.assign(new Error('Invalid Love Galaxy input'),{status:400})
       if ((cleanedInput.music_track==='custom') !== (cleanedFiles.length===5)) throw Object.assign(new Error('Photo or music selection is incomplete'),{status:400})
       const upstream = await edgeRequest(fetcher,req,'start',{input:cleanedInput,files:cleanedFiles})

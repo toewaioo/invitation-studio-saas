@@ -11,6 +11,7 @@ export interface LoveGalaxyInput {
   ring_text_one: string;
   ring_text_two: string;
   music_track: LoveGalaxyMusicTrack;
+  journey_discovery_enabled?: boolean;
 }
 export interface LoveGalaxyPhoto {
   id: string;
@@ -29,6 +30,11 @@ export interface LoveGalaxy {
   music_url: string | null;
   photos: LoveGalaxyPhoto[];
   created_at: string;
+}
+export interface DiscoverableLoveGalaxy {
+  username: string;
+  title: string;
+  public_key: string;
 }
 
 type UploadFile = { kind: 'photo' | 'music'; file: File };
@@ -64,7 +70,7 @@ export function normalizeLoveGalaxyInput(input: LoveGalaxyInput): LoveGalaxyInpu
   if (!ring_text_one || ring_text_one.length > 64) throw new Error('Ring phrase 1 is required and must be 64 characters or fewer.');
   if (!ring_text_two || ring_text_two.length > 64) throw new Error('Ring phrase 2 is required and must be 64 characters or fewer.');
   if (!LOVE_GALAXY_MUSIC_TRACKS.includes(music_track)) throw new Error('Choose a supported music option.');
-  return { title, ring_text_one, ring_text_two, music_track };
+  return { title, ring_text_one, ring_text_two, music_track, journey_discovery_enabled: input.journey_discovery_enabled === true };
 }
 
 function safeFile(file: File, kind: 'photo' | 'music') {
@@ -148,4 +154,9 @@ export function publishedLoveGalaxyUrl(galaxy: Pick<LoveGalaxy, 'status' | 'user
 
 export async function fetchPublicLoveGalaxy(username: string, key: string): Promise<LoveGalaxy> {
   return galaxyRequest<LoveGalaxy>('public', { query: { username, key } });
+}
+
+export async function fetchDiscoverableLoveGalaxies(): Promise<DiscoverableLoveGalaxy[]> {
+  const result = await galaxyRequest<{ worlds: DiscoverableLoveGalaxy[] }>('discoverable');
+  return Array.isArray(result?.worlds) ? result.worlds : [];
 }
