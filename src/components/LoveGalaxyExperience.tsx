@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { ArrowLeft, ArrowRight, Volume2, VolumeX, X } from "lucide-react";
-import { addSharedJourneyEnvironment, createSharedJourneyLayout, normalizeSharedJourneySampleId, SHARED_JOURNEY_DURATION_SECONDS, SHARED_JOURNEY_START_DISTANCE } from "./love-galaxy-shared-journey";
+import { addSharedJourneyEnvironment, createSharedJourneyLayout, normalizeSharedJourneySampleId, SHARED_JOURNEY_DURATION_SECONDS, SHARED_JOURNEY_START_DISTANCE, SHARED_JOURNEY_WORLD_COUNT } from "./love-galaxy-shared-journey";
 import backgroundMusic from "./love-galaxy-bg.mp3";
 import "./love-galaxy.css";
 
@@ -306,7 +306,7 @@ function mountGalaxy(
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#03040a");
   const camera = new THREE.PerspectiveCamera(47, 1, 0.08, 170);
-  if (reviewSharedJourneyPrototypeEnabled) camera.far = 3600;
+  if (reviewSharedJourneyPrototypeEnabled) camera.far = 6200;
   camera.position.set(destinationAnchor.x, destinationAnchor.y, destinationAnchor.z + (reviewSharedJourneyPrototypeEnabled ? SHARED_JOURNEY_START_DISTANCE : 20));
   camera.lookAt(destinationAnchor);
   camera.updateProjectionMatrix();
@@ -340,11 +340,14 @@ function mountGalaxy(
   canvas.dataset.dragRipplePrototype = reviewMotionPrototypeEnabled ? "enabled" : "disabled";
   canvas.dataset.passingStarPrototype = reviewMotionPrototypeEnabled ? "enabled" : "disabled";
   canvas.dataset.sharedJourneyReview = reviewSharedJourneyPrototypeEnabled ? "enabled" : "disabled";
-  canvas.dataset.sharedJourneySource = reviewSharedJourneyPrototypeEnabled ? "anonymous-demo-only" : "none";
+  canvas.dataset.sharedJourneySource = reviewSharedJourneyPrototypeEnabled ? "fictional-review-test-only" : "none";
   canvas.dataset.sharedJourneySampleId = reviewLayout?.sampleId ?? "none";
   canvas.dataset.sharedJourneyDestinationId = reviewLayout ? `placeholder-${reviewLayout.sampleId}` : "none";
   canvas.dataset.sharedJourneyDestinationPosition = reviewLayout?.destination.map(value => value.toFixed(2)).join(",") ?? "none";
   canvas.dataset.sharedJourneyWorldDepths = reviewLayout?.worlds.map(world => world.position[2].toFixed(2)).join(",") ?? "none";
+  canvas.dataset.sharedJourneyWorldLabels = JSON.stringify(reviewLayout?.worlds.map(world => world.label) ?? []);
+  canvas.dataset.sharedJourneyWorldPositions = JSON.stringify(reviewLayout?.worlds.map(world => world.position) ?? []);
+  canvas.dataset.sharedJourneyWorldProfiles = JSON.stringify(reviewLayout?.worlds.map(({ id, label, color, pattern }) => ({ id, label, color, pattern })) ?? []);
   canvas.dataset.curvedTextRingSweep = "360";
   canvas.dataset.crossedTextRingPlanes = "true";
   canvas.dataset.textRingRotationOne = "0.000";
@@ -809,6 +812,8 @@ function mountGalaxy(
   const previewDragWorldPoint = new THREE.Vector3();
   const cameraRight = new THREE.Vector3();
   const cameraUp = new THREE.Vector3();
+  const journeyLookDirection = new THREE.Vector3();
+  const journeyLookTarget = new THREE.Vector3();
   let previewDragActive = false;
   let finalViewStartedAt: number | null = null;
   const dummy = new THREE.Object3D();
@@ -825,6 +830,7 @@ function mountGalaxy(
   let cinematicElapsed = 0;
   let cinematicProgress = 0;
   let manualCamera = false;
+  let journeyLookActive = false;
   let cameraView: CameraStop = "sphere";
   let pinchDistance = 0;
   let pinchStartDistance = 0;
@@ -885,7 +891,18 @@ function mountGalaxy(
       const endDistance = getZoomBounds().home;
       camera.position.set(destinationAnchor.x, destinationAnchor.y, destinationAnchor.z + THREE.MathUtils.lerp(SHARED_JOURNEY_START_DISTANCE, endDistance, eased));
       camera.up.set(0, 1, 0);
-      camera.lookAt(destinationAnchor);
+      if (journeyLookActive) {
+        currentOrbit.theta = THREE.MathUtils.damp(currentOrbit.theta, targetOrbit.theta, 16, Math.min(delta, 0.06));
+        currentOrbit.phi = THREE.MathUtils.damp(currentOrbit.phi, targetOrbit.phi, 16, Math.min(delta, 0.06));
+        const returnToDestination = THREE.MathUtils.smoothstep(cinematicProgress, 0.90, 1);
+        const theta = currentOrbit.theta * (1 - returnToDestination);
+        const phi = Math.PI / 2 + (currentOrbit.phi - Math.PI / 2) * (1 - returnToDestination);
+        const sinPhi = Math.sin(phi);
+        journeyLookDirection.set(-sinPhi * Math.sin(theta), -Math.cos(phi), -sinPhi * Math.cos(theta)).normalize();
+        camera.lookAt(journeyLookTarget.copy(camera.position).add(journeyLookDirection));
+      } else {
+        camera.lookAt(destinationAnchor);
+      }
       setReviewDestinationReveal(cinematicProgress);
       canvas.dataset.sharedJourneyProgress = cinematicProgress.toFixed(3);
       canvas.dataset.sharedJourneyPhase = !journeyStarted ? "ready" : cinematicProgress < 0.78 ? "anonymous-worlds" : cinematicProgress < 1 ? "destination-approach" : "arrived";
@@ -924,14 +941,15 @@ function mountGalaxy(
       camera.quaternion.slerpQuaternions(takeoverQuaternion, manualLookQuaternion, THREE.MathUtils.smoothstep(takeoverElapsed, 0, takeoverDuration));
     }
     const cameraOffset = camera.position.clone().sub(orbitCenter);
-    const manualPhi = manualCamera ? currentOrbit.phi : Math.acos(THREE.MathUtils.clamp(cameraOffset.y / Math.max(0.001, cameraOffset.length()), -1, 1));
-    const nextView: CameraStop = manualPhi < 0.42 ? "above" : manualCamera ? (currentOrbit.radius < 18 ? "memories" : "sphere") : reviewSharedJourneyPrototypeEnabled ? (cinematicProgress >= 0.78 ? "memories" : "sphere") : cinematicProgress < 2 / 11 ? "sphere" : cinematicProgress < 8 / 11 ? "memories" : "above";
+    const manualPhi = manualCamera || journeyLookActive ? currentOrbit.phi : Math.acos(THREE.MathUtils.clamp(cameraOffset.y / Math.max(0.001, cameraOffset.length()), -1, 1));
+    const nextView: CameraStop = manualPhi < 0.42 ? "above" : manualCamera || journeyLookActive ? (manualCamera && currentOrbit.radius < 18 ? "memories" : "sphere") : reviewSharedJourneyPrototypeEnabled ? (cinematicProgress >= 0.78 ? "memories" : "sphere") : cinematicProgress < 2 / 11 ? "sphere" : cinematicProgress < 8 / 11 ? "memories" : "above";
     if (nextView !== cameraView) {
       cameraView = nextView;
       reportView(nextView);
     }
     canvas.dataset.cameraView = cameraView;
-    canvas.dataset.cameraMode = manualCamera ? "manual" : reviewSharedJourneyPrototypeEnabled && cinematicProgress >= 1 ? "shared-journey-arrived" : !journeyStarted ? "waiting" : reducedMotion.matches ? "reduced-motion" : "cinematic";
+    canvas.dataset.cameraMode = manualCamera ? "manual" : journeyLookActive && cinematicProgress < 1 ? "cinematic-look" : reviewSharedJourneyPrototypeEnabled && cinematicProgress >= 1 ? "shared-journey-arrived" : !journeyStarted ? "waiting" : reducedMotion.matches ? "reduced-motion" : "cinematic";
+    canvas.dataset.cameraLookMode = journeyLookActive && cinematicProgress < 0.95 ? "free-look" : "path";
     canvas.dataset.cameraProgress = cinematicProgress.toFixed(3);
     canvas.dataset.cameraPhase = reviewSharedJourneyPrototypeEnabled ? (cinematicProgress >= 1 ? "arrived" : cinematicProgress >= 0.78 ? "destination-approach" : "anonymous-worlds") : galaxyCameraPhase(cinematicProgress);
     camera.updateMatrixWorld();
@@ -1185,6 +1203,15 @@ function mountGalaxy(
   };
   const beginManualCamera = () => {
     if (manualCamera) return;
+    if (reviewSharedJourneyPrototypeEnabled && journeyStarted && cinematicProgress < 1) {
+      if (!journeyLookActive) {
+        journeyLookActive = true;
+        currentOrbit.setFromVector3(camera.position.clone().sub(orbitCenter));
+        targetOrbit.copy(currentOrbit);
+      }
+      return;
+    }
+    journeyLookActive = false;
     manualCamera = true;
     currentOrbit.setFromVector3(camera.position.clone().sub(orbitCenter));
     takeoverQuaternion.copy(camera.quaternion);
@@ -1563,10 +1590,10 @@ export default function LoveGalaxyExperience({ story, onBack }: LoveGalaxyExperi
     {!journeyStarted && !reviewSharedJourneyPrototypeEnabled && <a className="lg-create-link" href="/love-galaxy/create">Create your own Love Galaxy <ArrowRight size={14}/></a>}
     {!journeyStarted && !rendererFailed && <div className={`lg-entry-overlay${reviewSharedJourneyPrototypeEnabled ? " lg-entry-overlay-shared-journey" : ""}`}>
       {reviewSharedJourneyPrototypeEnabled && <aside className="lg-shared-journey-intro">
-        <span>SHARED GALAXY · REVIEW DEMO</span>
-        <strong>A sample link, a destination of its own.</strong>
-        <p>Fly through anonymous demo worlds before reaching this placeholder memory planet. No real creator content or links are loaded.</p>
-        <small>Sample share {reviewSampleId.slice(-1)} · destination location is unique to this demo link</small>
+        <span>SHARED GALAXY · FICTIONAL TEST RUN</span>
+        <strong>20 test planets, one placeholder destination.</strong>
+        <p>All worlds are fictional test fixtures, not real creators. Their 3D arrangement changes on each visit and stays fixed during this 14-second journey.</p>
+        <small>20 handcrafted test worlds · no real creator content or links are loaded</small>
       </aside>}
       <button className="lg-entry-button" type="button" disabled={!rendererReady || entering} aria-busy={!rendererReady || entering} onClick={enterGalaxy}>
         {reviewSharedJourneyPrototypeEnabled ? (rendererReady ? "BEGIN SHARED JOURNEY" : "PREPARE GALAXY") : rendererReady ? "ENTER GALAXY" : "PREPARE GALAXY"}
@@ -1578,8 +1605,8 @@ export default function LoveGalaxyExperience({ story, onBack }: LoveGalaxyExperi
 
     {journeyStarted && <header className="lg-hud-top">
       {reviewSharedJourneyPrototypeEnabled && <div className="lg-shared-journey-status" role="status" aria-live="polite">
-        <span>ANONYMOUS DEMO · {reviewSampleId.toUpperCase()}</span>
-        <strong>{sharedJourneyArrived ? "ARRIVED AT PLACEHOLDER DESTINATION" : "PASSING SHARED SAMPLE WORLDS"}</strong>
+        <span>FICTIONAL TEST RUN · {reviewSampleId.toUpperCase()}</span>
+        <strong>{sharedJourneyArrived ? "ARRIVED AT PLACEHOLDER DESTINATION" : `PASSING ${SHARED_JOURNEY_WORLD_COUNT} FICTIONAL TEST WORLDS`}</strong>
       </div>}
       <div className="lg-hud-actions">
         <button className="lg-music-toggle" type="button" aria-label={musicEnabled ? "Pause background music" : "Play background music"} aria-pressed={musicEnabled} onClick={toggleMusic}>
