@@ -163,21 +163,38 @@ html:has(.lg-experience), body:has(.lg-experience), #root:has(.lg-experience) {
 .lg-shared-journey-intro strong { display: block; margin-top: 9px; color: #fff2f8; font: 18px/1.3 Georgia, serif; }
 .lg-shared-journey-intro p { margin: 8px 0 10px; color: #d8cfdd; font: 12px/1.6 Arial, sans-serif; }
 .lg-shared-journey-intro small { color: #ad9db6; font: 10px/1.4 Arial, sans-serif; }
-.lg-shared-journey-status {
-  position: fixed;
-  z-index: 4;
-  pointer-events: none;
-  top: max(18px, env(safe-area-inset-top));
-  left: max(20px, env(safe-area-inset-left));
-  max-width: min(360px, calc(100vw - 96px));
-  padding: 11px 14px;
-  border: 1px solid #ffc0dd35;
-  border-radius: 10px;
-  background: #100b1bd9;
-  box-shadow: 0 8px 28px #0006;
-  backdrop-filter: blur(12px);
-}
+.lg-shared-journey-status { position: fixed; z-index: 4; pointer-events: none; top: max(18px, env(safe-area-inset-top)); left: max(20px, env(safe-area-inset-left)); max-width: min(360px, calc(100vw - 96px)); padding: 11px 14px; border: 1px solid #ffc0dd35; border-radius: 10px; background: #100b1bd9; box-shadow: 0 8px 28px #0006; backdrop-filter: blur(12px); }
 .lg-shared-journey-status strong { display: block; margin-top: 4px; color: #f6e8f0; font: 500 10px/1.4 Arial, sans-serif; letter-spacing: 1px; }
+.lg-return-home-button {
+  position: fixed;
+  z-index: 6;
+  bottom: max(26px, env(safe-area-inset-bottom));
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 218px;
+  min-height: 50px;
+  padding: 0 20px;
+  transform: translateX(-50%);
+  color: #fff2f8;
+  border: 1px solid #ffc0dd9c;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #35152feF, #110d1df2);
+  box-shadow: 0 10px 32px #0009, 0 0 28px #f77cba36, inset 0 0 18px #f77cba12;
+  font: 600 10px/1 Arial, sans-serif;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.lg-return-home-button:hover { border-color: #ffe4f1; background: linear-gradient(135deg, #4a1d40f2, #1a1027f5); box-shadow: 0 12px 38px #000a, 0 0 34px #f77cba5c; }
+.lg-return-home-button:focus-visible { outline: 2px solid var(--lg-cyan); outline-offset: 4px; }
 .lg-create-link {
   position: absolute;
   z-index: 6;
@@ -242,6 +259,7 @@ html:has(.lg-experience), body:has(.lg-experience), #root:has(.lg-experience) {
   .lg-shared-journey-status { left: max(14px, env(safe-area-inset-left)); top: max(14px, env(safe-area-inset-top)); max-width: calc(100vw - 84px); padding: 9px 11px; }
   .lg-shared-journey-status span { font-size: 8px; letter-spacing: 1.2px; }
   .lg-shared-journey-status strong { font-size: 9px; }
+  .lg-return-home-button { bottom: max(18px, env(safe-area-inset-bottom)); min-width: 210px; min-height: 48px; padding: 0 17px; font-size: 9px; }
   .lg-shared-world-tooltip { width: min(196px, calc(100vw - 24px)); min-height: 68px; padding: 9px 11px; }
   .lg-shared-world-tooltip-eyebrow { font-size: 7px; }
   .lg-shared-world-tooltip-label { font-size: 12px; }

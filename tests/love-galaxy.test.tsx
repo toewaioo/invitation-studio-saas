@@ -259,6 +259,7 @@ describe("standalone Love Galaxy experience", () => {
     expect(html).toContain('data-shared-journey-review="disabled"');
     expect(html).not.toContain("SHARED GALAXY · FICTIONAL TEST RUN");
     expect(html).not.toContain("lg-shared-world-tooltip");
+    expect(html).not.toContain("lg-return-home-button");
     expect(source).toContain('import.meta.env.VITE_LOVE_GALAXY_SHARED_JOURNEY === "true"');
     expect(source).toContain('sharedJourneyQuery?.get("review") === "shared-journey"');
     expect(source).toContain('canvas.dataset.sharedJourneySource = reviewSharedJourneyPrototypeEnabled ? "fictional-review-test-only" : "none"');
@@ -276,7 +277,9 @@ describe("standalone Love Galaxy experience", () => {
     const html = renderToStaticMarkup(<LoveGalaxyExperience />);
     const source = readFileSync(new URL("../src/components/LoveGalaxyExperience.tsx", import.meta.url), "utf8");
     const helper = readFileSync(new URL("../src/components/love-galaxy-shared-journey.ts", import.meta.url), "utf8");
+    const css = readFileSync(new URL("../src/components/love-galaxy.css", import.meta.url), "utf8");
     expect(html).not.toContain("lg-shared-world-tooltip");
+    expect(html).not.toContain("lg-return-home-button");
     expect(source).toContain('className="lg-shared-world-tooltip"');
     expect(source).toContain('worldTooltipElement.hidden = true');
     expect(source).toContain('tooltip.setAttribute("aria-label", `Visit ${nearestTarget.label}`)');
@@ -284,6 +287,13 @@ describe("standalone Love Galaxy experience", () => {
     expect(source).toContain('canvas.dataset.sharedJourneySelectedWorldId = travel.target.id');
     expect(source).toContain('sharedJourneyWorldTargets.find(world => world.id === worldId)');
     expect(source).toContain('raycaster.intersectObjects(sharedJourneyWorldRaycastTargets, false)[0]');
+    expect(source).toContain('startTravelToTarget(placeholderTravelTarget, destinationAnchor.clone(), getZoomBounds().home)');
+    expect(source).toContain('currentSharedJourneyWorldId = travel.target.id === placeholderTravelTarget.id ? null : travel.target.id');
+    expect(source).toContain('sharedJourneyWorldStatus.label.startsWith("TEST WORLD ")');
+    expect(source).toContain('aria-label="Return to my planet"');
+    expect(source).toContain('className="lg-return-home-button"');
+    expect(source).toContain('returnToHome: () => void');
+    expect(css).toContain(".lg-return-home-button");
     expect(helper).toContain('worldTargets.push({ id: spec.id, label: spec.label, group: world, surface, radius: spec.radius })');
     expect(helper).toContain('surface.userData.sharedJourneyWorldId = spec.id');
   });
