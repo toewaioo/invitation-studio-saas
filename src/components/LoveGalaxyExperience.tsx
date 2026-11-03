@@ -1221,6 +1221,27 @@ function mountGalaxy(
     cloud.rotation.x = Math.sin(time * 0.049) * 0.055;
     cloud.position.set(destinationAnchor.x + previewDragOffset.x, destinationAnchor.y + previewDragOffset.y, destinationAnchor.z);
     cloud.scale.setScalar(reviewSharedJourneyPrototypeEnabled ? Math.max(0.001, reviewDestinationReveal) : 1);
+    const homeStreamVisible = !reviewSharedJourneyPrototypeEnabled || (reviewDestinationReveal > 0.015 && !currentSharedJourneyWorldId && !sharedJourneyWorldTravel);
+    cloud.visible = homeStreamVisible;
+    for (const mesh of photoMeshes) mesh.visible = homeStreamVisible;
+    for (const mesh of frameMeshes) mesh.visible = homeStreamVisible;
+    canvas.dataset.sharedJourneyHomeStreamState = reviewSharedJourneyPrototypeEnabled
+      ? homeStreamVisible ? "active" : "hidden-away-from-home"
+      : "normal";
+    if (!homeStreamVisible) {
+      canvas.dataset.sharedJourneyHomeCardDistanceChecksSkipped = String(MEMORY_COUNT);
+      canvas.dataset.sharedJourneyHomeCardDistanceFastPath = "true";
+      return;
+    }
+    const homeCardBounds = Math.hypot(
+      PHOTO_BAND_OUTER_RADIUS * photoStreamHorizontalScale,
+      PHOTO_BAND_OUTER_RADIUS,
+      PHOTO_STREAM_ROWS_ABOVE_BELOW * PHOTO_STREAM_ROW_SPACING + 0.6,
+    );
+    const homeCardsBeyondApproachDistance = reviewSharedJourneyPrototypeEnabled
+      && camera.position.distanceTo(cloud.position) - homeCardBounds * reviewDestinationReveal > 2.0;
+    canvas.dataset.sharedJourneyHomeCardDistanceChecksSkipped = String(homeCardsBeyondApproachDistance ? MEMORY_COUNT : 0);
+    canvas.dataset.sharedJourneyHomeCardDistanceFastPath = String(homeCardsBeyondApproachDistance);
     cloud.updateMatrixWorld(true);
     camera.getWorldDirection(cameraForward);
     for (let image = 0; image < images.length; image += 1) {
@@ -1254,7 +1275,7 @@ function mountGalaxy(
         dummy.rotateZ(record.roll + Math.sin(drift) * 0.035);
         dummy.rotateY(Math.sin(record.phase) * 0.22);
         dummy.rotateX(Math.cos(record.phase) * 0.12);
-        const approachScale = THREE.MathUtils.smoothstep(worldPosition.distanceTo(camera.position), 0.3, 2.0);
+        const approachScale = homeCardsBeyondApproachDistance ? 1 : THREE.MathUtils.smoothstep(worldPosition.distanceTo(camera.position), 0.3, 2.0);
         const scale = record.scale * (1 + Math.sin(drift * 0.72) * 0.035) * approachScale * (reviewSharedJourneyPrototypeEnabled ? reviewDestinationReveal : 1);
         dummy.scale.setScalar(scale);
         dummy.updateMatrix();
@@ -1278,6 +1299,7 @@ function mountGalaxy(
     camera.getWorldDirection(cameraForward);
     let activeId = "none";
     let maxReveal = 0;
+    let distanceChecksSkipped = 0;
     for (const stream of sharedJourneyPhotoStreams) {
       const reveal = stream.group.userData.sharedJourneyReveal as number | undefined ?? 0;
       if (reveal > maxReveal) {
@@ -1290,6 +1312,13 @@ function mountGalaxy(
       localStreamInverseQuaternion.copy(localStreamWorldQuaternion).invert();
       localStreamCardQuaternion.copy(localStreamInverseQuaternion).multiply(camera.quaternion);
       localStreamCameraForward.copy(cameraForward).applyQuaternion(localStreamInverseQuaternion);
+      const localCardBounds = Math.hypot(
+        PHOTO_BAND_OUTER_RADIUS * photoStreamHorizontalScale,
+        PHOTO_BAND_OUTER_RADIUS,
+        PHOTO_STREAM_ROWS_ABOVE_BELOW * PHOTO_STREAM_ROW_SPACING + 0.6,
+      ) * stream.group.scale.x;
+      const cardsBeyondApproachDistance = camera.position.distanceTo(stream.group.position) - localCardBounds > 2.0;
+      if (cardsBeyondApproachDistance) distanceChecksSkipped += MEMORY_COUNT;
       for (let image = 0; image < stream.recordsByImage.length; image += 1) {
         const subset = stream.recordsByImage[image];
         const photos = stream.photoMeshes[image];
@@ -1304,14 +1333,17 @@ function mountGalaxy(
             record.lift + Math.sin(drift) * (record.row === 0 ? 0.1 : 0.06),
             Math.sin(orbitAngle) * record.radius,
           ).applyEuler(photoOrbitPlane);
-          worldPosition.copy(localPosition);
-          stream.group.localToWorld(worldPosition);
           dummy.position.copy(localPosition);
           dummy.quaternion.copy(localStreamCardQuaternion);
           dummy.rotateZ(record.roll + Math.sin(drift) * 0.035);
           dummy.rotateY(Math.sin(record.phase) * 0.22);
           dummy.rotateX(Math.cos(record.phase) * 0.12);
-          const approachScale = THREE.MathUtils.smoothstep(worldPosition.distanceTo(camera.position), 0.3, 2.0);
+          let approachScale = 1;
+          if (!cardsBeyondApproachDistance) {
+            worldPosition.copy(localPosition);
+            stream.group.localToWorld(worldPosition);
+            approachScale = THREE.MathUtils.smoothstep(worldPosition.distanceTo(camera.position), 0.3, 2.0);
+          }
           const scale = record.scale * (1 + Math.sin(drift * 0.72) * 0.035) * approachScale;
           dummy.scale.setScalar(scale);
           dummy.updateMatrix();
@@ -1328,6 +1360,7 @@ function mountGalaxy(
     }
     canvas.dataset.sharedJourneyLocalPhotoActiveId = maxReveal > 0.015 ? activeId : "none";
     canvas.dataset.sharedJourneyLocalPhotoActiveCardCount = maxReveal > 0.015 ? String(MEMORY_COUNT) : "0";
+    canvas.dataset.sharedJourneyPhotoDistanceChecksSkipped = String(distanceChecksSkipped);
   };
   const updateShootingStars = (time: number) => {
     const headPositions = shootingHeadGeometry.getAttribute("position") as THREE.BufferAttribute;
@@ -1539,6 +1572,11 @@ function mountGalaxy(
       });
     }
     candidates.sort((left, right) => left.score - right.score);
+    const visibleOcclusionTargets = sharedJourneyWorldOcclusionTargets.filter(target => {
+      const reveal = target.userData.sharedJourneyReveal;
+      return target.visible && (typeof reveal !== "number" || reveal >= 0.24);
+    });
+    canvas.dataset.sharedJourneyVisibleOcclusionTargetCount = String(visibleOcclusionTargets.length);
     let nearestTarget: SharedJourneyWorldTarget | null = null;
     let nearestX = 0;
     let nearestY = 0;
@@ -1546,7 +1584,7 @@ function mountGalaxy(
       worldVisibilityRaycaster.set(camera.position, candidate.direction);
       worldVisibilityRaycaster.near = 0;
       worldVisibilityRaycaster.far = candidate.distance + candidate.target.radius * candidate.target.group.scale.x;
-      const firstVisibleSurface = worldVisibilityRaycaster.intersectObjects(sharedJourneyWorldOcclusionTargets, false).find(hit => {
+      const firstVisibleSurface = worldVisibilityRaycaster.intersectObjects(visibleOcclusionTargets, false).find(hit => {
         const reveal = hit.object.userData.sharedJourneyReveal;
         return hit.object.visible && (typeof reveal !== "number" || reveal >= 0.24);
       });

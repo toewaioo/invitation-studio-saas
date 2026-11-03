@@ -283,6 +283,11 @@ describe("standalone Love Galaxy experience", () => {
     expect(source).toContain('const musicSource = reviewSharedJourneyPrototypeEnabled ? backgroundMusic :');
     expect(source).toContain('uniform float uLocalSpaceReveal');
     expect(source).toContain('const updateSharedJourneyPhotoStreams = (time: number) =>');
+    expect(source).toContain('const homeStreamVisible = !reviewSharedJourneyPrototypeEnabled ||');
+    expect(source).toContain('canvas.dataset.sharedJourneyHomeStreamState = reviewSharedJourneyPrototypeEnabled');
+    expect(source).toContain('const homeCardsBeyondApproachDistance = reviewSharedJourneyPrototypeEnabled');
+    expect(source).toContain('const cardsBeyondApproachDistance = camera.position.distanceTo(stream.group.position) - localCardBounds > 2.0');
+    expect(source).toContain('canvas.dataset.sharedJourneyPhotoDistanceChecksSkipped = String(distanceChecksSkipped)');
     expect(source).toContain('LOCAL SPACE · {SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS} LY RADIUS');
     expect(source).toContain('const updateSharedJourneyLocalSpaces = () =>');
     expect(source).toContain('updateSharedJourneyLocalSpaces();');
@@ -305,6 +310,9 @@ describe("standalone Love Galaxy experience", () => {
     expect(source).toContain('className="lg-shared-world-tooltip"');
     expect(source).toContain('worldTooltipElement.hidden = true');
     expect(source).toContain('tooltip.setAttribute("aria-label", `Visit ${nearestTarget.label}`)');
+    expect(source).toContain('const visibleOcclusionTargets = sharedJourneyWorldOcclusionTargets.filter(target =>');
+    expect(source).toContain('canvas.dataset.sharedJourneyVisibleOcclusionTargetCount = String(visibleOcclusionTargets.length)');
+    expect(source).toContain('intersectObjects(visibleOcclusionTargets, false)');
     expect(source).toContain('canvas.dataset.sharedJourneyPhase = progress < 1 ? "world-hop" : "world-arrived"');
     expect(source).toContain('canvas.dataset.sharedJourneySelectedWorldId = travel.target.id');
     expect(source).toContain('sharedJourneyWorldTargets.find(world => world.id === worldId)');
