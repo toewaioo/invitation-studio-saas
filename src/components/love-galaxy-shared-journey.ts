@@ -33,6 +33,13 @@ export type SharedJourneyLayout = {
   galaxies: SharedJourneyGalaxySpec[];
   visitSeed: number;
 };
+export type SharedJourneyWorldTarget = {
+  id: string;
+  label: string;
+  group: THREE.Group;
+  surface: THREE.Mesh;
+  radius: number;
+};
 
 type TestWorldStyle = Omit<SharedJourneyPlanetSpec, "label" | "source" | "position" | "seed"> & { name: string };
 
@@ -321,10 +328,13 @@ export function addSharedJourneyEnvironment(
     group.add(core);
   });
 
+  const worldTargets: SharedJourneyWorldTarget[] = [];
   layout.worlds.forEach(spec => {
     const world = new THREE.Group();
     world.name = spec.label;
     world.position.set(spec.position[0], spec.position[1], spec.position[2]);
+    world.userData.sharedJourneyWorldId = spec.id;
+    world.userData.sharedJourneyWorldLabel = spec.label;
     environment.add(world);
     const texture = makePlanetTexture(spec, register);
     const surface = new THREE.Mesh(
@@ -332,7 +342,10 @@ export function addSharedJourneyEnvironment(
       register(new THREE.MeshStandardMaterial({ map: texture, color: 0xffffff, roughness: 0.84, metalness: 0.035, emissive: spec.color, emissiveIntensity: 0.055 })),
     );
     surface.name = `${spec.label} · OPAQUE 3D TEST PLANET`;
+    surface.userData.sharedJourneyWorldId = spec.id;
+    surface.userData.sharedJourneyWorldLabel = spec.label;
     world.add(surface);
+    worldTargets.push({ id: spec.id, label: spec.label, group: world, surface, radius: spec.radius });
     const atmosphere = new THREE.Mesh(
       register(new THREE.SphereGeometry(spec.radius * 1.07, 28, 20)),
       register(new THREE.MeshBasicMaterial({ color: spec.color, side: THREE.BackSide, transparent: true, opacity: 0.12, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false })),
@@ -348,5 +361,5 @@ export function addSharedJourneyEnvironment(
     }
   });
 
-  return { environment, starCount, galaxyCount: layout.galaxies.length, galaxyPointCount, worldCount: layout.worlds.length };
+  return { environment, starCount, galaxyCount: layout.galaxies.length, galaxyPointCount, worldCount: layout.worlds.length, worldTargets };
 }

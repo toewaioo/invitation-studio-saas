@@ -258,6 +258,7 @@ describe("standalone Love Galaxy experience", () => {
     const source = readFileSync(new URL("../src/components/LoveGalaxyExperience.tsx", import.meta.url), "utf8");
     expect(html).toContain('data-shared-journey-review="disabled"');
     expect(html).not.toContain("SHARED GALAXY · FICTIONAL TEST RUN");
+    expect(html).not.toContain("lg-shared-world-tooltip");
     expect(source).toContain('import.meta.env.VITE_LOVE_GALAXY_SHARED_JOURNEY === "true"');
     expect(source).toContain('sharedJourneyQuery?.get("review") === "shared-journey"');
     expect(source).toContain('canvas.dataset.sharedJourneySource = reviewSharedJourneyPrototypeEnabled ? "fictional-review-test-only" : "none"');
@@ -269,6 +270,22 @@ describe("standalone Love Galaxy experience", () => {
     expect(source).toContain('THREE.MathUtils.smoothstep(cinematicProgress, 0.90, 1)');
     expect(source).toContain("camera.position.set(destinationAnchor.x, destinationAnchor.y, destinationAnchor.z + THREE.MathUtils.lerp(SHARED_JOURNEY_START_DISTANCE, endDistance, eased))");
     expect(source).toContain("currentOrbit.setFromVector3(camera.position.clone().sub(orbitCenter))");
+  });
+
+  test("review-only arrival exposes fictional in-view planet tooltips and a selected-world camera hop", () => {
+    const html = renderToStaticMarkup(<LoveGalaxyExperience />);
+    const source = readFileSync(new URL("../src/components/LoveGalaxyExperience.tsx", import.meta.url), "utf8");
+    const helper = readFileSync(new URL("../src/components/love-galaxy-shared-journey.ts", import.meta.url), "utf8");
+    expect(html).not.toContain("lg-shared-world-tooltip");
+    expect(source).toContain('className="lg-shared-world-tooltip"');
+    expect(source).toContain('worldTooltipElement.hidden = true');
+    expect(source).toContain('tooltip.setAttribute("aria-label", `Visit ${nearestTarget.label}`)');
+    expect(source).toContain('canvas.dataset.sharedJourneyPhase = progress < 1 ? "world-hop" : "world-arrived"');
+    expect(source).toContain('canvas.dataset.sharedJourneySelectedWorldId = travel.target.id');
+    expect(source).toContain('sharedJourneyWorldTargets.find(world => world.id === worldId)');
+    expect(source).toContain('raycaster.intersectObjects(sharedJourneyWorldRaycastTargets, false)[0]');
+    expect(helper).toContain('worldTargets.push({ id: spec.id, label: spec.label, group: world, surface, radius: spec.radius })');
+    expect(helper).toContain('surface.userData.sharedJourneyWorldId = spec.id');
   });
 
   test("sample share links resolve to unique placeholder locations while each visit layout stays stable in flight", () => {
