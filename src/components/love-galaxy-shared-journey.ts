@@ -456,7 +456,7 @@ export function addSharedJourneyEnvironment(
 
   const localSpaceSpecs = createSharedJourneyLocalSpaceSpecs(layout);
   const localSpaces: SharedJourneyLocalSpaceTarget[] = [];
-  const localStarsPerSpace = 480;
+  const localStarsPerSpace = 4200;
   const localNebulaPointsPerSpace = 180;
   const localGalaxiesPerSpace = 2;
   const localGalaxyPoints = 180;
@@ -474,22 +474,39 @@ export function addSharedJourneyEnvironment(
 
     const localStarPositions = new Float32Array(localStarsPerSpace * 3);
     const localStarColors = new Float32Array(localStarsPerSpace * 3);
+    const localStarSizes = new Float32Array(localStarsPerSpace);
+    const localStarPhases = new Float32Array(localStarsPerSpace);
     const baseColor = new THREE.Color(spec.color);
-    const starTints = [new THREE.Color(0xf0eaff), new THREE.Color(0x9bdcff), new THREE.Color(0xffb9dd)];
+    const starTints = [new THREE.Color(0xffb9df), new THREE.Color(0xb8baff), new THREE.Color(0xf0eaff)];
     for (let index = 0; index < localStarsPerSpace; index += 1) {
       const y = random() * 2 - 1;
       const angle = random() * Math.PI * 2;
       const radial = SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS * Math.cbrt(random());
       const ring = Math.sqrt(1 - y * y);
       localStarPositions.set([radial * ring * Math.cos(angle), radial * y, radial * ring * Math.sin(angle)], index * 3);
-      const tint = starTints[Math.floor(random() * starTints.length)].clone().lerp(baseColor, random() * 0.28);
-      const brightness = 0.58 + random() * 0.62;
+      const tint = starTints[Math.floor(random() * starTints.length)].clone().lerp(baseColor, random() * 0.12);
+      const brightness = 0.72 + random() * 0.56;
       localStarColors.set([tint.r * brightness, tint.g * brightness, tint.b * brightness], index * 3);
+      const sparkle = random();
+      localStarSizes[index] = 3.4 + random() * (sparkle > 0.9 ? 10 : 4.2);
+      localStarPhases[index] = random() * Math.PI * 2;
     }
     const localStarGeometry = register(new THREE.BufferGeometry());
     localStarGeometry.setAttribute("position", new THREE.BufferAttribute(localStarPositions, 3));
     localStarGeometry.setAttribute("color", new THREE.BufferAttribute(localStarColors, 3));
-    const localStarMaterial = register(new THREE.PointsMaterial({ size: 1.25, vertexColors: true, transparent: true, opacity: 0.84, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    localStarGeometry.setAttribute("aSize", new THREE.BufferAttribute(localStarSizes, 1));
+    localStarGeometry.setAttribute("aPhase", new THREE.BufferAttribute(localStarPhases, 1));
+    const localStarMaterial = register(new THREE.ShaderMaterial({
+      uniforms: { uTime: { value: 0 }, uLocalReveal: { value: 0 } },
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      vertexColors: true,
+      toneMapped: false,
+      vertexShader: `attribute float aSize; attribute float aPhase; uniform float uTime; varying vec3 vColor; varying float vTwinkle; varying float vSparkle; void main(){ vec4 view=modelViewMatrix*vec4(position,1.0); vColor=color; vTwinkle=.76+.24*sin(uTime*1.2+aPhase); vSparkle=smoothstep(8.0,12.0,aSize); gl_PointSize=clamp(aSize*(52.0/max(1.0,-view.z)),1.7,14.0); gl_Position=projectionMatrix*view; }`,
+      fragmentShader: `uniform float uLocalReveal; varying vec3 vColor; varying float vTwinkle; varying float vSparkle; void main(){ vec2 p=gl_PointCoord-vec2(.5); float radius=length(p); float halo=exp(-radius*radius*15.0); float core=1.0-smoothstep(.025,.18,radius); float rays=(exp(-abs(p.x)*65.0)+exp(-abs(p.y)*65.0))*(1.0-smoothstep(.08,.47,radius))*vSparkle; float alpha=(halo*.60+core*.85+rays*.34)*vTwinkle*uLocalReveal; gl_FragColor=vec4(mix(vColor,vec3(1.0),core*.5)*(1.0+vTwinkle*.25),alpha); }`,
+    }));
+    localSpace.userData.sharedJourneyLocalStarMaterial = localStarMaterial;
     localSpace.userData.sharedJourneyRevealMaterials.push({ material: localStarMaterial, baseOpacity: 0.84 });
     const localStars = new THREE.Points(localStarGeometry, localStarMaterial);
     localStars.name = `${spec.id} · 100 ly volumetric stars`;
@@ -498,6 +515,8 @@ export function addSharedJourneyEnvironment(
 
     for (let galaxyIndex = 0; galaxyIndex < localGalaxiesPerSpace; galaxyIndex += 1) {
       const galaxy = new THREE.Group();
+      const localGalaxyPalette = [0xffb9df, 0xb8baff, 0xda82d2, 0x9cc2ff];
+      const localGalaxyColor = new THREE.Color(localGalaxyPalette[Math.floor(random() * localGalaxyPalette.length)]).lerp(new THREE.Color(spec.color), 0.12);
       const centerY = random() * 2 - 1;
       const centerAngle = random() * Math.PI * 2;
       const centerRadius = 35 + random() * 46;
@@ -516,7 +535,7 @@ export function addSharedJourneyEnvironment(
         const thickness = (random() + random() + random() - 1.5) * galaxyRadius * 0.22;
         positions.set([Math.cos(angle) * radius, thickness, Math.sin(angle) * radius * 0.75], index * 3);
         const brightness = 0.55 + random() * 0.7;
-        colors.set([baseColor.r * brightness, baseColor.g * brightness, baseColor.b * brightness], index * 3);
+        colors.set([localGalaxyColor.r * brightness, localGalaxyColor.g * brightness, localGalaxyColor.b * brightness], index * 3);
       }
       const galaxyGeometry = register(new THREE.BufferGeometry());
       galaxyGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
@@ -531,14 +550,14 @@ export function addSharedJourneyEnvironment(
 
     const nebulaPositions = new Float32Array(localNebulaPointsPerSpace * 3);
     const nebulaColors = new Float32Array(localNebulaPointsPerSpace * 3);
-    const nebulaTint = new THREE.Color(spec.color).lerp(new THREE.Color(0x897aff), 0.42);
+    const nebulaTint = new THREE.Color(0xec6fba).lerp(new THREE.Color(0x745ae0), random() * 0.52);
     for (let index = 0; index < localNebulaPointsPerSpace; index += 1) {
       const y = random() * 2 - 1;
       const angle = random() * Math.PI * 2;
       const radial = 54 + random() * 44;
       const ring = Math.sqrt(1 - y * y);
       nebulaPositions.set([radial * ring * Math.cos(angle), radial * y, radial * ring * Math.sin(angle)], index * 3);
-      const brightness = 0.2 + random() * 0.24;
+      const brightness = 0.3 + random() * 0.34;
       nebulaColors.set([nebulaTint.r * brightness, nebulaTint.g * brightness, nebulaTint.b * brightness], index * 3);
     }
     const nebulaGeometry = register(new THREE.BufferGeometry());

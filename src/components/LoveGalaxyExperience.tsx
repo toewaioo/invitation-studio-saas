@@ -47,6 +47,20 @@ type PhotoRecord = {
   scale: number;
 };
 
+type SharedJourneyPhotoStream = {
+  id: string;
+  world: SharedJourneyWorldTarget;
+  group: THREE.Group;
+  band: THREE.Mesh;
+  bandMaterial: THREE.ShaderMaterial;
+  photoMaterials: THREE.MeshBasicMaterial[];
+  frameMaterial: THREE.MeshBasicMaterial;
+  photoMeshes: THREE.InstancedMesh[];
+  frameMeshes: THREE.InstancedMesh[];
+  recordsByImage: PhotoRecord[][];
+  scale: number;
+};
+
 type MountedScene = {
   startJourney: () => void;
   travelToWorld: (worldId: string) => void;
@@ -355,7 +369,7 @@ function mountGalaxy(
   canvas.dataset.sharedJourneyWorldDepths = reviewLayout?.worlds.map(world => world.position[2].toFixed(2)).join(",") ?? "none";
   canvas.dataset.sharedJourneyWorldLabels = JSON.stringify(reviewLayout?.worlds.map(world => world.label) ?? []);
   canvas.dataset.sharedJourneyWorldPositions = JSON.stringify(reviewLayout?.worlds.map(world => world.position) ?? []);
-  canvas.dataset.sharedJourneyWorldProfiles = JSON.stringify(reviewLayout?.worlds.map(({ id, label, color, pattern }) => ({ id, label, color, pattern })) ?? []);
+  canvas.dataset.sharedJourneyWorldProfiles = JSON.stringify(reviewLayout?.worlds.map(({ id, label, color, pattern, radius }) => ({ id, label, color, pattern, radius })) ?? []);
   canvas.dataset.sharedJourneyTooltipWorldId = "none";
   canvas.dataset.sharedJourneySelectedWorldId = "none";
   canvas.dataset.sharedJourneyHopProgress = "0";
@@ -413,10 +427,10 @@ function mountGalaxy(
   const nebulaMaterial = new THREE.ShaderMaterial({
     side: THREE.BackSide,
     depthWrite: false,
-    uniforms: { uTime: { value: 0 }, uMusic: { value: 0 }, uPassingStar: previewStarPass, uSharedJourney: { value: reviewSharedJourneyPrototypeEnabled ? 1 : 0 } },
+    uniforms: { uTime: { value: 0 }, uMusic: { value: 0 }, uPassingStar: previewStarPass, uSharedJourney: { value: reviewSharedJourneyPrototypeEnabled ? 1 : 0 }, uLocalSpaceReveal: { value: 1 } },
     vertexShader: `varying vec3 vPosition; varying vec2 vUv; void main(){ vPosition=position; vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
     fragmentShader: `
-      varying vec3 vPosition; varying vec2 vUv; uniform float uTime; uniform float uMusic; uniform float uPassingStar; uniform float uSharedJourney;
+      varying vec3 vPosition; varying vec2 vUv; uniform float uTime; uniform float uMusic; uniform float uPassingStar; uniform float uSharedJourney; uniform float uLocalSpaceReveal;
       float cloud(vec2 p, vec2 c, vec2 s){ vec2 q=(p-c)/s; return exp(-dot(q,q)*1.7); }
       void main(){
       vec2 p=vUv;
@@ -443,6 +457,7 @@ function mountGalaxy(
       vec3 passingStarTint=color*vec3(.62,.78,1.08)+vec3(.012,.018,.052);
       color=mix(color,passingStarTint,uPassingStar*.78);
       color*=1.0-uPassingStar*.28;
+      color=mix(vec3(.008,.006,.022),color,clamp(uLocalSpaceReveal,0.0,1.0));
         gl_FragColor=vec4(color,1.0);
       }`,
   });
@@ -451,6 +466,23 @@ function mountGalaxy(
   scene.add(nebula);
   addResource(nebula.geometry);
   addResource(nebulaMaterial);
+  if (reviewSharedJourneyPrototypeEnabled) {
+    const localNebulaGeometry = addResource(new THREE.SphereGeometry(SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS, 40, 28));
+    for (const localSpace of sharedJourneyLocalSpaces) {
+      const localMaterial = nebulaMaterial.clone();
+      localMaterial.uniforms.uTime = nebulaMaterial.uniforms.uTime;
+      localMaterial.uniforms.uMusic = nebulaMaterial.uniforms.uMusic;
+      localMaterial.uniforms.uPassingStar = nebulaMaterial.uniforms.uPassingStar;
+      localMaterial.uniforms.uSharedJourney = { value: 1 };
+      localMaterial.uniforms.uLocalSpaceReveal = { value: 0 };
+      addResource(localMaterial);
+      const localShell = new THREE.Mesh(localNebulaGeometry, localMaterial);
+      localShell.name = `${localSpace.label} · home-matched 3D nebula shell`;
+      localShell.frustumCulled = false;
+      localSpace.group.add(localShell);
+      localSpace.group.userData.sharedJourneyNebulaMaterial = localMaterial;
+    }
+  }
 
   // Pearl stars mix with seven luminous clusters, still in one particle draw call.
   const starFieldGroup = new THREE.Group();
@@ -469,6 +501,20 @@ function mountGalaxy(
     clusterGlow.scale.setScalar(22 + (index % 3) * 4);
     starFieldGroup.add(clusterGlow);
   });
+  if (reviewSharedJourneyPrototypeEnabled) {
+    for (const localSpace of sharedJourneyLocalSpaces) {
+      const revealMaterials = localSpace.group.userData.sharedJourneyRevealMaterials as { material: THREE.Material; baseOpacity: number }[];
+      starClusters.forEach((center, index) => {
+        const material = addResource(new THREE.SpriteMaterial({ map: clusterGlowTexture, color: index % 2 ? 0xb8baff : 0xffb9df, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+        revealMaterials.push({ material, baseOpacity: 0.27 });
+        const glow = new THREE.Sprite(material);
+        glow.name = `${localSpace.id} · home-style luminous star cluster ${index + 1}`;
+        glow.position.copy(center).multiplyScalar(1.18);
+        glow.scale.setScalar(22 + (index % 3) * 4);
+        localSpace.group.add(glow);
+      });
+    }
+  }
   canvas.dataset.starClusterCount = String(starClusters.length);
   const starPositions = new Float32Array(STAR_COUNT * 3);
   const starColors = new Float32Array(STAR_COUNT * 3);
@@ -590,6 +636,39 @@ function mountGalaxy(
   const glow = new THREE.Sprite(glowMaterial);
   glow.scale.set(13.2, 13.2, 1);
   core.add(glow);
+  if (reviewSharedJourneyPrototypeEnabled) {
+    for (const target of sharedJourneyWorldTargets) {
+      const sizeRatio = target.radius / 2.5;
+      const revealMaterials = target.group.userData.sharedJourneyRevealMaterials as { material: THREE.Material; baseOpacity: number; depthWrite: boolean }[];
+      const localHaloMaterial = addResource(nebulaHaloMaterial.clone());
+      localHaloMaterial.opacity = 0;
+      const localHalo = new THREE.Sprite(localHaloMaterial);
+      localHalo.name = `${target.id} · home-style pink nebula halo`;
+      localHalo.position.set(-0.08 * sizeRatio, 0.12 * sizeRatio, -2.62 * sizeRatio);
+      localHalo.scale.set(12 * sizeRatio, 12 * sizeRatio, 1);
+      target.group.add(localHalo);
+      revealMaterials.push({ material: localHaloMaterial, baseOpacity: 0.66, depthWrite: false });
+
+      const localGlowMaterial = addResource(glowMaterial.clone());
+      localGlowMaterial.opacity = 0;
+      const localGlow = new THREE.Sprite(localGlowMaterial);
+      localGlow.name = `${target.id} · home-style outer glow`;
+      localGlow.scale.set(13.2 * sizeRatio, 13.2 * sizeRatio, 1);
+      target.group.add(localGlow);
+      revealMaterials.push({ material: localGlowMaterial, baseOpacity: 0.84, depthWrite: false });
+
+      const localPinkLight = new THREE.PointLight(0xee86d0, 0, 22 * sizeRatio, 1.8);
+      const localVioletLight = new THREE.PointLight(0xb642c7, 0, 16 * sizeRatio, 1.7);
+      localPinkLight.name = `${target.id} · pink local key light`;
+      localVioletLight.name = `${target.id} · violet local fill light`;
+      localVioletLight.position.set(-5 * sizeRatio, 3 * sizeRatio, -3 * sizeRatio);
+      target.group.add(localPinkLight, localVioletLight);
+      target.group.userData.sharedJourneyLocalLights = [
+        { light: localPinkLight, intensity: 3, distance: 22 * sizeRatio },
+        { light: localVioletLight, intensity: 2, distance: 16 * sizeRatio },
+      ];
+    }
+  }
   // Keep the sphere, atmosphere, and glow balanced as one slightly smaller orb.
   core.position.copy(destinationAnchor);
   core.visible = !reviewSharedJourneyPrototypeEnabled;
@@ -736,8 +815,9 @@ function mountGalaxy(
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
+    uniforms: { uBandOpacity: { value: 1 } },
     vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-    fragmentShader: `varying vec2 vUv; void main(){ float radius=length(vUv-vec2(.5))*2.0; float edge=smoothstep(.48,.53,radius)*(1.0-smoothstep(.93,1.0,radius)); float grain=.5+.5*sin(radius*210.0); vec3 color=mix(vec3(.16,.025,.12),vec3(.42,.12,.3),grain); float alpha=edge*(.04+.035*grain); gl_FragColor=vec4(color,alpha); }`,
+    fragmentShader: `uniform float uBandOpacity; varying vec2 vUv; void main(){ float radius=length(vUv-vec2(.5))*2.0; float edge=smoothstep(.48,.53,radius)*(1.0-smoothstep(.93,1.0,radius)); float grain=.5+.5*sin(radius*210.0); vec3 color=mix(vec3(.16,.025,.12),vec3(.42,.12,.3),grain); float alpha=edge*(.04+.035*grain)*uBandOpacity; gl_FragColor=vec4(color,alpha); }`,
   }));
   const orbitBand = new THREE.Mesh(orbitBandGeometry, orbitBandMaterial);
   orbitBand.rotation.set(Math.PI / 2 + photoOrbitPlane.x, photoOrbitPlane.y, photoOrbitPlane.z);
@@ -828,9 +908,108 @@ function mountGalaxy(
     photoRaycastTargets.push(photos);
     frameMeshes.push(frames);
   }
+  const sharedJourneyPhotoStreams: SharedJourneyPhotoStream[] = [];
+  const sharedJourneyPhotoStreamBySpaceId = new Map<string, SharedJourneyPhotoStream>();
+  if (reviewSharedJourneyPrototypeEnabled) {
+    for (const target of sharedJourneyWorldTargets) {
+      const streamGroup = new THREE.Group();
+      streamGroup.name = `${target.label} · 1,200 fixed demo cards · seven rows`;
+      streamGroup.visible = false;
+      scene.add(streamGroup);
+
+      const bandMaterial = addResource(orbitBandMaterial.clone());
+      bandMaterial.uniforms.uBandOpacity.value = 0;
+      const band = new THREE.Mesh(orbitBandGeometry, bandMaterial);
+      band.rotation.set(Math.PI / 2 + photoOrbitPlane.x, photoOrbitPlane.y, photoOrbitPlane.z);
+      band.renderOrder = 1;
+      streamGroup.add(band);
+
+      const worldSeed = [...target.id].reduce((value, character) => Math.imul(value ^ character.charCodeAt(0), 0x01000193) >>> 0, 0x811c9dc5);
+      const worldRandom = seeded(worldSeed);
+      const localRecords: PhotoRecord[] = [];
+      for (let id = 0; id < MEMORY_COUNT; id += 1) {
+        const angle = id * Math.PI * (3 - Math.sqrt(5));
+        const radius = Math.sqrt(THREE.MathUtils.lerp(PHOTO_BAND_INNER_RADIUS ** 2, PHOTO_BAND_OUTER_RADIUS ** 2, (id + 0.5) / MEMORY_COUNT));
+        const row = Math.floor(worldRandom() * (PHOTO_STREAM_ROWS_ABOVE_BELOW * 2 + 1)) - PHOTO_STREAM_ROWS_ABOVE_BELOW;
+        localRecords.push({
+          id,
+          image: id % DEMO_IMAGES.length,
+          radius,
+          angle,
+          phase: worldRandom() * Math.PI * 2,
+          speed: 0.0095,
+          lift: row * PHOTO_STREAM_ROW_SPACING + (worldRandom() - 0.5) * 0.12,
+          row,
+          roll: (worldRandom() - 0.5) * 0.12,
+          scale: worldRandom() < 0.06 ? 1.45 + worldRandom() * 0.35 : 0.72 + worldRandom() * 0.58,
+        });
+      }
+      const recordsByImage = DEMO_IMAGES.map((_, image) => localRecords.filter(record => record.image === image));
+      const localPhotoMaterials: THREE.MeshBasicMaterial[] = [];
+      const localPhotoMeshes: THREE.InstancedMesh[] = [];
+      const localFrameMeshes: THREE.InstancedMesh[] = [];
+      const localFrameMaterial = addResource(frameMaterial.clone());
+      localFrameMaterial.transparent = true;
+      localFrameMaterial.opacity = 0;
+      addPhotoLightWave(localFrameMaterial);
+
+      for (let image = 0; image < DEMO_IMAGES.length; image += 1) {
+        const baseMaterial = photoMeshes[image]?.material as THREE.MeshBasicMaterial | undefined;
+        if (!baseMaterial) continue;
+        const localPhotoMaterial = addResource(baseMaterial.clone());
+        localPhotoMaterial.transparent = true;
+        localPhotoMaterial.opacity = 0;
+        addPhotoLightWave(localPhotoMaterial);
+        localPhotoMaterials.push(localPhotoMaterial);
+
+        const subset = recordsByImage[image];
+        const localPhotos = addResource(new THREE.InstancedMesh(photoGeometry, localPhotoMaterial, subset.length));
+        localPhotos.name = `${target.id} · demo photo cards ${image + 1}`;
+        localPhotos.userData.memoryIds = subset.map(record => record.id);
+        localPhotos.userData.sharedJourneyReveal = 0;
+        localPhotos.frustumCulled = false;
+        localPhotos.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        localPhotos.visible = false;
+        streamGroup.add(localPhotos);
+        localPhotoMeshes.push(localPhotos);
+        photoRaycastTargets.push(localPhotos);
+
+        const localFrames = addResource(new THREE.InstancedMesh(frameGeometry, localFrameMaterial, subset.length));
+        localFrames.name = `${target.id} · soft pink photo frames ${image + 1}`;
+        localFrames.frustumCulled = false;
+        localFrames.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        localFrames.visible = false;
+        streamGroup.add(localFrames);
+        localFrameMeshes.push(localFrames);
+      }
+
+      const stream: SharedJourneyPhotoStream = {
+        id: target.id,
+        world: target,
+        group: streamGroup,
+        band,
+        bandMaterial,
+        photoMaterials: localPhotoMaterials,
+        frameMaterial: localFrameMaterial,
+        photoMeshes: localPhotoMeshes,
+        frameMeshes: localFrameMeshes,
+        recordsByImage,
+        scale: target.radius / 2.5,
+      };
+      sharedJourneyPhotoStreams.push(stream);
+      const space = sharedJourneyLocalSpaces.find(candidate => candidate.destinationId === target.id);
+      if (space) sharedJourneyPhotoStreamBySpaceId.set(space.id, stream);
+    }
+  }
   sharedJourneyWorldOcclusionTargets.push(...photoRaycastTargets);
 
   canvas.dataset.photoInstanceCount = String(photoMeshes.reduce((count, mesh) => count + mesh.count, 0));
+  canvas.dataset.sharedJourneyLocalPhotoStreamCount = String(sharedJourneyPhotoStreams.length);
+  canvas.dataset.sharedJourneyLocalPhotoCardCount = String(sharedJourneyPhotoStreams.reduce((count, stream) => count + stream.recordsByImage.reduce((imageCount, records) => imageCount + records.length, 0), 0));
+  canvas.dataset.sharedJourneyLocalPhotoRows = String(PHOTO_STREAM_ROWS_ABOVE_BELOW * 2 + 1);
+  canvas.dataset.sharedJourneyLocalPhotoSource = reviewSharedJourneyPrototypeEnabled ? "fixed-demo-images-only" : "none";
+  canvas.dataset.sharedJourneyLocalStarsPerRegion = String(sharedJourneyLocalSpaces[0]?.starCount ?? 0);
+  canvas.dataset.sharedJourneyLocalStarPointCount = String(sharedJourneyLocalSpaces.reduce((count, space) => count + space.starCount, 0));
   canvas.dataset.backgroundStarCount = String(STAR_COUNT);
   canvas.dataset.shootingStarCount = String(SHOOTING_STAR_COUNT);
   canvas.dataset.threeRevision = THREE.REVISION;
@@ -1090,6 +1269,66 @@ function mountGalaxy(
       frames.instanceMatrix.needsUpdate = true;
     }
   };
+  const localStreamWorldQuaternion = new THREE.Quaternion();
+  const localStreamInverseQuaternion = new THREE.Quaternion();
+  const localStreamCardQuaternion = new THREE.Quaternion();
+  const localStreamCameraForward = new THREE.Vector3();
+  const updateSharedJourneyPhotoStreams = (time: number) => {
+    if (!reviewSharedJourneyPrototypeEnabled) return;
+    camera.getWorldDirection(cameraForward);
+    let activeId = "none";
+    let maxReveal = 0;
+    for (const stream of sharedJourneyPhotoStreams) {
+      const reveal = stream.group.userData.sharedJourneyReveal as number | undefined ?? 0;
+      if (reveal > maxReveal) {
+        maxReveal = reveal;
+        activeId = stream.id;
+      }
+      if (reveal <= 0.015) continue;
+      stream.group.updateMatrixWorld(true);
+      stream.group.getWorldQuaternion(localStreamWorldQuaternion);
+      localStreamInverseQuaternion.copy(localStreamWorldQuaternion).invert();
+      localStreamCardQuaternion.copy(localStreamInverseQuaternion).multiply(camera.quaternion);
+      localStreamCameraForward.copy(cameraForward).applyQuaternion(localStreamInverseQuaternion);
+      for (let image = 0; image < stream.recordsByImage.length; image += 1) {
+        const subset = stream.recordsByImage[image];
+        const photos = stream.photoMeshes[image];
+        const frames = stream.frameMeshes[image];
+        if (!photos || !frames) continue;
+        for (let index = 0; index < subset.length; index += 1) {
+          const record = subset[index];
+          const orbitAngle = record.angle + time * record.speed;
+          const drift = time * 0.22 + record.phase;
+          localPosition.set(
+            Math.cos(orbitAngle) * record.radius * photoStreamHorizontalScale,
+            record.lift + Math.sin(drift) * (record.row === 0 ? 0.1 : 0.06),
+            Math.sin(orbitAngle) * record.radius,
+          ).applyEuler(photoOrbitPlane);
+          worldPosition.copy(localPosition);
+          stream.group.localToWorld(worldPosition);
+          dummy.position.copy(localPosition);
+          dummy.quaternion.copy(localStreamCardQuaternion);
+          dummy.rotateZ(record.roll + Math.sin(drift) * 0.035);
+          dummy.rotateY(Math.sin(record.phase) * 0.22);
+          dummy.rotateX(Math.cos(record.phase) * 0.12);
+          const approachScale = THREE.MathUtils.smoothstep(worldPosition.distanceTo(camera.position), 0.3, 2.0);
+          const scale = record.scale * (1 + Math.sin(drift * 0.72) * 0.035) * approachScale;
+          dummy.scale.setScalar(scale);
+          dummy.updateMatrix();
+          photos.setMatrixAt(index, dummy.matrix);
+          framePosition.copy(localPosition).addScaledVector(localStreamCameraForward, 0.014 / Math.max(0.72, stream.scale));
+          dummy.position.copy(framePosition);
+          dummy.scale.setScalar(scale * 1.045);
+          dummy.updateMatrix();
+          frames.setMatrixAt(index, dummy.matrix);
+        }
+        photos.instanceMatrix.needsUpdate = true;
+        frames.instanceMatrix.needsUpdate = true;
+      }
+    }
+    canvas.dataset.sharedJourneyLocalPhotoActiveId = maxReveal > 0.015 ? activeId : "none";
+    canvas.dataset.sharedJourneyLocalPhotoActiveCardCount = maxReveal > 0.015 ? String(MEMORY_COUNT) : "0";
+  };
   const updateShootingStars = (time: number) => {
     const headPositions = shootingHeadGeometry.getAttribute("position") as THREE.BufferAttribute;
     let activeCount = 0;
@@ -1174,9 +1413,16 @@ function mountGalaxy(
       if (encountered) target.group.userData.sharedJourneyEncountered = true;
       const reveal = encountered ? Math.max(approach, 0.36) : approach;
       const scaleProgress = encountered ? Math.max(approach, 0.55) : approach;
-      const scale = THREE.MathUtils.lerp(0.72, 1.4, scaleProgress);
+      const passByScale = THREE.MathUtils.lerp(0.72, 1.4, scaleProgress);
+      const targetIsFocused = target.id === currentSharedJourneyWorldId || target.id === sharedJourneyWorldTravel?.target.id;
+      const focusStopDistance = Math.max(84, target.radius * 8.4);
+      const focusFadeDistance = focusStopDistance + 260;
+      const homeMatchProgress = targetIsFocused ? 1 - THREE.MathUtils.smoothstep(distance, focusStopDistance, focusFadeDistance) : 0;
+      const arrivalScale = 0.82 * 2.5 * distance / (target.radius * getZoomBounds().home);
+      const scale = THREE.MathUtils.lerp(passByScale, arrivalScale, homeMatchProgress);
       target.group.visible = reveal > 0.005;
       target.group.scale.setScalar(scale);
+      target.group.userData.sharedJourneyHomeMatchProgress = homeMatchProgress;
       target.group.userData.sharedJourneyReveal = reveal;
       target.surface.userData.sharedJourneyReveal = reveal;
       const materials = target.group.userData.sharedJourneyRevealMaterials as { material: THREE.Material; baseOpacity: number; depthWrite: boolean }[];
@@ -1185,6 +1431,11 @@ function mountGalaxy(
         entry.material.opacity = entry.baseOpacity * reveal;
         entry.material.depthWrite = entry.depthWrite && reveal > 0.985;
       }
+      const localLights = target.group.userData.sharedJourneyLocalLights as { light: THREE.PointLight; intensity: number; distance: number }[] | undefined;
+      for (const entry of localLights ?? []) {
+        entry.light.intensity = entry.intensity * reveal;
+        entry.light.distance = entry.distance * scale;
+      }
       if (target.group.visible) visibleCount += 1;
       scales.push(scale.toFixed(3));
       opacities.push(reveal.toFixed(3));
@@ -1192,17 +1443,18 @@ function mountGalaxy(
     canvas.dataset.sharedJourneyWorldVisibleCount = String(visibleCount);
     canvas.dataset.sharedJourneyWorldScales = scales.join(",");
     canvas.dataset.sharedJourneyWorldOpacities = opacities.join(",");
-    canvas.dataset.sharedJourneyWorldAppearance = "distance-fade-approach-scale-persistent-distant-worlds";
+    canvas.dataset.sharedJourneyWorldAppearance = "distance-fade-approach-scale-persistent-distant-worlds-selected-home-match";
   };
   const updateSharedJourneyLocalSpaces = () => {
     if (!reviewSharedJourneyPrototypeEnabled) return;
     let activeId = "none";
     let maxReveal = 0;
+    let focusedCardScale = "none";
     const reveals: string[] = [];
     for (const localSpace of sharedJourneyLocalSpaces) {
       localSpace.group.getWorldPosition(worldRevealPosition);
       const distance = camera.position.distanceTo(worldRevealPosition);
-      const fadeInDistance = localSpace.radiusLightYears * SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR * 0.8;
+      const fadeInDistance = localSpace.radiusLightYears * SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR * 1.2;
       const fadeOutDistance = localSpace.radiusLightYears * SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR * 4;
       const reveal = 1 - THREE.MathUtils.smoothstep(distance, fadeInDistance, fadeOutDistance);
       localSpace.group.visible = reveal > 0.004;
@@ -1210,6 +1462,35 @@ function mountGalaxy(
       for (const entry of materials) {
         entry.material.transparent = true;
         entry.material.opacity = entry.baseOpacity * reveal;
+      }
+      const localNebulaMaterial = localSpace.group.userData.sharedJourneyNebulaMaterial as THREE.ShaderMaterial | undefined;
+      if (localNebulaMaterial) localNebulaMaterial.uniforms.uLocalSpaceReveal.value = reveal;
+      const localStarMaterial = localSpace.group.userData.sharedJourneyLocalStarMaterial as THREE.ShaderMaterial | undefined;
+      if (localStarMaterial) {
+        localStarMaterial.uniforms.uTime.value = elapsedTime;
+        localStarMaterial.uniforms.uLocalReveal.value = reveal;
+      }
+      const photoStream = sharedJourneyPhotoStreamBySpaceId.get(localSpace.id);
+      if (photoStream) {
+        photoStream.world.group.getWorldPosition(worldPosition);
+        photoStream.group.position.copy(worldPosition);
+        const homeMatchProgress = Number(photoStream.world.group.userData.sharedJourneyHomeMatchProgress ?? 0);
+        const cardScaleCompensation = THREE.MathUtils.lerp(1, 1 / 0.82, homeMatchProgress);
+        const worldScale = photoStream.scale * photoStream.world.group.scale.x * cardScaleCompensation;
+        photoStream.group.scale.setScalar(worldScale);
+        photoStream.band.scale.x = photoStreamHorizontalScale;
+        const focusedWorldId = sharedJourneyWorldTravel?.target.id ?? currentSharedJourneyWorldId;
+        if (photoStream.id === focusedWorldId) focusedCardScale = worldScale.toFixed(3);
+        photoStream.group.rotation.set(Math.sin(elapsedTime * 0.049) * 0.055, elapsedTime * 0.018, 0);
+        photoStream.group.userData.sharedJourneyReveal = reveal;
+        photoStream.bandMaterial.uniforms.uBandOpacity.value = reveal;
+        photoStream.frameMaterial.opacity = 0.48 * reveal;
+        for (const material of photoStream.photoMaterials) material.opacity = reveal;
+        for (const mesh of [...photoStream.photoMeshes, ...photoStream.frameMeshes]) {
+          mesh.visible = reveal > 0.015;
+          mesh.userData.sharedJourneyReveal = reveal;
+        }
+        photoStream.group.visible = reveal > 0.015;
       }
       if (reveal > maxReveal) {
         maxReveal = reveal;
@@ -1220,6 +1501,7 @@ function mountGalaxy(
     canvas.dataset.sharedJourneyLocalSpaceActiveId = maxReveal > 0.004 ? activeId : "none";
     canvas.dataset.sharedJourneyLocalSpaceReveal = maxReveal.toFixed(3);
     canvas.dataset.sharedJourneyLocalSpaceRevealValues = reveals.join(",");
+    canvas.dataset.sharedJourneyFocusedCardScale = focusedCardScale;
     canvas.dataset.sharedJourneyLocalSpaceAppearance = "independent-100-light-year-3d-destination-regions";
   };
   const updateSharedWorldTooltip = () => {
@@ -1266,7 +1548,7 @@ function mountGalaxy(
       worldVisibilityRaycaster.far = candidate.distance + candidate.target.radius * candidate.target.group.scale.x;
       const firstVisibleSurface = worldVisibilityRaycaster.intersectObjects(sharedJourneyWorldOcclusionTargets, false).find(hit => {
         const reveal = hit.object.userData.sharedJourneyReveal;
-        return typeof reveal !== "number" || reveal >= 0.24;
+        return hit.object.visible && (typeof reveal !== "number" || reveal >= 0.24);
       });
       if (firstVisibleSurface?.object !== candidate.target.surface) continue;
       nearestTarget = candidate.target;
@@ -1312,6 +1594,7 @@ function mountGalaxy(
     updateSharedJourneyLocalSpaces();
     updatePreviewDrag(delta);
     updatePhotos(time);
+    updateSharedJourneyPhotoStreams(time);
     updateSharedWorldTooltip();
     photoWaveTime.value = time;
     photoWaveSpan.value = PHOTO_BAND_OUTER_RADIUS * photoStreamHorizontalScale + 1.6;
@@ -1702,9 +1985,11 @@ export default function LoveGalaxyExperience({ story, onBack }: LoveGalaxyExperi
   const reviewMotionPrototypeEnabled = import.meta.env.VITE_LOVE_GALAXY_REVIEW_MOTION === "true"
     && typeof window !== "undefined"
     && new URLSearchParams(window.location.search).get("review") === "motion";
-  const images = story?.photos?.length === 4 ? story.photos : DEMO_IMAGES;
-  const ringPhrases: readonly [string, string] = [story?.ringTextOne?.trim() || DEFAULT_RING_TEXT_ONE, story?.ringTextTwo?.trim() || DEFAULT_RING_TEXT_TWO];
-  const musicSource = story?.musicSrc || backgroundMusic;
+  const images = reviewSharedJourneyPrototypeEnabled ? DEMO_IMAGES : story?.photos?.length === 4 ? story.photos : DEMO_IMAGES;
+  const ringPhrases: readonly [string, string] = reviewSharedJourneyPrototypeEnabled
+    ? [DEFAULT_RING_TEXT_ONE, DEFAULT_RING_TEXT_TWO]
+    : [story?.ringTextOne?.trim() || DEFAULT_RING_TEXT_ONE, story?.ringTextTwo?.trim() || DEFAULT_RING_TEXT_TWO];
+  const musicSource = reviewSharedJourneyPrototypeEnabled ? backgroundMusic : story?.musicSrc || backgroundMusic;
   const memories = images === DEMO_IMAGES ? MEMORIES : Array.from({ length: MEMORY_COUNT }, (_, id) => ({ id, ...images[id % images.length] }));
 
   const readMusicLevel = useCallback(() => {
