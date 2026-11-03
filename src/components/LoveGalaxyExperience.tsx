@@ -309,10 +309,11 @@ function mountGalaxy(
   else visitSeedBuffer[0] = Math.floor(Math.random() * 0xffffffff);
   const reviewLayout = reviewSharedJourneyPrototypeEnabled ? createSharedJourneyLayout(reviewSampleId, visitSeedBuffer[0]) : null;
   const destinationAnchor = new THREE.Vector3(reviewLayout?.destination[0] ?? 0, reviewLayout?.destination[1] ?? 0, reviewLayout?.destination[2] ?? 0);
+  const sharedJourneyClearColor = reviewSharedJourneyPrototypeEnabled ? "#080614" : "#03040a";
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color("#03040a");
+  scene.background = new THREE.Color(sharedJourneyClearColor);
   const camera = new THREE.PerspectiveCamera(47, 1, 0.08, 170);
-  if (reviewSharedJourneyPrototypeEnabled) camera.far = 6200;
+  if (reviewSharedJourneyPrototypeEnabled) camera.far = 7200;
   camera.position.set(destinationAnchor.x, destinationAnchor.y, destinationAnchor.z + (reviewSharedJourneyPrototypeEnabled ? SHARED_JOURNEY_START_DISTANCE : 20));
   camera.lookAt(destinationAnchor);
   camera.updateProjectionMatrix();
@@ -328,7 +329,7 @@ function mountGalaxy(
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.22;
   renderer.autoClear = true; // Every frame is fresh: no photo afterimages or accumulation.
-  renderer.setClearColor("#03040a", 1);
+  renderer.setClearColor(sharedJourneyClearColor, 1);
   const gl = renderer.getContext();
   const debugRendererInfo = gl.getExtension("WEBGL_debug_renderer_info");
   const rendererName = debugRendererInfo ? String(gl.getParameter(debugRendererInfo.UNMASKED_RENDERER_WEBGL)) : "";
@@ -346,6 +347,7 @@ function mountGalaxy(
   canvas.dataset.dragRipplePrototype = reviewMotionPrototypeEnabled ? "enabled" : "disabled";
   canvas.dataset.passingStarPrototype = reviewMotionPrototypeEnabled ? "enabled" : "disabled";
   canvas.dataset.sharedJourneyReview = reviewSharedJourneyPrototypeEnabled ? "enabled" : "disabled";
+  canvas.dataset.sharedJourneyBackgroundFill = reviewSharedJourneyPrototypeEnabled ? "deep-indigo-3d-nebula" : "none";
   canvas.dataset.sharedJourneySource = reviewSharedJourneyPrototypeEnabled ? "fictional-review-test-only" : "none";
   canvas.dataset.sharedJourneySampleId = reviewLayout?.sampleId ?? "none";
   canvas.dataset.sharedJourneyDestinationId = reviewLayout ? `placeholder-${reviewLayout.sampleId}` : "none";
@@ -391,6 +393,7 @@ function mountGalaxy(
   canvas.dataset.sharedJourneyWorldCount = String(sharedJourneyEnvironment?.worldCount ?? 0);
   canvas.dataset.sharedJourneyGalaxyCount = String(sharedJourneyEnvironment?.galaxyCount ?? 0);
   canvas.dataset.sharedJourneyGalaxyPointCount = String(sharedJourneyEnvironment?.galaxyPointCount ?? 0);
+  canvas.dataset.sharedJourneyNebulaPointCount = String(sharedJourneyEnvironment?.nebulaPointCount ?? 0);
   canvas.dataset.sharedJourneyStarCount = String(sharedJourneyEnvironment?.starCount ?? 0);
   canvas.dataset.sharedJourneyDuration = String(reviewSharedJourneyPrototypeEnabled ? SHARED_JOURNEY_DURATION_SECONDS : 0);
   const previewStarPass = { value: 0 };
@@ -402,10 +405,10 @@ function mountGalaxy(
   const nebulaMaterial = new THREE.ShaderMaterial({
     side: THREE.BackSide,
     depthWrite: false,
-    uniforms: { uTime: { value: 0 }, uMusic: { value: 0 }, uPassingStar: previewStarPass },
+    uniforms: { uTime: { value: 0 }, uMusic: { value: 0 }, uPassingStar: previewStarPass, uSharedJourney: { value: reviewSharedJourneyPrototypeEnabled ? 1 : 0 } },
     vertexShader: `varying vec3 vPosition; varying vec2 vUv; void main(){ vPosition=position; vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
     fragmentShader: `
-      varying vec3 vPosition; varying vec2 vUv; uniform float uTime; uniform float uMusic; uniform float uPassingStar;
+      varying vec3 vPosition; varying vec2 vUv; uniform float uTime; uniform float uMusic; uniform float uPassingStar; uniform float uSharedJourney;
       float cloud(vec2 p, vec2 c, vec2 s){ vec2 q=(p-c)/s; return exp(-dot(q,q)*1.7); }
       void main(){
       vec2 p=vUv;
@@ -416,15 +419,19 @@ function mountGalaxy(
       float c=cloud(q,vec2(.53,.78),vec2(.27,.13));
       float d=cloud(q,vec2(.08,.36),vec2(.22,.15));
       float e=cloud(q,vec2(.91,.73),vec2(.23,.16));
+      float f=cloud(q,vec2(.43,.27),vec2(.34,.18));
+      float g=cloud(q,vec2(.33,.91),vec2(.31,.17));
       float w=.5+.5*sin(vPosition.x*.09+vPosition.y*.04+uTime*.035);
-      float neb=clamp(a*.55+b*.48+c*.44+d*.42+e*.36,0.,1.0);
+      float reviewFill=clamp(f*.2+g*.17,0.,.32)*uSharedJourney;
+      float neb=clamp(a*.55+b*.48+c*.44+d*.42+e*.36+reviewFill,0.,1.0);
       float filament=.5+.5*sin(p.x*44.0+p.y*27.0+sin(p.y*61.0+uTime*.02));
       float musicGlow=1.0+uMusic*.16;
-      vec3 color=vec3(.008,.006,.022);
+      vec3 color=vec3(.008,.006,.022)+vec3(.007,.004,.016)*uSharedJourney;
       color=mix(color,vec3(.19,.045,.23),neb*.90*musicGlow);
       color=mix(color,vec3(.30,.07,.32),b*.36*w*(1.0+uMusic*.10));
       color+=vec3(.16,.04,.24)*neb*smoothstep(.38,.88,filament)*.58*(1.0+uMusic*.12);
       color+=vec3(.17,.035,.17)*a*.42;
+      color+=vec3(.12,.035,.2)*reviewFill;
       vec3 passingStarTint=color*vec3(.62,.78,1.08)+vec3(.012,.018,.052);
       color=mix(color,passingStarTint,uPassingStar*.78);
       color*=1.0-uPassingStar*.28;
@@ -836,6 +843,7 @@ function mountGalaxy(
   const journeyLookDirection = new THREE.Vector3();
   const journeyLookTarget = new THREE.Vector3();
   const projectedWorldPoint = new THREE.Vector3();
+  const worldRevealPosition = new THREE.Vector3();
   const worldViewDirection = new THREE.Vector3();
   let previewDragActive = false;
   let finalViewStartedAt: number | null = null;
@@ -1144,6 +1152,40 @@ function mountGalaxy(
     glowMaterial.opacity = 0.84 * (1 - intensity * 0.32);
     atmosphereMaterial.opacity = 0.19 * (1 - intensity * 0.22);
   };
+  const updateSharedJourneyWorldAppearance = () => {
+    if (!reviewSharedJourneyPrototypeEnabled) return;
+    let visibleCount = 0;
+    const scales: string[] = [];
+    const opacities: string[] = [];
+    for (const target of sharedJourneyWorldTargets) {
+      target.group.updateWorldMatrix(true, false);
+      target.group.getWorldPosition(worldRevealPosition);
+      const distance = camera.position.distanceTo(worldRevealPosition);
+      const approach = 1 - THREE.MathUtils.smoothstep(distance, 400, 980);
+      const encountered = Boolean(target.group.userData.sharedJourneyEncountered) || distance <= 400 || reviewJourneyArrived;
+      if (encountered) target.group.userData.sharedJourneyEncountered = true;
+      const reveal = encountered ? Math.max(approach, 0.36) : approach;
+      const scaleProgress = encountered ? Math.max(approach, 0.55) : approach;
+      const scale = THREE.MathUtils.lerp(0.72, 1.4, scaleProgress);
+      target.group.visible = reveal > 0.005;
+      target.group.scale.setScalar(scale);
+      target.group.userData.sharedJourneyReveal = reveal;
+      target.surface.userData.sharedJourneyReveal = reveal;
+      const materials = target.group.userData.sharedJourneyRevealMaterials as { material: THREE.Material; baseOpacity: number; depthWrite: boolean }[];
+      for (const entry of materials) {
+        entry.material.transparent = true;
+        entry.material.opacity = entry.baseOpacity * reveal;
+        entry.material.depthWrite = entry.depthWrite && reveal > 0.985;
+      }
+      if (target.group.visible) visibleCount += 1;
+      scales.push(scale.toFixed(3));
+      opacities.push(reveal.toFixed(3));
+    }
+    canvas.dataset.sharedJourneyWorldVisibleCount = String(visibleCount);
+    canvas.dataset.sharedJourneyWorldScales = scales.join(",");
+    canvas.dataset.sharedJourneyWorldOpacities = opacities.join(",");
+    canvas.dataset.sharedJourneyWorldAppearance = "distance-fade-approach-scale-persistent-distant-worlds";
+  };
   const updateSharedWorldTooltip = () => {
     const tooltip = worldTooltipElement;
     if (!tooltip) return;
@@ -1157,11 +1199,12 @@ function mountGalaxy(
     const candidates: { target: SharedJourneyWorldTarget; distance: number; score: number; x: number; y: number; direction: THREE.Vector3 }[] = [];
     for (const target of sharedJourneyWorldTargets) {
       if (target.id === currentSharedJourneyWorldId) continue;
+      if ((target.group.userData.sharedJourneyReveal as number | undefined ?? 0) < 0.24) continue;
       target.group.updateWorldMatrix(true, false);
       target.group.getWorldPosition(projectedWorldPoint);
       const distance = camera.position.distanceTo(projectedWorldPoint);
       if (distance <= 0) continue;
-      const projectedRadius = target.radius * focalLength / distance;
+      const projectedRadius = target.radius * target.group.scale.x * focalLength / distance;
       if (projectedRadius < 2) continue;
       worldViewDirection.subVectors(projectedWorldPoint, camera.position).normalize();
       if (worldViewDirection.dot(cameraForward) <= 0) continue;
@@ -1184,8 +1227,11 @@ function mountGalaxy(
     for (const candidate of candidates.slice(0, 8)) {
       worldVisibilityRaycaster.set(camera.position, candidate.direction);
       worldVisibilityRaycaster.near = 0;
-      worldVisibilityRaycaster.far = candidate.distance + candidate.target.radius;
-      const firstVisibleSurface = worldVisibilityRaycaster.intersectObjects(sharedJourneyWorldOcclusionTargets, false)[0];
+      worldVisibilityRaycaster.far = candidate.distance + candidate.target.radius * candidate.target.group.scale.x;
+      const firstVisibleSurface = worldVisibilityRaycaster.intersectObjects(sharedJourneyWorldOcclusionTargets, false).find(hit => {
+        const reveal = hit.object.userData.sharedJourneyReveal;
+        return typeof reveal !== "number" || reveal >= 0.24;
+      });
       if (firstVisibleSurface?.object !== candidate.target.surface) continue;
       nearestTarget = candidate.target;
       nearestX = candidate.x;
@@ -1226,6 +1272,7 @@ function mountGalaxy(
     lastFrame = timestamp;
     const updateStarted = performance.now();
     updateCamera(cameraDelta);
+    updateSharedJourneyWorldAppearance();
     updatePreviewDrag(delta);
     updatePhotos(time);
     updateSharedWorldTooltip();
@@ -1309,7 +1356,7 @@ function mountGalaxy(
     if (!target) return;
     target.group.updateWorldMatrix(true, false);
     const targetPosition = target.group.getWorldPosition(new THREE.Vector3());
-    startTravelToTarget(target, targetPosition, Math.max(56, target.radius * 5.2));
+    startTravelToTarget(target, targetPosition, Math.max(84, target.radius * 8.4));
   };
   const returnToHome = () => {
     if (!reviewSharedJourneyPrototypeEnabled || !reviewJourneyArrived || sharedJourneyWorldTravel || !currentSharedJourneyWorldId) return;

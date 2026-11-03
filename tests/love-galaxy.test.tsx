@@ -266,6 +266,9 @@ describe("standalone Love Galaxy experience", () => {
     expect(source).toContain('canvas.dataset.sharedJourneyDestinationVisible = reviewDestinationReveal > 0.95 ? "true" : "false"');
     expect(source).toContain('canvas.dataset.sharedJourneyWorldDepths = reviewLayout?.worlds.map(world => world.position[2].toFixed(2)).join(",") ?? "none"');
     expect(source).toContain('canvas.dataset.sharedJourneyWorldLabels = JSON.stringify(reviewLayout?.worlds.map(world => world.label) ?? [])');
+    expect(source).toContain('canvas.dataset.sharedJourneyWorldAppearance = "distance-fade-approach-scale-persistent-distant-worlds"');
+    expect(source).toContain('const sharedJourneyClearColor = reviewSharedJourneyPrototypeEnabled ? "#080614" : "#03040a"');
+    expect(source).toContain('camera.far = 7200');
     expect(source).toContain('canvas.dataset.cameraLookMode = journeyLookActive && cinematicProgress < 0.95 ? "free-look" : "path"');
     expect(source).toContain('if (reviewSharedJourneyPrototypeEnabled && journeyStarted && cinematicProgress < 1)');
     expect(source).toContain('THREE.MathUtils.smoothstep(cinematicProgress, 0.90, 1)');
@@ -288,12 +291,16 @@ describe("standalone Love Galaxy experience", () => {
     expect(source).toContain('sharedJourneyWorldTargets.find(world => world.id === worldId)');
     expect(source).toContain('raycaster.intersectObjects(sharedJourneyWorldRaycastTargets, false)[0]');
     expect(source).toContain('startTravelToTarget(placeholderTravelTarget, destinationAnchor.clone(), getZoomBounds().home)');
+    expect(source).toContain('startTravelToTarget(target, targetPosition, Math.max(84, target.radius * 8.4))');
     expect(source).toContain('currentSharedJourneyWorldId = travel.target.id === placeholderTravelTarget.id ? null : travel.target.id');
     expect(source).toContain('sharedJourneyWorldStatus.label.startsWith("TEST WORLD ")');
     expect(source).toContain('aria-label="Return to my planet"');
     expect(source).toContain('className="lg-return-home-button"');
     expect(source).toContain('returnToHome: () => void');
     expect(css).toContain(".lg-return-home-button");
+    expect(helper).toContain("const radiusFromRoute = 40 + random() * 300");
+    expect(helper).toContain("const hazeCount = 320");
+    expect(helper).toContain("volumetric colored nebula dust");
     expect(helper).toContain('worldTargets.push({ id: spec.id, label: spec.label, group: world, surface, radius: spec.radius })');
     expect(helper).toContain('surface.userData.sharedJourneyWorldId = spec.id');
   });
@@ -319,7 +326,7 @@ describe("standalone Love Galaxy experience", () => {
     expect(azimuthSectors.size).toBe(4);
     expect(firstVisit.galaxies.every(galaxy => galaxy.position.every(Number.isFinite) && galaxy.radius >= 9)).toBe(true);
     const depths = firstVisit.worlds.map(world => world.position[2]).sort((a, b) => b - a);
-    expect(SHARED_JOURNEY_START_DISTANCE).toBe(5600);
+    expect(SHARED_JOURNEY_START_DISTANCE).toBe(6400);
     expect(Math.min(...depths)).toBeGreaterThan(1020);
     for (let index = 1; index < depths.length; index++) expect(depths[index - 1] - depths[index]).toBeGreaterThan(200);
     for (let left = 0; left < firstVisit.worlds.length; left++) {

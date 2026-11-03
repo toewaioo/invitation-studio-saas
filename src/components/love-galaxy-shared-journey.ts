@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 export const SHARED_JOURNEY_DURATION_SECONDS = 14;
-export const SHARED_JOURNEY_START_DISTANCE = 5600;
+export const SHARED_JOURNEY_START_DISTANCE = 6400;
 export const SHARED_JOURNEY_WORLD_COUNT = 20;
 
 export type SharedJourneySampleId = "demo-share-1" | "demo-share-2" | "demo-share-3";
@@ -269,29 +269,30 @@ export function addSharedJourneyEnvironment(
   environment.name = "Fictional review-test shared-world environment";
   environment.position.copy(destination);
   scene.add(environment);
-  scene.add(new THREE.AmbientLight(0x8094bd, 0.54));
+  scene.add(new THREE.AmbientLight(0x889bc9, 0.68));
   const sun = new THREE.DirectionalLight(0xf2dfff, 1.55);
   sun.position.set(destination.x - 80, destination.y + 110, destination.z + 210);
   scene.add(sun);
 
   const starRandom = seeded(layout.visitSeed ^ 0x68bc21eb);
-  const starCount = 3600;
+  const starCount = 10000;
   const starPositions = new Float32Array(starCount * 3);
   const starColors = new Float32Array(starCount * 3);
   for (let index = 0; index < starCount; index += 1) {
-    starPositions.set([(starRandom() - 0.5) * 340, (starRandom() - 0.5) * 240, 12 + starRandom() * 5600], index * 3);
+    starPositions.set([(starRandom() - 0.5) * 480, (starRandom() - 0.5) * 340, 12 + starRandom() * 6600], index * 3);
     const tint = starRandom();
-    starColors.set(tint > 0.86 ? [0.68, 0.82, 1] : tint > 0.66 ? [1, 0.62, 0.84] : [0.9, 0.92, 1], index * 3);
+    starColors.set(tint > 0.91 ? [0.55, 0.7, 1] : tint > 0.78 ? [0.88, 0.55, 1] : tint > 0.64 ? [1, 0.55, 0.82] : [0.92, 0.94, 1], index * 3);
   }
   const starGeometry = register(new THREE.BufferGeometry());
   starGeometry.setAttribute("position", new THREE.BufferAttribute(starPositions, 3));
   starGeometry.setAttribute("color", new THREE.BufferAttribute(starColors, 3));
-  const starMaterial = register(new THREE.PointsMaterial({ size: 1.25, vertexColors: true, transparent: true, opacity: 0.88, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+  const starMaterial = register(new THREE.PointsMaterial({ size: 1.4, vertexColors: true, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
   const stars = new THREE.Points(starGeometry, starMaterial);
   stars.name = "Fictional review-test corridor stars";
   environment.add(stars);
 
   let galaxyPointCount = 0;
+  let nebulaPointCount = 0;
   layout.galaxies.forEach((spec, galaxyIndex) => {
     const random = seeded(layout.visitSeed ^ hashString(spec.id));
     const group = new THREE.Group();
@@ -321,6 +322,47 @@ export function addSharedJourneyEnvironment(
     const points = new THREE.Points(geometry, material);
     points.frustumCulled = false;
     group.add(points);
+    const hazeCount = 320;
+    nebulaPointCount += hazeCount;
+    const hazePositions = new Float32Array(hazeCount * 3);
+    const hazeColors = new Float32Array(hazeCount * 3);
+    const hazeSizes = new Float32Array(hazeCount);
+    const hazeAlpha = new Float32Array(hazeCount);
+    const coolTint = new THREE.Color(galaxyIndex % 2 ? 0x8878ff : 0x62d9ee);
+    for (let index = 0; index < hazeCount; index += 1) {
+      const angle = random() * Math.PI * 2;
+      const spread = Math.sqrt(random()) * Math.min(68, spec.radius * 3.2);
+      const vertical = (random() - 0.5) * spec.radius * 3.4;
+      const depth = (random() - 0.5) * spec.radius * 7.2;
+      hazePositions.set([
+        Math.cos(angle) * spread,
+        Math.sin(angle) * spread * 0.52 + vertical,
+        Math.sin(angle) * spread * 0.68 + depth,
+      ], index * 3);
+      const hue = tint.clone().lerp(coolTint, random() * 0.46);
+      const brightness = 0.38 + random() * 0.4;
+      hazeColors.set([hue.r * brightness, hue.g * brightness, hue.b * brightness], index * 3);
+      hazeSizes[index] = 0.55 + random() * 0.95;
+      hazeAlpha[index] = 0.12 + random() * 0.15;
+    }
+    const hazeGeometry = register(new THREE.BufferGeometry());
+    hazeGeometry.setAttribute("position", new THREE.BufferAttribute(hazePositions, 3));
+    hazeGeometry.setAttribute("color", new THREE.BufferAttribute(hazeColors, 3));
+    hazeGeometry.setAttribute("aSize", new THREE.BufferAttribute(hazeSizes, 1));
+    hazeGeometry.setAttribute("aAlpha", new THREE.BufferAttribute(hazeAlpha, 1));
+    const hazeMaterial = register(new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      vertexColors: true,
+      toneMapped: false,
+      vertexShader: `attribute float aSize; attribute float aAlpha; varying vec3 vHazeColor; varying float vHazeAlpha; void main(){ vec4 view=modelViewMatrix*vec4(position,1.0); vHazeColor=color; vHazeAlpha=aAlpha; gl_PointSize=clamp(aSize*(920.0/max(1.0,-view.z)),1.0,18.0); gl_Position=projectionMatrix*view; }`,
+      fragmentShader: `varying vec3 vHazeColor; varying float vHazeAlpha; void main(){ vec2 p=gl_PointCoord-vec2(.5); float r=length(p); float soft=exp(-r*r*17.0); float core=1.0-smoothstep(.05,.42,r); gl_FragColor=vec4(vHazeColor,(soft*.72+core*.12)*vHazeAlpha); }`,
+    }));
+    const haze = new THREE.Points(hazeGeometry, hazeMaterial);
+    haze.name = `${spec.id} · volumetric colored nebula dust`;
+    haze.frustumCulled = false;
+    group.add(haze);
     const core = new THREE.Mesh(
       register(new THREE.SphereGeometry(0.8 + random() * 0.45, 14, 12)),
       register(new THREE.MeshBasicMaterial({ color: spec.color, transparent: true, opacity: 0.72, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false })),
@@ -333,33 +375,39 @@ export function addSharedJourneyEnvironment(
     const world = new THREE.Group();
     world.name = spec.label;
     world.position.set(spec.position[0], spec.position[1], spec.position[2]);
+    world.visible = false;
     world.userData.sharedJourneyWorldId = spec.id;
     world.userData.sharedJourneyWorldLabel = spec.label;
+    world.userData.sharedJourneyEncountered = false;
+    world.userData.sharedJourneyRevealMaterials = [] as { material: THREE.Material; baseOpacity: number; depthWrite: boolean }[];
     environment.add(world);
     const texture = makePlanetTexture(spec, register);
+    const surfaceMaterial = register(new THREE.MeshStandardMaterial({ map: texture, color: 0xffffff, roughness: 0.84, metalness: 0.035, emissive: spec.color, emissiveIntensity: 0.055, transparent: true, depthWrite: true }));
+    world.userData.sharedJourneyRevealMaterials.push({ material: surfaceMaterial, baseOpacity: 1, depthWrite: true });
     const surface = new THREE.Mesh(
       register(new THREE.SphereGeometry(spec.radius, 40, 32)),
-      register(new THREE.MeshStandardMaterial({ map: texture, color: 0xffffff, roughness: 0.84, metalness: 0.035, emissive: spec.color, emissiveIntensity: 0.055 })),
+      surfaceMaterial,
     );
     surface.name = `${spec.label} · OPAQUE 3D TEST PLANET`;
     surface.userData.sharedJourneyWorldId = spec.id;
     surface.userData.sharedJourneyWorldLabel = spec.label;
     world.add(surface);
     worldTargets.push({ id: spec.id, label: spec.label, group: world, surface, radius: spec.radius });
-    const atmosphere = new THREE.Mesh(
-      register(new THREE.SphereGeometry(spec.radius * 1.07, 28, 20)),
-      register(new THREE.MeshBasicMaterial({ color: spec.color, side: THREE.BackSide, transparent: true, opacity: 0.12, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false })),
-    );
+    const atmosphereMaterial = register(new THREE.MeshBasicMaterial({ color: spec.color, side: THREE.BackSide, transparent: true, opacity: 0.12, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+    world.userData.sharedJourneyRevealMaterials.push({ material: atmosphereMaterial, baseOpacity: 0.12, depthWrite: false });
+    const atmosphere = new THREE.Mesh(register(new THREE.SphereGeometry(spec.radius * 1.07, 28, 20)), atmosphereMaterial);
     world.add(atmosphere);
     if (spec.ringed) {
+      const ringMaterial = register(new THREE.MeshStandardMaterial({ color: spec.accentColor, roughness: 0.62, metalness: 0.18, side: THREE.DoubleSide, transparent: true, opacity: 1, depthWrite: false }));
+      world.userData.sharedJourneyRevealMaterials.push({ material: ringMaterial, baseOpacity: 1, depthWrite: false });
       const ring = new THREE.Mesh(
         register(new THREE.TorusGeometry(spec.radius * 1.42, 0.16, 8, 56)),
-        register(new THREE.MeshStandardMaterial({ color: spec.accentColor, roughness: 0.62, metalness: 0.18, side: THREE.DoubleSide })),
+        ringMaterial,
       );
       ring.rotation.set(0.92, 0.18, -0.24);
       world.add(ring);
     }
   });
 
-  return { environment, starCount, galaxyCount: layout.galaxies.length, galaxyPointCount, worldCount: layout.worlds.length, worldTargets };
+  return { environment, starCount, galaxyCount: layout.galaxies.length, galaxyPointCount, nebulaPointCount, worldCount: layout.worlds.length, worldTargets };
 }
