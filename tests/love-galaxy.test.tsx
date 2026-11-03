@@ -12,7 +12,7 @@ import LoveGalaxyExperience, {
   fitRingWordsAroundCrossing,
   galaxyCameraPhase,
 } from "../src/components/LoveGalaxyExperience";
-import { createSharedJourneyLayout, normalizeSharedJourneySampleId, SHARED_JOURNEY_START_DISTANCE, SHARED_JOURNEY_WORLD_COUNT } from "../src/components/love-galaxy-shared-journey";
+import { createSharedJourneyLayout, createSharedJourneyLocalSpaceSpecs, normalizeSharedJourneySampleId, SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS, SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR, SHARED_JOURNEY_START_DISTANCE, SHARED_JOURNEY_WORLD_COUNT } from "../src/components/love-galaxy-shared-journey";
 import Showcase from "../src/components/Showcase";
 
 const originalLocation = Object.getOwnPropertyDescriptor(globalThis, "location");
@@ -267,6 +267,11 @@ describe("standalone Love Galaxy experience", () => {
     expect(source).toContain('canvas.dataset.sharedJourneyWorldDepths = reviewLayout?.worlds.map(world => world.position[2].toFixed(2)).join(",") ?? "none"');
     expect(source).toContain('canvas.dataset.sharedJourneyWorldLabels = JSON.stringify(reviewLayout?.worlds.map(world => world.label) ?? [])');
     expect(source).toContain('canvas.dataset.sharedJourneyWorldAppearance = "distance-fade-approach-scale-persistent-distant-worlds"');
+    expect(source).toContain('canvas.dataset.sharedJourneyLocalSpaceCount = String(sharedJourneyEnvironment?.localSpaceCount ?? 0)');
+    expect(source).toContain('canvas.dataset.sharedJourneyLocalSpaceAppearance = "independent-100-light-year-3d-destination-regions"');
+    expect(source).toContain('LOCAL SPACE · {SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS} LY RADIUS');
+    expect(source).toContain('const updateSharedJourneyLocalSpaces = () =>');
+    expect(source).toContain('updateSharedJourneyLocalSpaces();');
     expect(source).toContain('const sharedJourneyClearColor = reviewSharedJourneyPrototypeEnabled ? "#080614" : "#03040a"');
     expect(source).toContain('camera.far = 7200');
     expect(source).toContain('canvas.dataset.cameraLookMode = journeyLookActive && cinematicProgress < 0.95 ? "free-look" : "path"');
@@ -299,6 +304,10 @@ describe("standalone Love Galaxy experience", () => {
     expect(source).toContain('returnToHome: () => void');
     expect(css).toContain(".lg-return-home-button");
     expect(helper).toContain("const radiusFromRoute = 40 + random() * 300");
+    expect(helper).toContain("export const SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS = 100");
+    expect(helper).toContain("export const SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR = 1");
+    expect(helper).toContain("const localStarsPerSpace = 480");
+    expect(helper).toContain("const localGalaxiesPerSpace = 2");
     expect(helper).toContain("const hazeCount = 320");
     expect(helper).toContain("volumetric colored nebula dust");
     expect(helper).toContain('worldTargets.push({ id: spec.id, label: spec.label, group: world, surface, radius: spec.radius })');
@@ -325,6 +334,13 @@ describe("standalone Love Galaxy experience", () => {
     const azimuthSectors = new Set(firstVisit.worlds.map(world => Math.floor(((Math.atan2(world.position[1], world.position[0]) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI / 2))));
     expect(azimuthSectors.size).toBe(4);
     expect(firstVisit.galaxies.every(galaxy => galaxy.position.every(Number.isFinite) && galaxy.radius >= 9)).toBe(true);
+    const localSpaces = createSharedJourneyLocalSpaceSpecs(firstVisit);
+    expect(localSpaces).toHaveLength(SHARED_JOURNEY_WORLD_COUNT + 1);
+    expect(localSpaces.every(space => space.radiusLightYears === SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS)).toBe(true);
+    expect(SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR).toBe(1);
+    expect(new Set(localSpaces.map(space => space.id)).size).toBe(21);
+    expect(localSpaces[0]).toMatchObject({ destinationId: `placeholder-${firstVisit.sampleId}`, label: "YOUR HOME", center: [0, 0, 0] });
+    expect(localSpaces.slice(1).map(space => space.center)).toEqual(firstVisit.worlds.map(world => world.position));
     const depths = firstVisit.worlds.map(world => world.position[2]).sort((a, b) => b - a);
     expect(SHARED_JOURNEY_START_DISTANCE).toBe(6400);
     expect(Math.min(...depths)).toBeGreaterThan(1020);

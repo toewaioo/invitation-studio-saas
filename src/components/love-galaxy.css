@@ -165,6 +165,7 @@ html:has(.lg-experience), body:has(.lg-experience), #root:has(.lg-experience) {
 .lg-shared-journey-intro small { color: #ad9db6; font: 10px/1.4 Arial, sans-serif; }
 .lg-shared-journey-status { position: fixed; z-index: 4; pointer-events: none; top: max(18px, env(safe-area-inset-top)); left: max(20px, env(safe-area-inset-left)); max-width: min(360px, calc(100vw - 96px)); padding: 11px 14px; border: 1px solid #ffc0dd35; border-radius: 10px; background: #100b1bd9; box-shadow: 0 8px 28px #0006; backdrop-filter: blur(12px); }
 .lg-shared-journey-status strong { display: block; margin-top: 4px; color: #f6e8f0; font: 500 10px/1.4 Arial, sans-serif; letter-spacing: 1px; }
+.lg-shared-journey-status small { display: block; margin-top: 5px; color: #b9c7ed; font: 600 8px/1.3 Arial, sans-serif; letter-spacing: 1.35px; }
 .lg-return-home-button {
   position: fixed;
   z-index: 6;

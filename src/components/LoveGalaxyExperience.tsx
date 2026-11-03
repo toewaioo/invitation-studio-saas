@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { ArrowLeft, ArrowRight, Volume2, VolumeX, X } from "lucide-react";
-import { addSharedJourneyEnvironment, createSharedJourneyLayout, normalizeSharedJourneySampleId, SHARED_JOURNEY_DURATION_SECONDS, SHARED_JOURNEY_START_DISTANCE, SHARED_JOURNEY_WORLD_COUNT, type SharedJourneyWorldTarget } from "./love-galaxy-shared-journey";
+import { addSharedJourneyEnvironment, createSharedJourneyLayout, normalizeSharedJourneySampleId, SHARED_JOURNEY_DURATION_SECONDS, SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS, SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR, SHARED_JOURNEY_START_DISTANCE, SHARED_JOURNEY_WORLD_COUNT, type SharedJourneyWorldTarget } from "./love-galaxy-shared-journey";
 import backgroundMusic from "./love-galaxy-bg.mp3";
 import "./love-galaxy.css";
 
@@ -390,11 +390,19 @@ function mountGalaxy(
     ? addSharedJourneyEnvironment(scene, reviewLayout, destinationAnchor, addResource)
     : null;
   const sharedJourneyWorldTargets = sharedJourneyEnvironment?.worldTargets ?? [];
+  const sharedJourneyLocalSpaces = sharedJourneyEnvironment?.localSpaces ?? [];
   canvas.dataset.sharedJourneyWorldCount = String(sharedJourneyEnvironment?.worldCount ?? 0);
   canvas.dataset.sharedJourneyGalaxyCount = String(sharedJourneyEnvironment?.galaxyCount ?? 0);
   canvas.dataset.sharedJourneyGalaxyPointCount = String(sharedJourneyEnvironment?.galaxyPointCount ?? 0);
   canvas.dataset.sharedJourneyNebulaPointCount = String(sharedJourneyEnvironment?.nebulaPointCount ?? 0);
   canvas.dataset.sharedJourneyStarCount = String(sharedJourneyEnvironment?.starCount ?? 0);
+  canvas.dataset.sharedJourneyLocalSpaceCount = String(sharedJourneyEnvironment?.localSpaceCount ?? 0);
+  canvas.dataset.sharedJourneyLocalSpaceRadiusLightYears = String(sharedJourneyEnvironment?.localSpaceRadiusLightYears ?? 0);
+  canvas.dataset.sharedJourneySceneUnitsPerLightYear = String(sharedJourneyEnvironment?.sceneUnitsPerLightYear ?? 0);
+  canvas.dataset.sharedJourneyLocalSpaceCenters = JSON.stringify(sharedJourneyLocalSpaces.map(space => ({ id: space.id, destinationId: space.destinationId, center: space.group.position.toArray() })));
+  canvas.dataset.sharedJourneyLocalSpaceActiveId = "none";
+  canvas.dataset.sharedJourneyLocalSpaceReveal = "0";
+  canvas.dataset.sharedJourneyLocalSpaceRevealValues = "";
   canvas.dataset.sharedJourneyDuration = String(reviewSharedJourneyPrototypeEnabled ? SHARED_JOURNEY_DURATION_SECONDS : 0);
   const previewStarPass = { value: 0 };
   const dragRippleCenter = { value: new THREE.Vector2() };
@@ -1186,6 +1194,34 @@ function mountGalaxy(
     canvas.dataset.sharedJourneyWorldOpacities = opacities.join(",");
     canvas.dataset.sharedJourneyWorldAppearance = "distance-fade-approach-scale-persistent-distant-worlds";
   };
+  const updateSharedJourneyLocalSpaces = () => {
+    if (!reviewSharedJourneyPrototypeEnabled) return;
+    let activeId = "none";
+    let maxReveal = 0;
+    const reveals: string[] = [];
+    for (const localSpace of sharedJourneyLocalSpaces) {
+      localSpace.group.getWorldPosition(worldRevealPosition);
+      const distance = camera.position.distanceTo(worldRevealPosition);
+      const fadeInDistance = localSpace.radiusLightYears * SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR * 0.8;
+      const fadeOutDistance = localSpace.radiusLightYears * SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR * 4;
+      const reveal = 1 - THREE.MathUtils.smoothstep(distance, fadeInDistance, fadeOutDistance);
+      localSpace.group.visible = reveal > 0.004;
+      const materials = localSpace.group.userData.sharedJourneyRevealMaterials as { material: THREE.Material; baseOpacity: number }[];
+      for (const entry of materials) {
+        entry.material.transparent = true;
+        entry.material.opacity = entry.baseOpacity * reveal;
+      }
+      if (reveal > maxReveal) {
+        maxReveal = reveal;
+        activeId = localSpace.id;
+      }
+      reveals.push(reveal.toFixed(3));
+    }
+    canvas.dataset.sharedJourneyLocalSpaceActiveId = maxReveal > 0.004 ? activeId : "none";
+    canvas.dataset.sharedJourneyLocalSpaceReveal = maxReveal.toFixed(3);
+    canvas.dataset.sharedJourneyLocalSpaceRevealValues = reveals.join(",");
+    canvas.dataset.sharedJourneyLocalSpaceAppearance = "independent-100-light-year-3d-destination-regions";
+  };
   const updateSharedWorldTooltip = () => {
     const tooltip = worldTooltipElement;
     if (!tooltip) return;
@@ -1273,6 +1309,7 @@ function mountGalaxy(
     const updateStarted = performance.now();
     updateCamera(cameraDelta);
     updateSharedJourneyWorldAppearance();
+    updateSharedJourneyLocalSpaces();
     updatePreviewDrag(delta);
     updatePhotos(time);
     updateSharedWorldTooltip();
@@ -1853,6 +1890,7 @@ export default function LoveGalaxyExperience({ story, onBack }: LoveGalaxyExperi
           : sharedJourneyWorldStatus
             ? `ARRIVED AT ${sharedJourneyWorldStatus.label}`
             : sharedJourneyArrived ? "ARRIVED AT PLACEHOLDER DESTINATION" : `PASSING ${SHARED_JOURNEY_WORLD_COUNT} FICTIONAL TEST WORLDS`}</strong>
+        {(sharedJourneyWorldStatus?.phase === "arrived" || sharedJourneyArrived) && <small>LOCAL SPACE · {SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS} LY RADIUS</small>}
       </div>}
       <div className="lg-hud-actions">
         <button className="lg-music-toggle" type="button" aria-label={musicEnabled ? "Pause background music" : "Play background music"} aria-pressed={musicEnabled} onClick={toggleMusic}>

@@ -3,6 +3,8 @@ import * as THREE from "three";
 export const SHARED_JOURNEY_DURATION_SECONDS = 14;
 export const SHARED_JOURNEY_START_DISTANCE = 6400;
 export const SHARED_JOURNEY_WORLD_COUNT = 20;
+export const SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR = 1;
+export const SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS = 100;
 
 export type SharedJourneySampleId = "demo-share-1" | "demo-share-2" | "demo-share-3";
 export type SharedJourneyPlanetPattern = "banded" | "islands" | "cratered" | "crystalline" | "mottled";
@@ -39,6 +41,25 @@ export type SharedJourneyWorldTarget = {
   group: THREE.Group;
   surface: THREE.Mesh;
   radius: number;
+};
+export type SharedJourneyLocalSpaceSpec = {
+  id: string;
+  destinationId: string;
+  label: string;
+  center: readonly [number, number, number];
+  radiusLightYears: number;
+  seed: number;
+  color: number;
+};
+export type SharedJourneyLocalSpaceTarget = {
+  id: string;
+  destinationId: string;
+  label: string;
+  group: THREE.Group;
+  radiusLightYears: number;
+  starCount: number;
+  galaxyCount: number;
+  nebulaPointCount: number;
 };
 
 type TestWorldStyle = Omit<SharedJourneyPlanetSpec, "label" | "source" | "position" | "seed"> & { name: string };
@@ -145,6 +166,30 @@ export function createSharedJourneyLayout(sampleId: string, visitSeed: number): 
     };
   });
   return { sampleId: safeId, destination: [destinationX, destinationY, 0], worlds, galaxies, visitSeed: visitSeed >>> 0 };
+}
+
+export function createSharedJourneyLocalSpaceSpecs(layout: SharedJourneyLayout): SharedJourneyLocalSpaceSpec[] {
+  const radiusLightYears = SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS;
+  return [
+    {
+      id: `local-home-${layout.sampleId}`,
+      destinationId: `placeholder-${layout.sampleId}`,
+      label: "YOUR HOME",
+      center: [0, 0, 0],
+      radiusLightYears,
+      seed: (layout.visitSeed ^ hashString(`home:${layout.sampleId}`)) >>> 0,
+      color: 0xd77ac8,
+    },
+    ...layout.worlds.map(world => ({
+      id: `local-${world.id}`,
+      destinationId: world.id,
+      label: world.label,
+      center: world.position,
+      radiusLightYears,
+      seed: (layout.visitSeed ^ hashString(`space:${world.id}`) ^ world.seed) >>> 0,
+      color: world.color,
+    })),
+  ];
 }
 
 function hexColor(color: number) {
@@ -409,5 +454,105 @@ export function addSharedJourneyEnvironment(
     }
   });
 
-  return { environment, starCount, galaxyCount: layout.galaxies.length, galaxyPointCount, nebulaPointCount, worldCount: layout.worlds.length, worldTargets };
+  const localSpaceSpecs = createSharedJourneyLocalSpaceSpecs(layout);
+  const localSpaces: SharedJourneyLocalSpaceTarget[] = [];
+  const localStarsPerSpace = 480;
+  const localNebulaPointsPerSpace = 180;
+  const localGalaxiesPerSpace = 2;
+  const localGalaxyPoints = 180;
+  localSpaceSpecs.forEach(spec => {
+    const random = seeded(spec.seed);
+    const localSpace = new THREE.Group();
+    localSpace.name = `${spec.label} · ${spec.radiusLightYears} light-year local space`;
+    localSpace.position.set(...spec.center);
+    localSpace.visible = false;
+    localSpace.userData.sharedJourneyLocalSpaceId = spec.id;
+    localSpace.userData.sharedJourneyLocalSpaceDestinationId = spec.destinationId;
+    localSpace.userData.sharedJourneyLocalSpaceRadiusLightYears = spec.radiusLightYears;
+    localSpace.userData.sharedJourneyRevealMaterials = [] as { material: THREE.Material; baseOpacity: number }[];
+    environment.add(localSpace);
+
+    const localStarPositions = new Float32Array(localStarsPerSpace * 3);
+    const localStarColors = new Float32Array(localStarsPerSpace * 3);
+    const baseColor = new THREE.Color(spec.color);
+    const starTints = [new THREE.Color(0xf0eaff), new THREE.Color(0x9bdcff), new THREE.Color(0xffb9dd)];
+    for (let index = 0; index < localStarsPerSpace; index += 1) {
+      const y = random() * 2 - 1;
+      const angle = random() * Math.PI * 2;
+      const radial = SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS * Math.cbrt(random());
+      const ring = Math.sqrt(1 - y * y);
+      localStarPositions.set([radial * ring * Math.cos(angle), radial * y, radial * ring * Math.sin(angle)], index * 3);
+      const tint = starTints[Math.floor(random() * starTints.length)].clone().lerp(baseColor, random() * 0.28);
+      const brightness = 0.58 + random() * 0.62;
+      localStarColors.set([tint.r * brightness, tint.g * brightness, tint.b * brightness], index * 3);
+    }
+    const localStarGeometry = register(new THREE.BufferGeometry());
+    localStarGeometry.setAttribute("position", new THREE.BufferAttribute(localStarPositions, 3));
+    localStarGeometry.setAttribute("color", new THREE.BufferAttribute(localStarColors, 3));
+    const localStarMaterial = register(new THREE.PointsMaterial({ size: 1.25, vertexColors: true, transparent: true, opacity: 0.84, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    localSpace.userData.sharedJourneyRevealMaterials.push({ material: localStarMaterial, baseOpacity: 0.84 });
+    const localStars = new THREE.Points(localStarGeometry, localStarMaterial);
+    localStars.name = `${spec.id} · 100 ly volumetric stars`;
+    localStars.frustumCulled = false;
+    localSpace.add(localStars);
+
+    for (let galaxyIndex = 0; galaxyIndex < localGalaxiesPerSpace; galaxyIndex += 1) {
+      const galaxy = new THREE.Group();
+      const centerY = random() * 2 - 1;
+      const centerAngle = random() * Math.PI * 2;
+      const centerRadius = 35 + random() * 46;
+      const centerRing = Math.sqrt(1 - centerY * centerY);
+      galaxy.position.set(centerRadius * centerRing * Math.cos(centerAngle), centerRadius * centerY, centerRadius * centerRing * Math.sin(centerAngle));
+      galaxy.rotation.set((random() - 0.5) * 1.3, random() * Math.PI * 2, (random() - 0.5) * 1.3);
+      galaxy.name = `${spec.id} · local 3D galaxy ${galaxyIndex + 1}`;
+      const positions = new Float32Array(localGalaxyPoints * 3);
+      const colors = new Float32Array(localGalaxyPoints * 3);
+      const arms = 3 + galaxyIndex % 2;
+      const galaxyRadius = 3.5 + random() * 5.5;
+      for (let index = 0; index < localGalaxyPoints; index += 1) {
+        const radius = Math.sqrt(random()) * galaxyRadius;
+        const arm = index % arms;
+        const angle = arm * Math.PI * 2 / arms + radius * 0.52 + (random() - 0.5) * 0.5;
+        const thickness = (random() + random() + random() - 1.5) * galaxyRadius * 0.22;
+        positions.set([Math.cos(angle) * radius, thickness, Math.sin(angle) * radius * 0.75], index * 3);
+        const brightness = 0.55 + random() * 0.7;
+        colors.set([baseColor.r * brightness, baseColor.g * brightness, baseColor.b * brightness], index * 3);
+      }
+      const galaxyGeometry = register(new THREE.BufferGeometry());
+      galaxyGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      galaxyGeometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      const galaxyMaterial = register(new THREE.PointsMaterial({ size: 0.72, vertexColors: true, transparent: true, opacity: 0.76, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+      localSpace.userData.sharedJourneyRevealMaterials.push({ material: galaxyMaterial, baseOpacity: 0.76 });
+      const points = new THREE.Points(galaxyGeometry, galaxyMaterial);
+      points.frustumCulled = false;
+      galaxy.add(points);
+      localSpace.add(galaxy);
+    }
+
+    const nebulaPositions = new Float32Array(localNebulaPointsPerSpace * 3);
+    const nebulaColors = new Float32Array(localNebulaPointsPerSpace * 3);
+    const nebulaTint = new THREE.Color(spec.color).lerp(new THREE.Color(0x897aff), 0.42);
+    for (let index = 0; index < localNebulaPointsPerSpace; index += 1) {
+      const y = random() * 2 - 1;
+      const angle = random() * Math.PI * 2;
+      const radial = 54 + random() * 44;
+      const ring = Math.sqrt(1 - y * y);
+      nebulaPositions.set([radial * ring * Math.cos(angle), radial * y, radial * ring * Math.sin(angle)], index * 3);
+      const brightness = 0.2 + random() * 0.24;
+      nebulaColors.set([nebulaTint.r * brightness, nebulaTint.g * brightness, nebulaTint.b * brightness], index * 3);
+    }
+    const nebulaGeometry = register(new THREE.BufferGeometry());
+    nebulaGeometry.setAttribute("position", new THREE.BufferAttribute(nebulaPositions, 3));
+    nebulaGeometry.setAttribute("color", new THREE.BufferAttribute(nebulaColors, 3));
+    const localNebulaMaterial = register(new THREE.PointsMaterial({ size: 2.1, vertexColors: true, transparent: true, opacity: 0.28, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+    localSpace.userData.sharedJourneyRevealMaterials.push({ material: localNebulaMaterial, baseOpacity: 0.28 });
+    const localNebula = new THREE.Points(nebulaGeometry, localNebulaMaterial);
+    localNebula.name = `${spec.id} · 100 ly 3D nebula volume`;
+    localNebula.frustumCulled = false;
+    localSpace.add(localNebula);
+
+    localSpaces.push({ id: spec.id, destinationId: spec.destinationId, label: spec.label, group: localSpace, radiusLightYears: spec.radiusLightYears, starCount: localStarsPerSpace, galaxyCount: localGalaxiesPerSpace, nebulaPointCount: localNebulaPointsPerSpace });
+  });
+
+  return { environment, starCount, galaxyCount: layout.galaxies.length, galaxyPointCount, nebulaPointCount, worldCount: layout.worlds.length, worldTargets, localSpaces, localSpaceCount: localSpaces.length, localSpaceRadiusLightYears: SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS, sceneUnitsPerLightYear: SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR };
 }
