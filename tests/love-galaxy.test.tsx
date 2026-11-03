@@ -12,6 +12,7 @@ import LoveGalaxyExperience, {
   fitRingWordsAroundCrossing,
   galaxyCameraPhase,
 } from "../src/components/LoveGalaxyExperience";
+import { createSharedJourneyLayout, normalizeSharedJourneySampleId } from "../src/components/love-galaxy-shared-journey";
 import Showcase from "../src/components/Showcase";
 
 const originalLocation = Object.getOwnPropertyDescriptor(globalThis, "location");
@@ -250,6 +251,54 @@ describe("standalone Love Galaxy experience", () => {
     expect(weddingGrid).toContain("Rose Reverie");
     expect(weddingGrid).not.toContain("Love Galaxy");
     expect(weddingGrid).not.toContain("galaxy-memory");
+  });
+
+  test("the shared-journey prototype is explicitly gated and keeps the normal experience disabled by default", () => {
+    const html = renderToStaticMarkup(<LoveGalaxyExperience />);
+    const source = readFileSync(new URL("../src/components/LoveGalaxyExperience.tsx", import.meta.url), "utf8");
+    expect(html).toContain('data-shared-journey-review="disabled"');
+    expect(html).not.toContain("SHARED GALAXY · REVIEW DEMO");
+    expect(source).toContain('import.meta.env.VITE_LOVE_GALAXY_SHARED_JOURNEY === "true"');
+    expect(source).toContain('sharedJourneyQuery?.get("review") === "shared-journey"');
+    expect(source).toContain('canvas.dataset.sharedJourneySource = reviewSharedJourneyPrototypeEnabled ? "anonymous-demo-only" : "none"');
+    expect(source).toContain('canvas.dataset.sharedJourneyDestinationVisible = reviewDestinationReveal > 0.95 ? "true" : "false"');
+    expect(source).toContain('canvas.dataset.sharedJourneyWorldDepths = reviewLayout?.worlds.map(world => world.position[2].toFixed(2)).join(",") ?? "none"');
+    expect(source).toContain("camera.position.set(destinationAnchor.x, destinationAnchor.y, destinationAnchor.z + THREE.MathUtils.lerp(SHARED_JOURNEY_START_DISTANCE, endDistance, eased))");
+    expect(source).toContain("currentOrbit.setFromVector3(camera.position.clone().sub(orbitCenter))");
+  });
+
+  test("sample share links resolve to unique placeholder locations while each visit layout stays stable in flight", () => {
+    const firstVisit = createSharedJourneyLayout("demo-share-1", 12345);
+    const repeatedVisitState = createSharedJourneyLayout("demo-share-1", 12345);
+    const newVisit = createSharedJourneyLayout("demo-share-1", 67890);
+    const secondSample = createSharedJourneyLayout("demo-share-2", 12345);
+    expect(firstVisit).toEqual(repeatedVisitState);
+    expect(firstVisit.destination).not.toEqual(secondSample.destination);
+    expect(firstVisit.destination).toEqual(newVisit.destination);
+    expect(firstVisit.worlds).toHaveLength(7);
+    expect(firstVisit.galaxies).toHaveLength(9);
+    expect(firstVisit.worlds.map(world => world.position)).not.toEqual(newVisit.worlds.map(world => world.position));
+    expect(firstVisit.worlds.every(world => world.source === "anonymous-demo-only" && world.id.startsWith("anonymous-world-"))).toBe(true);
+    expect(firstVisit.worlds.every(world => world.radius > 3 && world.radius < 5 && world.position.every(Number.isFinite))).toBe(true);
+    expect(firstVisit.galaxies.every(galaxy => galaxy.position.every(Number.isFinite) && galaxy.radius >= 9)).toBe(true);
+    const depths = firstVisit.worlds.map(world => world.position[2]).sort((a, b) => b - a);
+    expect(Math.min(...depths)).toBeGreaterThan(140);
+    for (let index = 1; index < depths.length; index += 1) expect(depths[index - 1] - depths[index]).toBeGreaterThan(48);
+    expect(normalizeSharedJourneySampleId("demo-share-3")).toBe("demo-share-3");
+    expect(normalizeSharedJourneySampleId("a-real-name-or-key")).toBe("demo-share-1");
+  });
+
+  test("the review scene uses no creator lookup and preserves the existing photo and ring interaction scene", () => {
+    const helper = readFileSync(new URL("../src/components/love-galaxy-shared-journey.ts", import.meta.url), "utf8");
+    const source = readFileSync(new URL("../src/components/LoveGalaxyExperience.tsx", import.meta.url), "utf8");
+    expect(helper).toContain('source: "anonymous-demo-only"');
+    expect(helper).not.toContain("fetch(");
+    expect(helper).not.toContain("/api/");
+    expect(source).toContain('canvas.dataset.photoDistribution = "dense-equatorial-seven-row-stream"');
+    expect(source).toContain('const memoryId = memoryIds?.[hit.instanceId]');
+    expect(source).toContain("if (memoryId !== undefined) selectMemory(memoryId)");
+    expect(source).toContain('canvas.dataset.textRingRendering = "orbital-curved-3d-glyphs"');
+    expect(source).toContain("mounted.startJourney()");
   });
 
   test("keeps the Love Galaxy creation experience on its own page and route", () => {

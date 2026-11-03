@@ -104,6 +104,43 @@ html:has(.lg-experience), body:has(.lg-experience), #root:has(.lg-experience) {
 }
 .lg-entry-button:disabled { opacity: .65; cursor: wait; }
 .lg-entry-error { position: absolute; top: calc(50% + 46px); left: 24px; right: 24px; margin: 0; color: #ffe5f1; text-align: center; font: 12px/1.6 Georgia, serif; }
+.lg-entry-overlay-shared-journey .lg-entry-button { transform: translateY(-8vh); }
+.lg-shared-journey-intro {
+  position: absolute;
+  left: max(28px, env(safe-area-inset-left));
+  bottom: max(30px, env(safe-area-inset-bottom));
+  width: min(390px, calc(100vw - 56px));
+  padding: 18px 20px 17px;
+  border: 1px solid #ffc0dd42;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #100b1be8, #080914e8);
+  box-shadow: 0 14px 46px #0007, 0 0 28px #ed7db31a;
+  backdrop-filter: blur(14px);
+}
+.lg-shared-journey-intro span, .lg-shared-journey-status span {
+  display: block;
+  color: #ffc0dd;
+  font: 600 9px/1.4 Arial, sans-serif;
+  letter-spacing: 1.8px;
+}
+.lg-shared-journey-intro strong { display: block; margin-top: 9px; color: #fff2f8; font: 18px/1.3 Georgia, serif; }
+.lg-shared-journey-intro p { margin: 8px 0 10px; color: #d8cfdd; font: 12px/1.6 Arial, sans-serif; }
+.lg-shared-journey-intro small { color: #ad9db6; font: 10px/1.4 Arial, sans-serif; }
+.lg-shared-journey-status {
+  position: fixed;
+  z-index: 4;
+  pointer-events: none;
+  top: max(18px, env(safe-area-inset-top));
+  left: max(20px, env(safe-area-inset-left));
+  max-width: min(360px, calc(100vw - 96px));
+  padding: 11px 14px;
+  border: 1px solid #ffc0dd35;
+  border-radius: 10px;
+  background: #100b1bd9;
+  box-shadow: 0 8px 28px #0006;
+  backdrop-filter: blur(12px);
+}
+.lg-shared-journey-status strong { display: block; margin-top: 4px; color: #f6e8f0; font: 500 10px/1.4 Arial, sans-serif; letter-spacing: 1px; }
 .lg-create-link {
   position: absolute;
   z-index: 6;
@@ -161,6 +198,13 @@ html:has(.lg-experience), body:has(.lg-experience), #root:has(.lg-experience) {
 
 @media (max-width: 700px) {
   .lg-entry-button { min-width: 204px; min-height: 54px; padding: 17px 24px; font-size: 10px; letter-spacing: 2.5px; }
+  .lg-entry-overlay-shared-journey .lg-entry-button { transform: translateY(-10vh); }
+  .lg-shared-journey-intro { left: max(16px, env(safe-area-inset-left)); bottom: max(18px, env(safe-area-inset-bottom)); width: min(390px, calc(100vw - 32px)); padding: 15px 16px; }
+  .lg-shared-journey-intro strong { font-size: 16px; }
+  .lg-shared-journey-intro p { font-size: 11px; }
+  .lg-shared-journey-status { left: max(14px, env(safe-area-inset-left)); top: max(14px, env(safe-area-inset-top)); max-width: calc(100vw - 84px); padding: 9px 11px; }
+  .lg-shared-journey-status span { font-size: 8px; letter-spacing: 1.2px; }
+  .lg-shared-journey-status strong { font-size: 9px; }
   .lg-hud-top { padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)); }
   .lg-stage-vignette { background: linear-gradient(180deg, #03040a9e 0%, transparent 22%, transparent 59%, #03040aa6 100%), radial-gradient(ellipse at center, transparent 37%, #03040a52 100%); }
 }
