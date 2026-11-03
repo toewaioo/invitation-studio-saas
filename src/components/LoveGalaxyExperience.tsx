@@ -306,7 +306,7 @@ function mountGalaxy(
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#03040a");
   const camera = new THREE.PerspectiveCamera(47, 1, 0.08, 170);
-  if (reviewSharedJourneyPrototypeEnabled) camera.far = 760;
+  if (reviewSharedJourneyPrototypeEnabled) camera.far = 3600;
   camera.position.set(destinationAnchor.x, destinationAnchor.y, destinationAnchor.z + (reviewSharedJourneyPrototypeEnabled ? SHARED_JOURNEY_START_DISTANCE : 20));
   camera.lookAt(destinationAnchor);
   camera.updateProjectionMatrix();

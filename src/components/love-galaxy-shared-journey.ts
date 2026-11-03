@@ -1,7 +1,7 @@
 import * as THREE from "three";
 
 export const SHARED_JOURNEY_DURATION_SECONDS = 14;
-export const SHARED_JOURNEY_START_DISTANCE = 560;
+export const SHARED_JOURNEY_START_DISTANCE = 3200;
 
 export type SharedJourneySampleId = "demo-share-1" | "demo-share-2" | "demo-share-3";
 export type SharedJourneyPlanetSurface = "ocean" | "rust" | "ice" | "gas" | "stone" | "jade" | "indigo";
@@ -31,8 +31,8 @@ export type SharedJourneyLayout = {
 };
 
 const SAMPLE_IDS: readonly SharedJourneySampleId[] = ["demo-share-1", "demo-share-2", "demo-share-3"];
-const WORLD_DEPTHS = [520, 458, 396, 334, 272, 210, 148] as const;
-const GALAXY_DEPTHS = [540, 476, 412, 348, 284, 220, 156, 92, 38] as const;
+const WORLD_DEPTHS = [2600, 2300, 2000, 1700, 1400, 1100, 800] as const;
+const GALAXY_DEPTHS = [3000, 2700, 2400, 2100, 1800, 1500, 1200, 850, 500] as const;
 const PLANETS: readonly { radius: number; color: number; surface: SharedJourneyPlanetSurface; ringed: boolean }[] = [
   { radius: 4.1, color: 0x438a9e, surface: "ocean", ringed: true },
   { radius: 4.5, color: 0xb5674d, surface: "rust", ringed: false },
@@ -183,7 +183,7 @@ export function addSharedJourneyEnvironment(
   const starPositions = new Float32Array(starCount * 3);
   const starColors = new Float32Array(starCount * 3);
   for (let index = 0; index < starCount; index += 1) {
-    starPositions.set([(starRandom() - 0.5) * 250, (starRandom() - 0.5) * 180, 12 + starRandom() * 590], index * 3);
+    starPositions.set([(starRandom() - 0.5) * 250, (starRandom() - 0.5) * 180, 12 + starRandom() * 3200], index * 3);
     const tint = starRandom();
     starColors.set(tint > 0.86 ? [0.68, 0.82, 1] : tint > 0.66 ? [1, 0.62, 0.84] : [0.9, 0.92, 1], index * 3);
   }

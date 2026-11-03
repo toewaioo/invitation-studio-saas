@@ -12,7 +12,7 @@ import LoveGalaxyExperience, {
   fitRingWordsAroundCrossing,
   galaxyCameraPhase,
 } from "../src/components/LoveGalaxyExperience";
-import { createSharedJourneyLayout, normalizeSharedJourneySampleId } from "../src/components/love-galaxy-shared-journey";
+import { createSharedJourneyLayout, normalizeSharedJourneySampleId, SHARED_JOURNEY_START_DISTANCE } from "../src/components/love-galaxy-shared-journey";
 import Showcase from "../src/components/Showcase";
 
 const originalLocation = Object.getOwnPropertyDescriptor(globalThis, "location");
@@ -282,8 +282,19 @@ describe("standalone Love Galaxy experience", () => {
     expect(firstVisit.worlds.every(world => world.radius > 3 && world.radius < 5 && world.position.every(Number.isFinite))).toBe(true);
     expect(firstVisit.galaxies.every(galaxy => galaxy.position.every(Number.isFinite) && galaxy.radius >= 9)).toBe(true);
     const depths = firstVisit.worlds.map(world => world.position[2]).sort((a, b) => b - a);
-    expect(Math.min(...depths)).toBeGreaterThan(140);
-    for (let index = 1; index < depths.length; index += 1) expect(depths[index - 1] - depths[index]).toBeGreaterThan(48);
+    expect(SHARED_JOURNEY_START_DISTANCE).toBe(3200);
+    expect(Math.min(...depths)).toBeGreaterThan(790);
+    for (let index = 1; index < depths.length; index++) expect(depths[index - 1] - depths[index]).toBeGreaterThan(280);
+    for (let left = 0; left < firstVisit.worlds.length; left++) {
+      for (let right = left + 1; right < firstVisit.worlds.length; right++) {
+        const a = new THREE.Vector3(...firstVisit.worlds[left].position);
+        const b = new THREE.Vector3(...firstVisit.worlds[right].position);
+        expect(a.distanceTo(b)).toBeGreaterThan(200);
+      }
+    }
+    const revealEase = 0.78 ** 2 * (3 - 2 * 0.78);
+    const farthestCameraAtReveal = THREE.MathUtils.lerp(SHARED_JOURNEY_START_DISTANCE, 76, revealEase);
+    expect(Math.min(...firstVisit.worlds.map(world => world.position[2] - world.radius))).toBeGreaterThan(farthestCameraAtReveal);
     expect(normalizeSharedJourneySampleId("demo-share-3")).toBe("demo-share-3");
     expect(normalizeSharedJourneySampleId("a-real-name-or-key")).toBe("demo-share-1");
   });
