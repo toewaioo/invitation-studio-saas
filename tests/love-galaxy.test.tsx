@@ -12,7 +12,7 @@ import LoveGalaxyExperience, {
   fitRingWordsAroundCrossing,
   galaxyCameraPhase,
 } from "../src/components/LoveGalaxyExperience";
-import { createPublishedSharedJourneyLayout, createSharedJourneyLayout, createSharedJourneyLocalSpaceSpecs, normalizeSharedJourneySampleId, SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS, SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR, SHARED_JOURNEY_START_DISTANCE, SHARED_JOURNEY_WORLD_COUNT } from "../src/components/love-galaxy-shared-journey";
+import { createPublishedJourneyShareHref, createPublishedSharedJourneyLayout, createSharedJourneyLayout, createSharedJourneyLocalSpaceSpecs, normalizeSharedJourneySampleId, SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS, SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR, SHARED_JOURNEY_START_DISTANCE, SHARED_JOURNEY_WORLD_COUNT } from "../src/components/love-galaxy-shared-journey";
 import Showcase from "../src/components/Showcase";
 
 const originalLocation = Object.getOwnPropertyDescriptor(globalThis, "location");
@@ -337,6 +337,21 @@ describe("standalone Love Galaxy experience", () => {
     expect(publicSource).toContain("value.photos.length !== 4");
     expect(publicSource).toContain("username: galaxy.username");
     expect(publicSource).toContain("<LoveGalaxyExperience story={story} journeyEnabled />");
+  });
+
+  test("normal journey offers a discovery-only planet picker and builds the existing public share route", () => {
+    const optedIn = { username: "galaxy-opted00001", title: "Only the title is public", public_key: "a".repeat(64) };
+    const source = readFileSync(new URL("../src/components/LoveGalaxyExperience.tsx", import.meta.url), "utf8");
+    const href = `/love/${optedIn.username}?key=${optedIn.public_key}`;
+    expect(createPublishedJourneyShareHref(optedIn)).toBe(href);
+    expect(createPublishedJourneyShareHref({ ...optedIn, username: "not-a-galaxy" })).toBeNull();
+    expect(createPublishedJourneyShareHref({ ...optedIn, title: " " })).toBeNull();
+    expect(createPublishedJourneyShareHref({ ...optedIn, public_key: "private-or-invalid" })).toBeNull();
+    expect(source).toContain('journeyEnabled && !reviewSharedJourneyPrototypeEnabled');
+    expect(source).toContain('className="lg-shared-planet-picker"');
+    expect(source).toContain('aria-label="Choose an opted-in shared planet"');
+    expect(source).toContain('mountedScene.current?.travelToWorld(selectedSharedPlanet.world.username)');
+    expect(source).toContain('href={sharedJourneyWorldStatus.href}');
   });
 
   test("review-only arrival exposes fictional in-view planet tooltips and a selected-world camera hop", () => {

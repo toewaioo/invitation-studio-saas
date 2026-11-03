@@ -119,6 +119,15 @@ export function normalizeSharedJourneySampleId(value: string | null | undefined)
   return SAMPLE_IDS.includes(value as SharedJourneySampleId) ? value as SharedJourneySampleId : SAMPLE_IDS[0];
 }
 
+export function createPublishedJourneyShareHref(world: { username?: unknown; title?: unknown; public_key?: unknown }) {
+  if (!world || typeof world.username !== "string" || !/^galaxy-[a-z0-9-]{8,39}$/.test(world.username)
+    || typeof world.title !== "string" || !world.title.trim() || world.title.trim().length > 120
+    || typeof world.public_key !== "string" || !/^[0-9a-f]{64}$/.test(world.public_key)) return null;
+  const shareUrl = new URL(`/love/${world.username}`, "https://love.invalid");
+  shareUrl.searchParams.set("key", world.public_key);
+  return `${shareUrl.pathname}${shareUrl.search}`;
+}
+
 export function createSharedJourneyLayout(sampleId: string, visitSeed: number): SharedJourneyLayout {
   const safeId = normalizeSharedJourneySampleId(sampleId);
   const identity = hashString(safeId);
@@ -173,7 +182,8 @@ export function createSharedJourneyLayout(sampleId: string, visitSeed: number): 
 export function createPublishedSharedJourneyLayout(visitSeed: number, discoverableWorlds: readonly { username: string; title: string; public_key: string }[] = []): SharedJourneyLayout {
   const seen = new Set<string>();
   const worlds = discoverableWorlds.flatMap((world, index): SharedJourneyPlanetSpec[] => {
-    if (!world || typeof world.username !== "string" || !/^galaxy-[a-z0-9-]{8,39}$/.test(world.username) || typeof world.title !== "string" || !world.title.trim() || world.title.trim().length > 120 || typeof world.public_key !== "string" || !/^[0-9a-f]{64}$/.test(world.public_key) || seen.has(world.username)) return [];
+    const href = createPublishedJourneyShareHref(world);
+    if (!href || seen.has(world.username)) return [];
     seen.add(world.username);
     if (index >= SHARED_JOURNEY_WORLD_COUNT) return [];
     const style = TEST_WORLD_STYLES[index % TEST_WORLD_STYLES.length];
@@ -181,13 +191,11 @@ export function createPublishedSharedJourneyLayout(visitSeed: number, discoverab
     const random = seeded((visitSeed ^ worldSeed) >>> 0);
     const angle = ((index % 4) + random()) * Math.PI / 2;
     const radiusFromRoute = 52 + random() * 220;
-    const shareUrl = new URL(`/love/${world.username}`, "https://love.invalid");
-    shareUrl.searchParams.set("key", world.public_key);
     return [{
       id: world.username,
       label: world.title.trim(),
       source: "owner-opted-in",
-      href: `${shareUrl.pathname}${shareUrl.search}`,
+      href,
       position: [Math.cos(angle) * radiusFromRoute, Math.sin(angle) * radiusFromRoute, WORLD_DEPTH_START - index * WORLD_DEPTH_GAP + (random() - 0.5) * 18],
       radius: style.radius * (0.94 + random() * 0.12),
       color: style.color,

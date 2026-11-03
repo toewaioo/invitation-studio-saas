@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { ArrowLeft, ArrowRight, Volume2, VolumeX, X } from "lucide-react";
-import { addSharedJourneyEnvironment, createPublishedSharedJourneyLayout, createSharedJourneyLayout, normalizeSharedJourneySampleId, SHARED_JOURNEY_DURATION_SECONDS, SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS, SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR, SHARED_JOURNEY_START_DISTANCE, SHARED_JOURNEY_WORLD_COUNT, type SharedJourneyWorldTarget } from "./love-galaxy-shared-journey";
+import { addSharedJourneyEnvironment, createPublishedJourneyShareHref, createPublishedSharedJourneyLayout, createSharedJourneyLayout, normalizeSharedJourneySampleId, SHARED_JOURNEY_DURATION_SECONDS, SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS, SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR, SHARED_JOURNEY_START_DISTANCE, SHARED_JOURNEY_WORLD_COUNT, type SharedJourneyWorldTarget } from "./love-galaxy-shared-journey";
 import { fetchDiscoverableLoveGalaxies, type DiscoverableLoveGalaxy } from "../lib/loveGalaxy";
 import backgroundMusic from "./love-galaxy-bg.mp3";
 import "./love-galaxy.css";
@@ -2026,6 +2026,7 @@ export default function LoveGalaxyExperience({ story, onBack, journeyEnabled = f
   const [entryError, setEntryError] = useState(false);
   const [sharedJourneyArrived, setSharedJourneyArrived] = useState(false);
   const [sharedJourneyWorldStatus, setSharedJourneyWorldStatus] = useState<SharedJourneyWorldStatus | null>(null);
+  const [selectedSharedWorldId, setSelectedSharedWorldId] = useState("");
   const sharedJourneyQuery = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const reviewSharedJourneyPrototypeEnabled = import.meta.env.VITE_LOVE_GALAXY_SHARED_JOURNEY === "true"
     && sharedJourneyQuery?.get("review") === "shared-journey";
@@ -2065,6 +2066,14 @@ export default function LoveGalaxyExperience({ story, onBack, journeyEnabled = f
   const musicSource = reviewSharedJourneyPrototypeEnabled ? backgroundMusic : story?.musicSrc || backgroundMusic;
   const memories = images === DEMO_IMAGES ? MEMORIES : Array.from({ length: MEMORY_COUNT }, (_, id) => ({ id, ...images[id % images.length] }));
   const showSharedWorldInteractions = sharedJourneyEnabled && (reviewSharedJourneyPrototypeEnabled || discoverableWorlds.length > 0);
+  const sharedPlanetOptions = journeyEnabled && !reviewSharedJourneyPrototypeEnabled
+    ? discoverableWorlds.flatMap(world => {
+      const href = createPublishedJourneyShareHref(world);
+      return href ? [{ world, href }] : [];
+    })
+    : [];
+  const selectedSharedPlanet = sharedPlanetOptions.find(option => option.world.username === selectedSharedWorldId);
+  const sharedWorldTravelInProgress = sharedJourneyWorldStatus?.phase === "traveling";
 
   const readMusicLevel = useCallback(() => {
     const audio = music.current;
@@ -2244,15 +2253,45 @@ export default function LoveGalaxyExperience({ story, onBack, journeyEnabled = f
     {onBack && <button className="lg-back-button" type="button" onClick={onBack} aria-label="Back to Love Galaxy creation"><ArrowLeft size={17}/><span>Back</span></button>}
 
     {journeyStarted && <header className="lg-hud-top">
-      {(reviewSharedJourneyPrototypeEnabled || (journeyEnabled && (discoverableWorlds.length > 0 || !!sharedJourneyWorldStatus))) && <div className="lg-shared-journey-status" role="status" aria-live="polite">
+      {(reviewSharedJourneyPrototypeEnabled || (journeyEnabled && (discoverableWorlds.length > 0 || !!sharedJourneyWorldStatus))) && <div className={`lg-shared-journey-status${sharedPlanetOptions.length > 0 ? " lg-shared-journey-status-with-picker" : ""}`}>
+        <div role="status" aria-live="polite">
         <span>{reviewSharedJourneyPrototypeEnabled ? `FICTIONAL TEST RUN · ${reviewSampleId.toUpperCase()}` : "SHARED JOURNEY · OPTED-IN PLANETS"}</span>
         <strong>{sharedJourneyWorldStatus?.phase === "traveling"
           ? `TRAVELLING TO ${sharedJourneyWorldStatus.label}`
           : sharedJourneyWorldStatus
             ? `ARRIVED AT ${sharedJourneyWorldStatus.label}`
             : reviewSharedJourneyPrototypeEnabled ? sharedJourneyArrived ? "ARRIVED AT PLACEHOLDER DESTINATION" : `PASSING ${SHARED_JOURNEY_WORLD_COUNT} FICTIONAL TEST WORLDS` : `PASSING ${discoverableWorlds.length} OPTED-IN PLANETS`}</strong>
-        {!reviewSharedJourneyPrototypeEnabled && sharedJourneyWorldStatus?.phase === "arrived" && sharedJourneyWorldStatus.href && <a className="lg-open-journey-world" href={sharedJourneyWorldStatus.href} target="_blank" rel="noreferrer">Open {sharedJourneyWorldStatus.label}</a>}
+        {!reviewSharedJourneyPrototypeEnabled && sharedJourneyWorldStatus?.phase === "arrived" && sharedJourneyWorldStatus.href && <a className="lg-open-journey-world" href={sharedJourneyWorldStatus.href} target="_blank" rel="noreferrer" title="Open this planet's published Love Galaxy in a new tab"><span>Open {sharedJourneyWorldStatus.label}</span><ArrowRight size={14} aria-hidden="true" /></a>}
         {(sharedJourneyWorldStatus?.phase === "arrived" || sharedJourneyArrived) && <small>LOCAL SPACE · {SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS} LY RADIUS</small>}
+        </div>
+        {sharedPlanetOptions.length > 0 && <section className="lg-shared-planet-picker" aria-label="Travel to an opted-in shared planet">
+          <label htmlFor="lg-shared-planet-select"><span>SHARED PLANETS</span></label>
+          <div className="lg-shared-planet-picker-controls">
+            <select
+              id="lg-shared-planet-select"
+              aria-label="Choose an opted-in shared planet"
+              aria-describedby="lg-shared-planet-help"
+              value={selectedSharedWorldId}
+              onChange={event => setSelectedSharedWorldId(event.currentTarget.value)}
+            >
+              <option value="">Choose a planet ({sharedPlanetOptions.length})</option>
+              {sharedPlanetOptions.map(({ world }) => <option key={world.username} value={world.username}>{world.title}</option>)}
+            </select>
+            <button
+              type="button"
+              disabled={!selectedSharedPlanet || !sharedJourneyArrived || sharedWorldTravelInProgress}
+              onClick={() => {
+                if (selectedSharedPlanet && sharedJourneyArrived && !sharedWorldTravelInProgress) {
+                  mountedScene.current?.travelToWorld(selectedSharedPlanet.world.username);
+                }
+              }}
+            >
+              <ArrowRight size={14} aria-hidden="true" />
+              <span>Travel</span>
+            </button>
+          </div>
+          <p id="lg-shared-planet-help">{!sharedJourneyArrived ? "Reach your own planet first to unlock travel." : sharedWorldTravelInProgress ? "Your flight is underway." : "Fly to its planet, then open its published Love Galaxy."}</p>
+        </section>}
       </div>}
       <div className="lg-hud-actions">
         <button className="lg-music-toggle" type="button" aria-label={musicEnabled ? "Pause background music" : "Play background music"} aria-pressed={musicEnabled} onClick={toggleMusic}>

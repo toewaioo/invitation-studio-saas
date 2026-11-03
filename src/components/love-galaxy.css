@@ -93,6 +93,50 @@ html:has(.lg-experience), body:has(.lg-experience), #root:has(.lg-experience) {
 .lg-shared-world-tooltip-eyebrow { color: #ffc0dd; font: 600 8px/1.35 Arial, sans-serif; letter-spacing: 1.1px; }
 .lg-shared-world-tooltip-label { display: -webkit-box; overflow: hidden; color: #fff4f9; font: 600 13px/1.3 Arial, sans-serif; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
 .lg-shared-world-tooltip small { color: #cfbfd0; font: 10px/1.35 Arial, sans-serif; }
+.lg-shared-planet-picker {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+  padding-top: 10px;
+  color: #fff2f8;
+  border-top: 1px solid #ffc0dd35;
+  pointer-events: auto;
+}
+.lg-shared-planet-picker label span { color: #ffc0dd; font: 600 8px/1.4 Arial, sans-serif; letter-spacing: 1.5px; }
+.lg-shared-planet-picker-controls { display: flex; gap: 7px; min-width: 0; }
+.lg-shared-planet-picker select {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  color: #fff2f8;
+  border: 1px solid #ffc0dd56;
+  border-radius: 8px;
+  background: #100b1b;
+  font: 12px/1.35 Arial, sans-serif;
+}
+.lg-shared-planet-picker select option { color: #fff2f8; background: #100b1b; }
+.lg-shared-planet-picker button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 86px;
+  min-height: 44px;
+  padding: 0 10px;
+  color: #fff2f8;
+  border: 1px solid #ffc0dd8a;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #35152f, #110d1d);
+  font: 600 10px/1 Arial, sans-serif;
+  cursor: pointer;
+}
+.lg-shared-planet-picker button:disabled { opacity: .48; cursor: not-allowed; }
+.lg-shared-planet-picker p { margin: 0; color: #c9bed0; font: 10px/1.45 Arial, sans-serif; }
+.lg-shared-planet-picker select:focus-visible, .lg-shared-planet-picker button:focus-visible { outline: 2px solid var(--lg-cyan); outline-offset: 3px; }
 .lg-renderer-message {
   position: absolute;
   z-index: 6;
@@ -154,7 +198,7 @@ html:has(.lg-experience), body:has(.lg-experience), #root:has(.lg-experience) {
   box-shadow: 0 14px 46px #0007, 0 0 28px #ed7db31a;
   backdrop-filter: blur(14px);
 }
-.lg-shared-journey-intro span, .lg-shared-journey-status span {
+.lg-shared-journey-intro span, .lg-shared-journey-status > div > span {
   display: block;
   color: #ffc0dd;
   font: 600 9px/1.4 Arial, sans-serif;
@@ -164,9 +208,11 @@ html:has(.lg-experience), body:has(.lg-experience), #root:has(.lg-experience) {
 .lg-shared-journey-intro p { margin: 8px 0 10px; color: #d8cfdd; font: 12px/1.6 Arial, sans-serif; }
 .lg-shared-journey-intro small { color: #ad9db6; font: 10px/1.4 Arial, sans-serif; }
 .lg-shared-journey-status { position: fixed; z-index: 4; pointer-events: none; top: max(18px, env(safe-area-inset-top)); left: max(20px, env(safe-area-inset-left)); max-width: min(360px, calc(100vw - 96px)); padding: 11px 14px; border: 1px solid #ffc0dd35; border-radius: 10px; background: #100b1bd9; box-shadow: 0 8px 28px #0006; backdrop-filter: blur(12px); }
+.lg-shared-journey-status-with-picker { width: min(360px, calc(100vw - 96px)); }
 .lg-shared-journey-status strong { display: block; margin-top: 4px; color: #f6e8f0; font: 500 10px/1.4 Arial, sans-serif; letter-spacing: 1px; }
 .lg-shared-journey-status small { display: block; margin-top: 5px; color: #b9c7ed; font: 600 8px/1.3 Arial, sans-serif; letter-spacing: 1.35px; }
-.lg-open-journey-world { display:inline-block; margin-top:7px; color:#ffe2f3; font:600 10px/1.45 Arial,sans-serif; text-decoration:underline; text-underline-offset:3px; pointer-events:auto; }
+.lg-open-journey-world { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-height:44px; margin-top:9px; padding:10px 12px; color:#fff2f8; border:1px solid #ffc0dd8a; border-radius:8px; background:linear-gradient(135deg,#35152f,#110d1d); font:600 11px/1.45 Arial,sans-serif; text-decoration:none; overflow-wrap:anywhere; pointer-events:auto; }
+.lg-open-journey-world svg { flex:none; }
 .lg-open-journey-world:focus-visible { outline:2px solid var(--lg-cyan); outline-offset:3px; }
 .lg-return-home-button {
   position: fixed;
@@ -260,9 +306,11 @@ html:has(.lg-experience), body:has(.lg-experience), #root:has(.lg-experience) {
   .lg-shared-journey-intro strong { font-size: 16px; }
   .lg-shared-journey-intro p { font-size: 11px; }
   .lg-shared-journey-status { left: max(14px, env(safe-area-inset-left)); top: max(14px, env(safe-area-inset-top)); max-width: calc(100vw - 84px); padding: 9px 11px; }
-  .lg-shared-journey-status span { font-size: 8px; letter-spacing: 1.2px; }
+  .lg-shared-journey-status-with-picker { width: calc(100vw - 84px); }
+  .lg-shared-journey-status > div > span { font-size: 8px; letter-spacing: 1.2px; }
   .lg-shared-journey-status strong { font-size: 9px; }
   .lg-return-home-button { bottom: max(18px, env(safe-area-inset-bottom)); min-width: 210px; min-height: 48px; padding: 0 17px; font-size: 9px; }
+  .lg-shared-planet-picker select { font-size: 11px; }
   .lg-shared-world-tooltip { width: min(196px, calc(100vw - 24px)); min-height: 68px; padding: 9px 11px; }
   .lg-shared-world-tooltip-eyebrow { font-size: 7px; }
   .lg-shared-world-tooltip-label { font-size: 12px; }
