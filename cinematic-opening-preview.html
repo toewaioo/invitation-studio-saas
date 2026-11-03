@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Cinematic opening · Sample preview</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module">
+    import React from 'react';
+    import { createRoot } from 'react-dom/client';
+    import Invitation from '/src/components/Invitation.tsx';
+    import { createDesignPreview } from '/src/lib/designPreview.ts';
+    import '/src/styles.css';
+    const params = new URLSearchParams(location.search);
+    const design = ['thazin','noir','rose'].includes(params.get('design')) ? params.get('design') : 'thazin';
+    const project = createDesignPreview(design, 'my');
+    if (['sage','midnight','rose','blue'].includes(params.get('theme'))) project.theme = params.get('theme');
+    if (params.get('empty') === '1') project.photos = [];
+    createRoot(document.getElementById('root')).render(
+      React.createElement(React.StrictMode, null, React.createElement(Invitation, { project, preview: true }))
+    );
+  </script>
+</body>
+</html>

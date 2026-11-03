@@ -1,0 +1,5 @@
+[functions.invitation-photo]
+verify_jwt = false
+
+[functions.guest-invitation]
+verify_jwt = false

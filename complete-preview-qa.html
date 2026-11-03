@@ -1,0 +1,11 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Complete invitation preview · QA only</title></head><body><div id="root"></div><script type="module">
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import Invitation from '/src/components/Invitation.tsx';
+import {createDesignPreview} from '/src/lib/designPreview.ts';
+import '/src/styles.css';
+const root=createRoot(document.getElementById('root'));
+window.renderFixture=(template='thazin',scenario='normal')=>{let p=createDesignPreview(template,'my');if(scenario==='empty')p={...p,id:'empty-optional-qa',parent_a:'',parent_b:'',message:'',event_date:'',event_time:'',venue:'',map_url:'',photos:[]};root.render(React.createElement(React.StrictMode,null,React.createElement(Invitation,{key:template+scenario,project:p,preview:true})));return {template,scenario};};
+document.addEventListener('qa-fixture',()=>{const args=JSON.parse(document.documentElement.dataset.qaFixture);window.renderFixture(args.template,args.scenario);});
+window.renderFixture();
+</script></body></html>

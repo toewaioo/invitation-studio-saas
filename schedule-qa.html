@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="my">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>မင်္ဂလာနေ့ အစီအစဉ် · Responsive preview</title>
+<style>html,body{margin:0;min-height:100%;background:#12271f}iframe{display:block;margin:0 auto;border:0;background:#12271f;max-width:100%}</style></head>
+<body><iframe title="အစီအစဉ် ၄ ခု နမူနာဖိတ်စာ" id="preview"></iframe>
+<script>
+const params = new URLSearchParams(location.search);
+const frame = document.querySelector('iframe');
+frame.width = params.get('width') || '390';
+frame.height = params.get('height') || '844';
+frame.src = '/schedule-preview.html?' + params.toString();
+if (params.get('fit') === '1') {
+  const scale = Math.min(1, (innerWidth - 16) / Number(frame.width), (innerHeight - 16) / Number(frame.height));
+  frame.style.transform = `scale(${scale})`;
+  frame.style.transformOrigin = 'top center';
+  document.body.style.overflow = 'hidden';
+}
+</script></body></html>

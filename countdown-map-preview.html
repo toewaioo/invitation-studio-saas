@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Countdown & Mini Map · နမူနာဖိတ်စာ</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module">
+    import React from 'react';
+    import { createRoot } from 'react-dom/client';
+    import Invitation from '/src/components/Invitation.tsx';
+    import { createDesignPreview } from '/src/lib/designPreview.ts';
+    import '/src/styles.css';
+    const params = new URLSearchParams(location.search);
+    const design = ['thazin','noir','rose'].includes(params.get('design')) ? params.get('design') : 'thazin';
+    const project = createDesignPreview(design, 'my');
+    project.map_url = 'https://maps.app.goo.gl/CS6Q7snZngXwxkm87';
+    project.venue = 'လိုတရ ဟင်္သာတ ကျောင်းတိုက် ပရဟိတ ဓမ္မရိပ်သာ၊ ရန်ကုန်';
+    if (params.get('map') === 'none') project.map_url = '';
+    if (params.get('map') === 'invalid') project.map_url = 'https://example.com/invalid';
+    if (params.has('date')) project.event_date = params.get('date');
+    const targetPage = params.get('page') === 'map' ? '4' : params.get('page') === 'schedule' ? '3' : '2';
+    if (params.get('emptySchedule') === '1') delete project.schedule;
+    if (params.get('short') === '1') project.map_url = 'https://maps.app.goo.gl/SampleOnly';
+    if (params.get('empty') === '1') { project.map_url = ''; project.venue = ''; }
+    createRoot(document.getElementById('root')).render(React.createElement(Invitation, {project, preview:true}));
+    // Use normal invitation controls; stop after arriving at page four.
+    let opened = false, lastClick = 0;
+    const started = performance.now();
+    const timer = setInterval(() => {
+      if (performance.now() - started > 120000) { clearInterval(timer); return; }
+      const seal = document.querySelector('#open-envelope');
+      if (!opened && seal && !seal.disabled) { opened = true; seal.click(); lastClick = performance.now(); return; }
+      if (!opened || performance.now() - lastClick < 2500) return;
+      const active = document.querySelector('.paper.active');
+      if (active?.dataset.page === targetPage) { clearInterval(timer); document.documentElement.dataset.previewReady = 'true'; return; }
+      const next = document.querySelector('#next-page');
+      if (next && !next.disabled && !document.querySelector('#reading-room').hidden) { next.click(); lastClick = performance.now(); }
+    }, 150);
+  </script>
+</body>
+</html>

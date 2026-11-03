@@ -1,0 +1,27 @@
+.route-guidance-dialog {
+  box-sizing: border-box; width: min(520px, calc(100vw - 24px)); max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 24px); overflow-y: auto; overscroll-behavior: contain;
+  padding: 18px; border: 1px solid #b69a60; border-radius: 12px; margin: auto;
+  color: #214c3d; background: #fff9e9; box-shadow: 0 18px 80px #0006;
+  font-family: 'Noto Sans Myanmar', sans-serif; font-size: 13px; line-height: 1.9; text-align: left;
+}
+.route-guidance-dialog::backdrop { background: #09261de0; }
+.route-guidance-dialog * { box-sizing: border-box; min-width: 0; overflow-wrap: anywhere; }
+.route-guidance-dialog > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.route-guidance-dialog > header small { font-size: 11px; color: #705c31; }
+.route-guidance-dialog h2 { font-size: 18px; line-height: 1.8; margin: 0; }
+.route-guidance-dialog > header button { width: 44px; min-height: 44px; flex: 0 0 44px; border: 1px solid #b69a60; border-radius: 50%; background: transparent; color: #214c3d; font-size: 24px; cursor: pointer; }
+.route-guidance-dialog h3 { font-size: 13px; margin: 0; }
+.route-guidance-dialog p { margin: 9px 0; }
+.route-guidance-dialog .route-arrival-target { margin-top: 12px; padding: 12px; border-left: 3px solid #b69a60; border-radius: 4px; background: #e9eedc; }
+.route-guidance-dialog .route-arrival-target p { font-size: 15px; font-weight: 600; margin: 5px 0; }
+.route-guidance-dialog .route-arrival-target small { font-size: 11px; }
+.route-guidance-dialog .route-url-limitation { padding: 9px; border: 1px solid #b69a6060; background: #b69a6012; font-size: 12px; }
+.route-guidance-dialog .route-planning-steps { padding-left: 23px; margin: 10px 0; }
+.route-guidance-dialog .route-planning-steps li { padding-left: 3px; margin: 6px 0; }
+.route-guidance-dialog .route-planning-caveat { font-size: 11px; line-height: 1.85; color: #4e5d4a; }
+.route-guidance-dialog .route-open-maps { display: flex; justify-content: center; align-items: center; min-height: 44px; padding: 10px; border-radius: 5px; background: #214c3d; color: #fff9e9; text-decoration: none; }
+.route-guidance-dialog .route-planning-help { display: inline-block; color: #214c3d; font-size: 11px; min-height: 32px; }
+.route-guidance-dialog .route-planning-warning { padding: 10px; background: #fff0cc; }
+.route-guidance-dialog :focus-visible { outline: 2px solid #996e25; outline-offset: 3px; }
+@media (max-width: 350px) { .route-guidance-dialog { padding: 12px; font-size: 12px; } }

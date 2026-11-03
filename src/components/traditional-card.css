@@ -1,0 +1,39 @@
+/* One printed card per screen. The fitter measures rendered blocks after fonts
+ * load. No truncation, line clamps, transform scaling, or hidden customer text. */
+.invite .paper.invitation-paper {display:flex;align-items:center;justify-content:center;padding:17px 20px;overflow:visible;text-align:center;}
+.invite .paper.invitation-paper::before {border-radius:0;border-color:color-mix(in srgb,var(--gold) 50%,transparent);}
+.invite .traditional-card {--card-density:1;--card-ink:#303b32;position:relative;display:flex;flex-direction:column;gap:calc(1px + 2px * var(--card-density));flex:0 0 auto;width:100%;max-width:440px;min-height:0;margin:0 auto;color:var(--card-ink);font:12px/1.65 var(--my);text-align:center;overflow-wrap:anywhere;word-break:normal;container-type:inline-size;}
+.invite .traditional-card *, .invite .traditional-card *::before,.invite .traditional-card *::after {min-width:0;max-width:100%;}
+.invite .traditional-heading {position:relative;padding:0 2px;}
+.invite .invitation-paper .traditional-heading h1 {display:block;width:auto;margin:0;padding:0;border:0;color:var(--card-ink);font:700 calc(15px + 3px * var(--card-density))/1.65 var(--my);letter-spacing:0;overflow-wrap:anywhere;text-wrap:balance;}
+.invite .traditional-rule {display:flex;align-items:center;justify-content:center;gap:8px;margin:calc(1px + 2px * var(--card-density)) auto;color:var(--gold);width:78%;}
+.invite .traditional-rule i {height:1px;flex:1;background:currentColor;opacity:.4;}
+.invite .traditional-rule span {font:calc(8px + 8px * var(--card-density))/1 var(--serif);}
+.invite .traditional-families {display:flex;flex-direction:column;gap:calc(1px + 2px * var(--card-density));width:100%;}
+.invite .traditional-family {display:flex;flex-direction:column;gap:calc(1px + 2px * var(--card-density));margin:0;padding:0;}
+.invite .traditional-parents {margin:0;font-size:12px;line-height:1.65;white-space:pre-line;overflow-wrap:anywhere;}
+.invite .traditional-card .traditional-person {display:block;margin:0;font:600 calc(14px + 6px * var(--card-density))/1.65 var(--my);color:var(--card-ink);letter-spacing:0;white-space:pre-line;overflow-wrap:anywhere;text-wrap:balance;}
+.invite .traditional-union {display:flex;align-items:center;justify-content:center;gap:8px;margin:calc(1px + 2px * var(--card-density)) auto;color:var(--gold);font-size:12px;line-height:1.5;}
+.invite .traditional-union span:first-child,.invite .traditional-union span:last-child {font:calc(8px + 8px * var(--card-density))/1 var(--serif);}
+.invite .traditional-rule-small {width:55%;margin:calc(1px + 2px * var(--card-density)) auto;}
+.invite .traditional-wording {margin:0;font-size:12px;line-height:1.65;white-space:pre-line;overflow-wrap:anywhere;text-wrap:pretty;}
+/* Date and time never compete for two narrow columns. Each field gets the
+ * entire row, with a quiet label column and a shrinkable/wrapping value. */
+.invite .traditional-event {display:grid;grid-template-columns:minmax(0,1fr);row-gap:calc(3px + 2px * var(--card-density));width:100%;max-width:420px;margin:calc(4px + 3px * var(--card-density)) auto 0;padding:calc(5px + 3px * var(--card-density)) 8px;border-top:1px solid color-mix(in srgb,var(--gold) 32%,transparent);font-size:clamp(11.5px,3.6cqw,12px);line-height:1.75;text-align:left;}
+.invite .traditional-event>div {display:grid;grid-template-columns:3.4em minmax(0,1fr);column-gap:8px;align-items:start;margin:0;min-width:0;}
+.invite .traditional-event dt {margin:0;color:#63695a;font-size:11px;font-weight:400;line-height:1.85;overflow-wrap:normal;}
+.invite .traditional-event dd {margin:0;min-width:0;max-width:100%;font-size:inherit;font-weight:400;line-height:1.75;white-space:pre-line;overflow-wrap:anywhere;word-break:normal;letter-spacing:0;}
+.invite .traditional-event time {display:block;font:inherit;line-height:inherit;white-space:pre-line;overflow-wrap:anywhere;}
+.invite .traditional-event .traditional-location {grid-column:1/-1;}
+.invite .traditional-event .traditional-venue {font-size:inherit;font-weight:400;}
+.invite .traditional-map-link {align-self:center;font-size:11.5px;line-height:1.65;min-height:28px;padding:3px 6px;color:#596a4f;text-underline-offset:3px;}
+.invite .traditional-endmark {font:calc(8px + 8px * var(--card-density))/1 var(--serif);margin:0;color:var(--gold);}
+.invite .traditional-card .paper-footnote {margin:0;padding:0;font-size:10px;line-height:1.5;color:#747769;}
+.invite .traditional-corner {position:absolute;top:-2px;width:23px;height:30px;color:var(--gold);opacity:.5;pointer-events:none;}
+.invite .traditional-corner-left {left:-6px;transform:rotate(145deg);}
+.invite .traditional-corner-right {right:-6px;transform:rotate(-145deg) scaleX(-1);}
+@media(min-width:960px) {.invite .paper.invitation-paper {padding:20px 27px;}}
+@media(max-width:350px) {.invite .traditional-event {padding-inline:5px;} .invite .traditional-event>div {column-gap:6px;}}
+/* On the narrowest phones, spare duplicate ornaments before reducing text. */
+@media(max-width:350px) {.invite .traditional-card .traditional-rule-small,.invite .traditional-card .traditional-endmark {display:none;}}
+.invite .invitation-paper.strip-content {overflow:hidden!important;}

@@ -1,0 +1,10 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Responsive invitation text · QA only</title><style>.qa-flat .book-scene,.qa-flat .book,.qa-flat .right-leaves,.qa-flat .left-leaf,.qa-flat .paper{transform:none!important;perspective:none!important}</style></head><body><div id="root"></div><script type="module">
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import Invitation from '/src/components/Invitation.tsx';
+import {createDesignPreview} from '/src/lib/designPreview.ts';
+import '/src/styles.css';
+const root=createRoot(document.getElementById('root'));
+window.renderFixture=(template='thazin',scenario='normal')=>{let p=createDesignPreview(template,'my');if(scenario==='long')p={...p,event_date:'2027-11-25',event_time:'နံနက် ၀၉:၀၀ နာရီမှ မွန်းတည့် ၁၂:၀၀ နာရီအထိ',venue:'နမူနာ မင်္ဂလာဧည့်ခံခန်းမနှင့် အခမ်းအနားဆောင်\nအမှတ် (၁၂၃)၊ မဟာဗန္ဓုလလမ်း၊ အလယ်ပိုင်းရပ်ကွက်\nရွှေပြည်သာမြို့နယ်၊ ရန်ကုန်တိုင်းဒေသကြီး',map_url:''};root.render(React.createElement(React.StrictMode,null,React.createElement(Invitation,{key:template+scenario,project:p,preview:true})));document.documentElement.dataset.scenario=scenario;return {template,scenario};};
+document.addEventListener('qa-fixture',()=>{const args=JSON.parse(document.documentElement.dataset.qaFixture);window.renderFixture(args.template,args.scenario);});window.renderFixture();
+</script></body></html>

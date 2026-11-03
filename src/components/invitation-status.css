@@ -1,0 +1,246 @@
+.public-status {
+  --status-ink: #30493a;
+  --status-muted: #727a70;
+  --status-gold: #b29a64;
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  overflow: hidden;
+  padding: max(24px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+  color: var(--status-ink);
+  background:
+    radial-gradient(ellipse at 50% 12%, #e9ebdd 0, transparent 48%),
+    radial-gradient(ellipse at 6% 92%, #e9e3d3 0, transparent 39%),
+    #f5f2e9;
+  font-family: "Noto Serif Myanmar", "Noto Sans Myanmar", Georgia, serif;
+}
+
+.public-status__wash {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  opacity: .35;
+  background: repeating-linear-gradient(103deg, transparent 0 7px, #8f806010 7px 8px);
+  mask-image: linear-gradient(135deg, transparent 8%, #000 45%, transparent 93%);
+}
+
+.public-status__card {
+  position: relative;
+  width: min(100%, 440px);
+  padding: 42px 27px 33px;
+  overflow: hidden;
+  text-align: center;
+  border: 1px solid #c9b98780;
+  border-radius: 3px;
+  background:
+    radial-gradient(ellipse at 50% 0%, #fffdf2 0, transparent 63%),
+    linear-gradient(145deg, #fffdf7, #f8f3e6);
+  box-shadow: 0 18px 52px #263a2b12, 0 3px 9px #263a2b08, inset 0 0 0 5px #b29a640d;
+  animation: public-status-appear 700ms cubic-bezier(.2,.7,.25,1) both;
+}
+
+.public-status__card::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border: 1px solid #b29a6436;
+  pointer-events: none;
+}
+
+.public-status__card::after {
+  content: "";
+  position: absolute;
+  top: -118px;
+  left: 50%;
+  width: 252px;
+  height: 252px;
+  transform: translateX(-50%);
+  border: 1px solid #b29a6418;
+  border-radius: 50%;
+  box-shadow: 0 0 0 13px #b29a6408, 0 0 0 27px #b29a6406;
+  pointer-events: none;
+}
+
+.public-status__corner {
+  position: absolute;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  border-color: #b29a6490;
+  border-style: solid;
+  pointer-events: none;
+}
+
+.public-status__corner--top { top: 15px; left: 15px; border-width: 1px 0 0 1px; }
+.public-status__corner--bottom { right: 15px; bottom: 15px; border-width: 0 1px 1px 0; }
+
+.public-status__seal {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 17px;
+  color: #345640;
+  border: 1px solid #b29a6470;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #fffdf4, #f1ead8);
+  box-shadow: 0 5px 16px #263a2b12, inset 0 0 0 5px #b29a6411;
+}
+
+.public-status__seal::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border: 1px solid #b29a6438;
+  border-radius: inherit;
+  animation: public-status-halo 2.8s ease-in-out 2 both;
+}
+
+.public-status__seal-ring { display: grid; place-items: center; }
+.public-status__seal.is-loading svg { animation: public-status-spin 1.6s linear infinite; }
+
+.public-status__kicker {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: #7c765e;
+  font: 500 9px/1.7 var(--font-ui);
+  letter-spacing: .18em;
+}
+
+.public-status__rule {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin: 13px auto 14px;
+  color: var(--status-gold);
+  font: 12px/1 Georgia, serif;
+}
+
+.public-status__rule::before,
+.public-status__rule::after {
+  content: "";
+  width: 36px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #b29a6480);
+}
+
+.public-status__rule::after { transform: scaleX(-1); }
+
+.public-status__card h1 {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+  margin: 0;
+  color: #293e31;
+  font: 500 clamp(21px, 5.8vw, 26px)/1.9 "Noto Serif Myanmar", "Noto Sans Myanmar", Georgia, serif;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.public-status__message {
+  position: relative;
+  z-index: 1;
+  max-width: 320px;
+  margin: 12px auto 0;
+  color: var(--status-muted);
+  font: 400 13px/2.1 "Noto Sans Myanmar", var(--font-ui), sans-serif;
+  text-wrap: pretty;
+}
+
+.public-status__demo {
+  position: relative;
+  z-index: 1;
+  max-width: 320px;
+  margin: 14px auto 0;
+  padding: 10px 12px;
+  color: #687365;
+  border: 1px solid #d6d3c4;
+  background: #f7f5eb;
+  font: 400 11px/1.8 var(--font-ui), "Noto Sans Myanmar", sans-serif;
+}
+
+.public-status__actions {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  margin-top: 25px;
+}
+
+.public-status__retry {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: min(100%, 258px);
+  min-height: 48px;
+  padding: 10px 18px;
+  color: #fffdf7;
+  border: 1px solid #2e503b;
+  border-radius: 3px;
+  background: linear-gradient(135deg, #3e684d, #2f513c);
+  box-shadow: 0 4px 10px #284a351c, inset 0 1px #ffffff1a;
+  font: 500 13px/1.6 "Noto Sans Myanmar", var(--font-ui), sans-serif;
+  transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+}
+
+.public-status__retry:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, #477455, #355d44);
+  box-shadow: 0 7px 14px #284a3522, inset 0 1px #ffffff1a;
+}
+
+.public-status__retry:active { transform: translateY(0); }
+
+.public-status__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 5px 8px;
+  color: #697568;
+  border-radius: 2px;
+  font: 400 12px/1.8 "Noto Sans Myanmar", var(--font-ui), sans-serif;
+  text-decoration: underline;
+  text-decoration-color: #9ca38f;
+  text-underline-offset: 4px;
+  transition: color 160ms ease;
+}
+
+.public-status__back:hover { color: #30493a; }
+.public-status.is-english .public-status__card h1 {
+  font: 400 clamp(28px, 7vw, 36px)/1.2 "Cormorant Garamond", Georgia, serif;
+}
+.public-status.is-english .public-status__message { font-family: var(--font-ui), sans-serif; }
+
+@keyframes public-status-appear {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes public-status-halo {
+  0%, 100% { opacity: .25; transform: scale(.96); }
+  50% { opacity: .75; transform: scale(1.04); }
+}
+@keyframes public-status-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 420px) {
+  .public-status__card { padding: 38px 22px 28px; }
+  .public-status__seal { width: 68px; height: 68px; margin-bottom: 14px; }
+  .public-status__message { font-size: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-status__card,
+  .public-status__seal::before,
+  .public-status__seal.is-loading svg { animation: none !important; }
+  .public-status__retry,
+  .public-status__back { transition: none !important; }
+}

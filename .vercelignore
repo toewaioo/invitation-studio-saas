@@ -1,0 +1,12 @@
+.env*
+!.env.example
+node_modules/
+dist/
+.git/
+*.tsbuildinfo
+coverage/
+
+artifacts/
+tests/
+supabase/
+scripts/

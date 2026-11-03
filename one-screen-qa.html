@@ -1,0 +1,13 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Invitation fit · synthetic QA only</title></head><body><div id="root"></div><script type="module">
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import Invitation from '/src/components/Invitation.tsx';
+import {emptyProject} from '/src/types.ts';
+import '/src/styles.css';
+const base={...emptyProject,id:'synthetic-one-screen-qa',title:'Synthetic QA only',status:'draft',public_key:null,created_at:'',updated_at:'',person_a:'မောင်ပြည့်ဖြိုးအောင်မင်းခန့်',person_b:'မနှင်းသဇင်ဝင်းထက်အောင်',parent_a:'ဦးအောင်မင်း နှင့်\nဒေါ်ခင်မြ (နမူနာ)',parent_b:'ဦးဝင်းထက် နှင့်\nဒေါ်နှင်းအေး (နမူနာ)',event_date:'2027-02-14',event_time:'09:30',venue:'နမူနာ မင်္ဂလာဧည့်ခန်းမ\nနမူနာလမ်း၊ ရန်ကုန်မြို့',map_url:'https://maps.app.goo.gl/synthetic-example',photos:Array.from({length:6},(_,i)=>({id:'test-'+i,position:i,caption:'နမူနာပုံ '+(i+1),url:'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><defs><linearGradient id="a" x2="1" y2="1"><stop stop-color="#e5dfce"/><stop offset="1" stop-color="#87968a"/></linearGradient></defs><path fill="url(#a)" d="M0 0h600v800H0z"/></svg>')}))};
+const root=createRoot(document.getElementById('root'));
+window.renderFixture=(template='noir',scenario='normal')=>{let p={...base,template};if(scenario==='long'){p={...p,person_a:'မောင်ပြည့်ဖြိုးအောင်မင်းခန့် နမူနာအမည်',person_b:'မနှင်းသဇင်ဝင်းထက်အောင် နမူနာအမည်',parent_a:'ဦးအောင်မင်းခန့် နှင့် ဒေါ်ခင်သဇင်မြ (နမူနာ)',parent_b:'ဦးဝင်းထက်အောင် နှင့် ဒေါ်နှင်းသဇင်အေး (နမူနာ)',message:'မင်္ဂလာဧည့်ခံပွဲသို့ ကြွရောက်၍ မင်္ဂလာဆုမွန်ကောင်းများ ချီးမြှင့်ပေးပါရန် မေတ္တာဖြင့် လေးစားစွာ ဖိတ်ကြားအပ်ပါသည်။',venue:'နမူနာ မင်္ဂလာဧည့်ခန်းမ၊ ဒုတိယထပ်\nနမူနာလမ်း၊ နမူနာနေရာ၊ ရန်ကုန်မြို့'};}if(scenario==='no-map')p.map_url='';root.render(React.createElement(React.StrictMode,null,React.createElement(Invitation,{key:template+scenario,project:p})));return {template,scenario};};
+document.addEventListener('qa-fixture',()=>{const args=JSON.parse(document.documentElement.dataset.qaFixture);window.renderFixture(args.template,args.scenario);});
+document.documentElement.dataset.qaReady='true';
+window.renderFixture(new URLSearchParams(location.search).get('design')||'noir');
+</script></body></html>

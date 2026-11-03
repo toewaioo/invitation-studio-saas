@@ -1,0 +1,69 @@
+{
+  "route_guidance": {
+    "event_time_consumed": true,
+    "target_in_opt_in_dialog_only": true,
+    "target_timezone": "Asia/Yangon",
+    "target_example": "2027-02-14 09:37",
+    "dialog_outside_invitation_dom": true,
+    "invitation_time_hidden_while_dialog_open": true,
+    "calendar_time_hidden": true,
+    "dialog_removed_and_time_absent_after_close": true,
+    "maps_url_contains_no_event_time_or_unsupported_timing_parameters": true,
+    "manual_arrive_by_instructions": true,
+    "durations_invented": false
+  },
+  "responsive_checks": [
+    {
+      "width": 320,
+      "height": 568,
+      "four_routes": true,
+      "horizontal_overflow": false,
+      "content_scrolls": false,
+      "time_absent_after_dialog_close": true
+    },
+    {
+      "width": 375,
+      "height": 667,
+      "four_routes": true,
+      "horizontal_overflow": false,
+      "content_scrolls": false,
+      "time_absent_after_dialog_close": true
+    },
+    {
+      "width": 390,
+      "height": 844,
+      "four_routes": true,
+      "horizontal_overflow": false,
+      "content_scrolls": false,
+      "time_absent_after_dialog_close": true
+    },
+    {
+      "width": 768,
+      "height": 1024,
+      "four_routes": true,
+      "horizontal_overflow": false,
+      "content_scrolls": false,
+      "time_absent_after_dialog_close": true
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "four_routes": true,
+      "horizontal_overflow": false,
+      "content_scrolls": false,
+      "time_absent_after_dialog_close": true
+    }
+  ],
+  "tests": {
+    "passed": 115,
+    "failed": 0,
+    "files": 19,
+    "build": "passed"
+  },
+  "production_deployed": false,
+  "backend_or_customer_data_changed": false,
+  "sources": [
+    "https://developers.google.com/maps/documentation/urls/guide",
+    "https://support.google.com/maps/answer/6291839?hl=en&co=GENIE.Platform%3DDesktop"
+  ]
+}

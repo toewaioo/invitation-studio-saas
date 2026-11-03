@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>မင်္ဂလာနေ့ အစီအစဉ် · နမူနာဖိတ်စာ</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module">
+    import React from 'react';
+    import { createRoot } from 'react-dom/client';
+    import Invitation from '/src/components/Invitation.tsx';
+    import { createDesignPreview } from '/src/lib/designPreview.ts';
+    import '/src/styles.css';
+    const params = new URLSearchParams(location.search);
+    const design = ['thazin','noir','rose'].includes(params.get('design')) ? params.get('design') : 'thazin';
+    const project = createDesignPreview(design, 'my');
+    if (params.get('emptySchedule') === '1') delete project.schedule;
+    if (params.get('short') === '1') project.map_url = 'https://maps.app.goo.gl/SampleOnly';
+    if (params.get('empty') === '1') { project.map_url = ''; project.venue = ''; }
+    import ScheduleEditor from '/src/components/ScheduleEditor.tsx';
+    function Demo() {
+      const [schedule, setSchedule] = React.useState(project.schedule);
+      const [editing, setEditing] = React.useState(false);
+      return React.createElement(React.Fragment, null,
+        React.createElement(Invitation, { project: {...project, schedule}, preview: true }),
+        React.createElement('button', {onClick:()=>setEditing(!editing), style:{position:'fixed',bottom:8,left:8,zIndex:2000,padding:'9px',borderRadius:'8px',border:'1px solid #ac965f',background:'#fff9eb',color:'#214d3e',fontFamily:'inherit'}}, editing ? 'ပိတ်ရန်' : 'နမူနာအစီအစဉ် ပြင်ရန်'),
+        editing && React.createElement('div', {style:{position:'fixed',inset:'8% 5%',zIndex:1999,background:'#fff9eb',color:'#214d3e',padding:16,overflow:'auto',borderRadius:12}},
+          React.createElement('p', null, 'နမူနာအတွက်သာ — customer data ကို မသိမ်းပါ။'),
+          React.createElement(ScheduleEditor, {value:schedule,lang:'my',onChange:setSchedule})));
+    }
+    createRoot(document.getElementById('root')).render(React.createElement(Demo));
+    // Use normal invitation controls; stop after arriving at page four.
+    let opened = false, lastClick = 0;
+    const started = performance.now();
+    const timer = setInterval(() => {
+      if (performance.now() - started > 120000) { clearInterval(timer); return; }
+      const seal = document.querySelector('#open-envelope');
+      if (!opened && seal && !seal.disabled) { opened = true; seal.click(); lastClick = performance.now(); return; }
+      if (!opened || performance.now() - lastClick < 2500) return;
+      const active = document.querySelector('.paper.active');
+      if (active?.dataset.page === '3') { clearInterval(timer); document.documentElement.dataset.previewReady = 'true'; return; }
+      const next = document.querySelector('#next-page');
+      if (next && !next.disabled && !document.querySelector('#reading-room').hidden) { next.click(); lastClick = performance.now(); }
+    }, 150);
+  </script>
+</body>
+</html>

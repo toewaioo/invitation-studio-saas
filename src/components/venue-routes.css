@@ -1,0 +1,42 @@
+/* Compact route list replaces the page-four timeline, not a new page.
+   Specificity intentionally matches the final one-screen/ornate styles. */
+.invite.invite.invite .details-paper { overflow-y: auto; overscroll-behavior: contain; }
+.invite.invite.invite .details-paper .soft-copy { margin: 4px 0 8px; line-height: 1.65; }
+.invite.invite.invite .details-paper .ornament { margin: 3px 0 6px; }
+.invite.invite.invite .route-information { width: 100%; text-align: left; margin: 4px 0 10px; }
+.invite.invite.invite .route-heading { display: flex; gap: 9px; align-items: center; padding: 0 0 8px; }
+.invite.invite.invite .route-heading > span { color: var(--foil, #b19c67); font-size: 26px; line-height: 1; }
+.invite.invite.invite .route-heading h3 { font: 600 13px/1.65 var(--body-my); color: var(--jewel, #214d3e); margin: 0; }
+.invite.invite.invite .route-heading p { margin: 2px 0 0; font: 11px/1.65 var(--body-my); color: var(--jewel, #214d3e); opacity: .8; }
+.invite.invite.invite .venue-routes { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.invite.invite.invite .venue-routes li { margin: 0; min-width: 0; }
+.invite.invite.invite .venue-routes a { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px; border: 1px solid color-mix(in srgb, var(--foil, #b19c67) 55%, transparent); border-radius: 5px; background: color-mix(in srgb, var(--foil, #b19c67) 6%, transparent); color: var(--jewel, #214d3e); text-decoration: none; box-sizing: border-box; transition: background .18s ease; }
+.invite.invite.invite .venue-routes a:hover { background: color-mix(in srgb, var(--foil, #b19c67) 16%, transparent); }
+.invite.invite.invite .route-number { display: grid; place-items: center; flex: 0 0 25px; height: 25px; border: 1px solid color-mix(in srgb, var(--foil, #b19c67) 70%, transparent); border-radius: 50%; color: var(--jewel, #214d3e); font: 12px/1 var(--body-my); }
+.invite.invite.invite .route-label { flex: 1; min-width: 0; overflow-wrap: anywhere; font: 500 12px/1.75 var(--body-my); }
+.invite.invite.invite .route-arrow { flex: 0 0 auto; color: var(--foil, #b19c67); font-size: 18px; }
+.invite.invite.invite .route-estimate-note,
+.invite.invite.invite .route-sample-note,
+.invite.invite.invite .route-empty { margin: 7px 0 0; color: var(--jewel, #214d3e); font: 11px/1.75 var(--body-my); opacity: .85; }
+.invite.invite.invite .route-sample-note { font-size: 10px; opacity: .7; }
+.invite.invite.invite .route-fallback { display: block; min-height: 44px; padding: 9px; color: var(--jewel, #214d3e); font: 12px/1.7 var(--body-my); }
+.invite.invite.invite .details-paper .venue-address { font: 11px/1.75 var(--body-my); margin: 0; }
+.invite.invite.invite .details-paper .venue-jump { line-height: 1.75; overflow-wrap: anywhere; max-width: 100%; }
+@media (max-height: 620px) {
+  .invite.invite.invite .details-paper .soft-copy { display: none; }
+  .invite.invite.invite .route-heading { padding-bottom: 4px; }
+  .invite.invite.invite .venue-routes { gap: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .invite.invite.invite .venue-routes a { transition: none; }
+}
+/* Short viewports keep the full route list, estimate caveat and venue;
+   remove only the decorative greeting / repeated subtitle to gain room. */
+@media (max-height: 700px) {
+  .invite.invite.invite .details-paper .soft-copy { display: none; }
+}
+@media (max-height: 620px) {
+  .invite.invite.invite .route-heading p { display: none; }
+  .invite.invite.invite .route-information { margin-bottom: 4px; }
+  .invite.invite.invite .route-estimate-note { line-height: 1.55; }
+}

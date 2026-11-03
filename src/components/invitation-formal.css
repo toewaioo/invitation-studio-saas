@@ -1,0 +1,183 @@
+/* Formal Myanmar invitation typography shared by every paper design.
+ * This layer changes presentation only: all copy and names remain bound to the
+ * existing customer-entered fields, with no inferred relatives or credentials.
+ */
+.invite.invite .paper.invitation-paper {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.invite.invite .traditional-card {
+  gap: calc(2px + 3px * var(--card-density));
+  max-width: 440px;
+}
+
+.invite.invite .traditional-heading {
+  width: 100%;
+  margin: 0 0 calc(2px + 3px * var(--card-density));
+}
+
+.invite.invite .invitation-paper .traditional-heading h1 {
+  font-size: calc(15px + 2px * var(--card-density));
+  line-height: 1.85;
+  text-wrap: balance;
+}
+
+.invite.invite .traditional-families {
+  gap: calc(3px + 3px * var(--card-density));
+}
+
+.invite.invite .traditional-family {
+  gap: calc(1px + 2px * var(--card-density));
+}
+
+.invite.invite .traditional-card .traditional-parents {
+  color: color-mix(in srgb, var(--jewel) 80%, #746c5b);
+  font: 400 calc(11px + 1.5px * var(--card-density))/1.9 var(--body-my);
+  text-align: center;
+  white-space: pre-line;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-wrap: wrap;
+}
+
+/* Atomic inline boxes move a complete supplied name/word onto the next line.
+ * Only a unit wider than the entire card uses emergency grapheme-safe wrapping. */
+.invite.invite .traditional-card .traditional-parent-unit {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: top;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.invite.invite .traditional-card .traditional-parent-emphasis {
+  color: inherit;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+/* The fitter keeps readable font floors. Extremely long supplied copy must
+ * remain reachable rather than being cut off by the one-screen paper shell. */
+.invite.invite .paper.invitation-paper:has(.traditional-card[data-fit="oversize"]) {
+  justify-content: flex-start;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.invite.invite .traditional-card .traditional-person {
+  color: var(--jewel);
+  font: 700 calc(18px + 5px * var(--card-density))/1.8 var(--display-my);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.invite.invite .traditional-union {
+  width: min(82%, 310px);
+  gap: 10px;
+  margin: calc(3px + 2px * var(--card-density)) auto;
+  color: var(--foil);
+  font: 600 calc(12px + 1px * var(--card-density))/1.8 var(--body-my);
+}
+
+.invite.invite .traditional-union::before,
+.invite.invite .traditional-union::after {
+  content: "";
+  height: 1px;
+  flex: 1 1 28px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--foil) 68%, transparent));
+}
+
+.invite.invite .traditional-union::after {
+  transform: scaleX(-1);
+}
+
+.invite.invite .traditional-union span:first-child,
+.invite.invite .traditional-union span:last-child {
+  color: var(--foil);
+  font-size: calc(10px + 2px * var(--card-density));
+}
+
+.invite.invite .traditional-card .traditional-rule-small {
+  width: min(64%, 250px);
+  margin: calc(2px + 2px * var(--card-density)) auto;
+}
+
+.invite.invite .traditional-card .traditional-wording {
+  width: 100%;
+  max-width: 36ch;
+  margin: 0 auto;
+  color: color-mix(in srgb, var(--jewel) 90%, #716a58);
+  font: 400 calc(12px + 1px * var(--card-density))/2.05 var(--body-my);
+  text-align: center;
+  text-wrap: pretty;
+}
+
+/* Date and place read as centered lines in the same printed invitation column. */
+.invite.invite .traditional-event {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(4px + 2px * var(--card-density));
+  width: 100%;
+  max-width: 390px;
+  margin: calc(3px + 2px * var(--card-density)) auto 0;
+  padding: calc(6px + 2px * var(--card-density)) 4px 0;
+  text-align: center;
+}
+
+.invite.invite .traditional-event > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  width: 100%;
+  text-align: center;
+}
+
+.invite.invite .traditional-event dt {
+  color: var(--foil);
+  font-size: calc(10px + 1px * var(--card-density));
+  line-height: 1.8;
+  text-align: center;
+}
+
+.invite.invite .traditional-event dd,
+.invite.invite .traditional-event time {
+  width: 100%;
+  color: var(--jewel);
+  line-height: 1.9;
+  text-align: center;
+}
+
+.invite.invite .traditional-event .traditional-location {
+  width: 100%;
+}
+
+.invite.invite .traditional-map-link {
+  align-self: center;
+  color: var(--jewel);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.invite.invite .traditional-endmark {
+  margin-top: 1px;
+}
+
+@media (max-width: 350px) {
+  .invite.invite .traditional-card .traditional-person {
+    font-size: calc(17px + 4px * var(--card-density));
+  }
+
+  .invite.invite .traditional-card .traditional-wording {
+    font-size: calc(11.5px + 0.75px * var(--card-density));
+  }
+
+  .invite.invite .traditional-event {
+    padding-inline: 2px;
+  }
+}

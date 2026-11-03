@@ -1,0 +1,22 @@
+.invite.invite.invite .details-paper { overflow-y: auto; overscroll-behavior: contain; }
+.invite.invite.invite .wedding-schedule { width: 100%; margin: 8px 0 12px; text-align: left; }
+.invite.invite.invite .wedding-schedule h3 { margin: 0 0 12px; text-align: center; color: var(--jewel, #214d3e); font: 600 14px/1.8 var(--body-my); }
+.invite.invite.invite .schedule-milestones { list-style: none; margin: 0 0 0 10px; padding: 0; border-left: 1px solid var(--foil, #b19c67); }
+.invite.invite.invite .schedule-milestones li { position: relative; padding: 0 0 13px 24px; margin: 0; min-width: 0; }
+.invite.invite.invite .schedule-milestones li:last-child { padding-bottom: 2px; }
+.invite.invite.invite .schedule-milestones li::before { content: ''; position: absolute; left: -4px; top: 9px; width: 7px; height: 7px; border-radius: 50%; background: var(--foil, #b19c67); box-shadow: 0 0 0 3px color-mix(in srgb, var(--foil, #b19c67) 15%, transparent); }
+.invite.invite.invite .schedule-milestones time { color: var(--foil, #b19c67); display: block; font: 500 13px/1.7 var(--body-my); letter-spacing: .05em; }
+.invite.invite.invite .schedule-milestones p { color: var(--jewel, #214d3e); font: 500 14px/1.85 var(--body-my); overflow-wrap: anywhere; margin: 2px 0 0; }
+.invite.invite.invite .schedule-sample-note { font: 10px/1.7 var(--body-my); opacity: .65; text-align: center; margin: 8px 0 0; }
+.invite.invite.invite .details-paper .venue-address { font: 11px/1.8 var(--body-my); margin: 6px 0 0; }
+.invite.invite.invite .details-paper .venue-jump { max-width: 100%; overflow-wrap: anywhere; line-height: 1.8; }
+.schedule-editor { border: 1px solid #c7b78d; border-radius: 8px; padding: 16px; min-width: 0; }
+.schedule-editor legend { padding: 0 7px; font-weight: 600; }
+.schedule-editor > p { margin: 0 0 14px; font-size: 12px; line-height: 1.9; opacity: .75; }
+.schedule-editor-row { display: grid; grid-template-columns: 150px 1fr 40px; align-items: end; gap: 10px; margin: 12px 0; }
+.schedule-editor-row label { min-width: 0; }
+.schedule-editor button { min-height: 42px; padding: 8px 12px; border: 1px solid #c7b78d; border-radius: 5px; color: #214d3e; background: #faf6eb; cursor: pointer; }
+.schedule-editor button:disabled { opacity: .5; cursor: default; }
+@media (max-width: 520px) { .schedule-editor-row { grid-template-columns: 1fr 40px; } .schedule-editor-row label:first-child { grid-column: 1 / -1; } }
+@media (max-height: 700px) { .invite.invite.invite .details-paper .soft-copy { display: none; } .invite.invite.invite .schedule-milestones li { padding-bottom: 9px; } }
+@media (max-height: 620px) { .invite.invite.invite .wedding-schedule h3 { margin-bottom: 6px; } .invite.invite.invite .schedule-milestones p { font-size: 12px; } .invite.invite.invite .schedule-milestones li { padding-bottom: 5px; } }

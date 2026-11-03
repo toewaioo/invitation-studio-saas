@@ -1,0 +1,169 @@
+html:has(.lg-experience), body:has(.lg-experience), #root:has(.lg-experience) {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  background: #03040a;
+}
+
+.lg-experience {
+  --my: "Noto Serif Myanmar";
+  --lg-ink: #f2f6ff;
+  --lg-cyan: #ffc0dd;
+  position: fixed;
+  z-index: 50;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100svh;
+  overflow: hidden;
+  color: var(--lg-ink);
+  background: #03040a;
+  isolation: isolate;
+  font-family: var(--my), Georgia, serif;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+.lg-experience *, .lg-experience *::before, .lg-experience *::after { box-sizing: border-box; }
+.lg-experience button { -webkit-tap-highlight-color: transparent; }
+.lg-experience button:focus-visible, .lg-three-canvas:focus-visible { outline: 2px solid var(--lg-cyan); outline-offset: 4px; }
+
+.lg-three-stage {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 48% 44%, #24101f 0%, #0c0816 48%, #03040a 100%);
+}
+.lg-three-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+  outline: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.lg-stage-vignette {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, #03040a9c 0%, transparent 20%, transparent 60%, #03040a8c 100%), radial-gradient(ellipse at center, transparent 47%, #03040a68 100%);
+}
+.lg-renderer-message {
+  position: absolute;
+  z-index: 6;
+  top: 50%;
+  left: 50%;
+  width: min(360px, calc(100% - 40px));
+  padding: 16px 20px;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  border: 1px solid #ffc0dd66;
+  border-radius: 12px;
+  background: #100a17ef;
+  text-align: center;
+  font: 12px/1.7 Georgia, serif;
+}
+
+.lg-entry-overlay {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+  background: radial-gradient(ellipse at center, #1006170a, #03040a40);
+}
+.lg-entry-button {
+  min-width: 216px;
+  min-height: 56px;
+  padding: 18px 28px;
+  color: #fff0f7;
+  border: 1px solid #ffd1e9a6;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2f112ddc, #130b20eb);
+  box-shadow: 0 0 32px #f77cba30, inset 0 0 20px #f77cba0a;
+  font: 500 11px/1.4 Georgia, serif;
+  letter-spacing: 2.8px;
+  white-space: nowrap;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  transition: opacity .25s ease, border-color .25s ease, box-shadow .25s ease, background .25s ease;
+}
+.lg-entry-button:hover:not(:disabled) {
+  border-color: #ffe5f1;
+  background: linear-gradient(135deg, #49163de8, #23102feb);
+  box-shadow: 0 0 44px #f77cba4a, inset 0 0 20px #f77cba10;
+}
+.lg-entry-button:disabled { opacity: .65; cursor: wait; }
+.lg-entry-error { position: absolute; top: calc(50% + 46px); left: 24px; right: 24px; margin: 0; color: #ffe5f1; text-align: center; font: 12px/1.6 Georgia, serif; }
+.lg-create-link {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  bottom: max(28px, env(safe-area-inset-bottom));
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
+  transform: translateX(-50%);
+  color: #f5d8e8;
+  font: 12px/1.4 Georgia, serif;
+  text-decoration: none;
+  white-space: nowrap;
+  text-shadow: 0 1px 12px #03040a;
+}
+.lg-create-link:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+.lg-create-link:focus-visible { outline: 2px solid var(--lg-cyan); outline-offset: 4px; border-radius: 4px; }
+
+.lg-hud-top {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right));
+  pointer-events: none;
+}
+.lg-hud-actions { display: flex; pointer-events: auto; }
+.lg-music-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: #ffc0dd;
+  border: 1px solid #ffc1df50;
+  border-radius: 50%;
+  background: #100a17cc;
+  box-shadow: 0 0 20px #08142650;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: border-color .2s ease, background .2s ease;
+}
+.lg-music-toggle:hover, .lg-music-toggle[aria-pressed="true"] { color: #fff0f7; border-color: #ffc1df88; background: #231021dd; }
+.lg-music-toggle svg { flex: none; }
+
+.lg-photo-dialog { width: min(620px, calc(100vw - 28px)); max-width: 620px; max-height: min(90dvh, 880px); padding: 0; overflow: hidden; color: #fff0f7; border: 1px solid #ffc2df62; border-radius: 16px; background: #100a17f5; box-shadow: 0 25px 90px #000c, 0 0 30px #f77cba25; }
+.lg-photo-dialog::backdrop { background: #02040bd9; backdrop-filter: blur(8px); }
+.lg-photo-dialog>header { display: flex; justify-content: flex-end; padding: 10px 12px 0; }
+.lg-photo-dialog>header button, .lg-photo-controls button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; color: #ffe5f1; border: 1px solid #ffc1df30; border-radius: 50%; background: #231021; cursor: pointer; }
+.lg-photo-dialog figure { margin: 0; padding: 12px; }
+.lg-photo-dialog figure img { display: block; width: 100%; max-height: 64dvh; object-fit: contain; border-radius: 9px; box-shadow: 0 12px 36px #0009; }
+.lg-photo-controls { display: flex; align-items: center; justify-content: center; gap: 22px; padding: 0 16px 14px; }
+
+@media (max-width: 700px) {
+  .lg-entry-button { min-width: 204px; min-height: 54px; padding: 17px 24px; font-size: 10px; letter-spacing: 2.5px; }
+  .lg-hud-top { padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)); }
+  .lg-stage-vignette { background: linear-gradient(180deg, #03040a9e 0%, transparent 22%, transparent 59%, #03040aa6 100%), radial-gradient(ellipse at center, transparent 37%, #03040a52 100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lg-experience *, .lg-experience *::before, .lg-experience *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
