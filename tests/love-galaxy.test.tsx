@@ -12,7 +12,7 @@ import LoveGalaxyExperience, {
   fitRingWordsAroundCrossing,
   galaxyCameraPhase,
 } from "../src/components/LoveGalaxyExperience";
-import { createSharedJourneyLayout, createSharedJourneyLocalSpaceSpecs, normalizeSharedJourneySampleId, SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS, SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR, SHARED_JOURNEY_START_DISTANCE, SHARED_JOURNEY_WORLD_COUNT } from "../src/components/love-galaxy-shared-journey";
+import { createPublishedSharedJourneyLayout, createSharedJourneyLayout, createSharedJourneyLocalSpaceSpecs, normalizeSharedJourneySampleId, SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS, SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR, SHARED_JOURNEY_START_DISTANCE, SHARED_JOURNEY_WORLD_COUNT } from "../src/components/love-galaxy-shared-journey";
 import Showcase from "../src/components/Showcase";
 
 const originalLocation = Object.getOwnPropertyDescriptor(globalThis, "location");
@@ -257,12 +257,13 @@ describe("standalone Love Galaxy experience", () => {
     const html = renderToStaticMarkup(<LoveGalaxyExperience />);
     const source = readFileSync(new URL("../src/components/LoveGalaxyExperience.tsx", import.meta.url), "utf8");
     expect(html).toContain('data-shared-journey-review="disabled"');
+    expect(html).toContain('data-shared-journey-enabled="disabled"');
     expect(html).not.toContain("SHARED GALAXY · FICTIONAL TEST RUN");
     expect(html).not.toContain("lg-shared-world-tooltip");
     expect(html).not.toContain("lg-return-home-button");
     expect(source).toContain('import.meta.env.VITE_LOVE_GALAXY_SHARED_JOURNEY === "true"');
     expect(source).toContain('sharedJourneyQuery?.get("review") === "shared-journey"');
-    expect(source).toContain('canvas.dataset.sharedJourneySource = reviewSharedJourneyPrototypeEnabled ? "fictional-review-test-only" : "none"');
+    expect(source).toContain('canvas.dataset.sharedJourneySource = reviewSharedJourneyPrototypeEnabled ? "fictional-review-test-only" : sharedJourneyEnabled ? "published-story-content" : "none"');
     expect(source).toContain('canvas.dataset.sharedJourneyDestinationVisible = reviewDestinationReveal > 0.95 ? "true" : "false"');
     expect(source).toContain('canvas.dataset.sharedJourneyWorldDepths = reviewLayout?.worlds.map(world => world.position[2].toFixed(2)).join(",") ?? "none"');
     expect(source).toContain('canvas.dataset.sharedJourneyWorldLabels = JSON.stringify(reviewLayout?.worlds.map(world => world.label) ?? [])');
@@ -283,21 +284,45 @@ describe("standalone Love Galaxy experience", () => {
     expect(source).toContain('const musicSource = reviewSharedJourneyPrototypeEnabled ? backgroundMusic :');
     expect(source).toContain('uniform float uLocalSpaceReveal');
     expect(source).toContain('const updateSharedJourneyPhotoStreams = (time: number) =>');
-    expect(source).toContain('const homeStreamVisible = !reviewSharedJourneyPrototypeEnabled ||');
-    expect(source).toContain('canvas.dataset.sharedJourneyHomeStreamState = reviewSharedJourneyPrototypeEnabled');
-    expect(source).toContain('const homeCardsBeyondApproachDistance = reviewSharedJourneyPrototypeEnabled');
+    expect(source).toContain('const homeStreamVisible = !sharedJourneyEnabled ||');
+    expect(source).toContain('canvas.dataset.sharedJourneyHomeStreamState = sharedJourneyEnabled');
+    expect(source).toContain('const homeCardsBeyondApproachDistance = sharedJourneyEnabled');
     expect(source).toContain('const cardsBeyondApproachDistance = camera.position.distanceTo(stream.group.position) - localCardBounds > 2.0');
     expect(source).toContain('canvas.dataset.sharedJourneyPhotoDistanceChecksSkipped = String(distanceChecksSkipped)');
     expect(source).toContain('LOCAL SPACE · {SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS} LY RADIUS');
     expect(source).toContain('const updateSharedJourneyLocalSpaces = () =>');
     expect(source).toContain('updateSharedJourneyLocalSpaces();');
-    expect(source).toContain('const sharedJourneyClearColor = reviewSharedJourneyPrototypeEnabled ? "#080614" : "#03040a"');
+    expect(source).toContain('const sharedJourneyClearColor = sharedJourneyEnabled ? "#080614" : "#03040a"');
     expect(source).toContain('camera.far = 7200');
     expect(source).toContain('canvas.dataset.cameraLookMode = journeyLookActive && cinematicProgress < 0.95 ? "free-look" : "path"');
-    expect(source).toContain('if (reviewSharedJourneyPrototypeEnabled && journeyStarted && cinematicProgress < 1)');
+    expect(source).toContain('if (sharedJourneyEnabled && journeyStarted && cinematicProgress < 1)');
     expect(source).toContain('THREE.MathUtils.smoothstep(cinematicProgress, 0.90, 1)');
     expect(source).toContain("camera.position.set(destinationAnchor.x, destinationAnchor.y, destinationAnchor.z + THREE.MathUtils.lerp(SHARED_JOURNEY_START_DISTANCE, endDistance, eased))");
     expect(source).toContain("currentOrbit.setFromVector3(camera.position.clone().sub(orbitCenter))");
+  });
+
+  test("published shared journeys use the creator's four photos and never add fictional sample worlds", () => {
+    const photos = [1, 2, 3, 4].map(index => ({ src: `/published-memory-${index}.jpg`, alt: `Published memory ${index}` }));
+    const html = renderToStaticMarkup(<LoveGalaxyExperience story={{ title: "Published Love Galaxy", ringTextOne: "Our first orbit", ringTextTwo: "A real shared memory", photos }} journeyEnabled />);
+    const source = readFileSync(new URL("../src/components/LoveGalaxyExperience.tsx", import.meta.url), "utf8");
+    const publicSource = readFileSync(new URL("../src/components/LoveGalaxyPublic.tsx", import.meta.url), "utf8");
+    const publishedLayout = createPublishedSharedJourneyLayout(12345);
+    const homeSpaces = createSharedJourneyLocalSpaceSpecs(publishedLayout);
+    expect(html).toContain('data-shared-journey-enabled="enabled"');
+    expect(html).toContain('data-shared-journey-review="disabled"');
+    expect(html).toContain("PREPARE GALAXY");
+    expect(html).not.toContain("FICTIONAL TEST RUN");
+    expect(html).not.toContain("TEST WORLD");
+    expect(publishedLayout.worlds).toHaveLength(0);
+    expect(publishedLayout.galaxies).toHaveLength(0);
+    expect(homeSpaces).toHaveLength(1);
+    expect(homeSpaces[0]).toMatchObject({ id: "local-home-published", destinationId: "published-love-galaxy", label: "YOUR HOME" });
+    expect(source).toContain('const images = reviewSharedJourneyPrototypeEnabled ? DEMO_IMAGES : story?.photos?.length === 4 ? story.photos : DEMO_IMAGES');
+    expect(source).toContain('rendererReady ? "BEGIN JOURNEY" : "PREPARE GALAXY"');
+    expect(source).toContain('createSharedJourneyLayout(reviewSampleId, visitSeedBuffer[0])');
+    expect(source).toContain('sharedJourneyEnabled ? createPublishedSharedJourneyLayout(visitSeedBuffer[0]) : null');
+    expect(publicSource).toContain("value.photos.length !== 4");
+    expect(publicSource).toContain("<LoveGalaxyExperience story={story} journeyEnabled />");
   });
 
   test("review-only arrival exposes fictional in-view planet tooltips and a selected-world camera hop", () => {

@@ -29,7 +29,7 @@ export type SharedJourneyGalaxySpec = {
   rotation: readonly [number, number, number];
 };
 export type SharedJourneyLayout = {
-  sampleId: SharedJourneySampleId;
+  sampleId: SharedJourneySampleId | "published";
   destination: readonly [number, number, number];
   worlds: SharedJourneyPlanetSpec[];
   galaxies: SharedJourneyGalaxySpec[];
@@ -168,12 +168,16 @@ export function createSharedJourneyLayout(sampleId: string, visitSeed: number): 
   return { sampleId: safeId, destination: [destinationX, destinationY, 0], worlds, galaxies, visitSeed: visitSeed >>> 0 };
 }
 
+export function createPublishedSharedJourneyLayout(visitSeed: number): SharedJourneyLayout {
+  return { sampleId: "published", destination: [0, 0, 0], worlds: [], galaxies: [], visitSeed: visitSeed >>> 0 };
+}
+
 export function createSharedJourneyLocalSpaceSpecs(layout: SharedJourneyLayout): SharedJourneyLocalSpaceSpec[] {
   const radiusLightYears = SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS;
   return [
     {
       id: `local-home-${layout.sampleId}`,
-      destinationId: `placeholder-${layout.sampleId}`,
+      destinationId: layout.sampleId === "published" ? "published-love-galaxy" : `placeholder-${layout.sampleId}`,
       label: "YOUR HOME",
       center: [0, 0, 0],
       radiusLightYears,
@@ -310,8 +314,9 @@ export function addSharedJourneyEnvironment(
   destination: THREE.Vector3,
   register: <T extends { dispose: () => void }>(resource: T) => T,
 ) {
+  const reviewSample = layout.sampleId !== "published";
   const environment = new THREE.Group();
-  environment.name = "Fictional review-test shared-world environment";
+  environment.name = reviewSample ? "Fictional review-test shared-world environment" : "Published Love Galaxy journey environment";
   environment.position.copy(destination);
   scene.add(environment);
   scene.add(new THREE.AmbientLight(0x889bc9, 0.68));
@@ -333,7 +338,7 @@ export function addSharedJourneyEnvironment(
   starGeometry.setAttribute("color", new THREE.BufferAttribute(starColors, 3));
   const starMaterial = register(new THREE.PointsMaterial({ size: 1.4, vertexColors: true, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
   const stars = new THREE.Points(starGeometry, starMaterial);
-  stars.name = "Fictional review-test corridor stars";
+  stars.name = reviewSample ? "Fictional review-test corridor stars" : "Published journey corridor stars";
   environment.add(stars);
 
   let galaxyPointCount = 0;
