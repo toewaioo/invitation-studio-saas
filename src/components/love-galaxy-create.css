@@ -42,6 +42,7 @@ html:has(.lg-creator-page), body:has(.lg-creator-page), #root:has(.lg-creator-pa
 .lg-ring-field input:focus,.lg-title-field input:focus { border-color:#d88cba; box-shadow:0 0 0 3px #dc8aba20; }
 .lg-ring-field small { color:#8f8295; font-size:10px; text-align:right; }
 .lg-title-field { display:grid; gap:7px; margin-top:16px; color:#d5c6d8; font-size:11px; }
+.lg-title-hint { color:#a89cad; font-size:10px; line-height:1.6; }
 .lg-music-options { display:grid; gap:8px; }
 .lg-music-option { position:relative; display:flex; align-items:center; gap:10px; min-height:64px; padding:10px 13px; border:1px solid #ffffff20; border-radius:11px; background:#0b0913; cursor:pointer; }
 .lg-music-option.selected { border-color:#db8aba9c; background:#c55f9c14; }

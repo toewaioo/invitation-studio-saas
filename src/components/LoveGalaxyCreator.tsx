@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Copy, Download, ImagePlus, LoaderCircle, Music2, Play, QrCode, ShieldCheck, Sparkles, UploadCloud } from 'lucide-react';
 import LoveGalaxyExperience, { type LoveGalaxyStory } from './LoveGalaxyExperience';
 import { createLoveGalaxy, LOVE_GALAXY_MUSIC_BYTES, LOVE_GALAXY_PHOTO_COUNT, publishedLoveGalaxyUrl, type LoveGalaxy, type LoveGalaxyMusicTrack } from '../lib/loveGalaxy';
+import { createGalaxyPlanetName } from '../lib/galaxyName';
 import { verifiedHeartQr, type VerifiedHeartQr } from '../lib/shareQr';
 import './love-galaxy-create.css';
 
@@ -10,7 +11,7 @@ const audioTypes = ['audio/mpeg', 'audio/mp4', 'audio/aac', 'audio/ogg', 'audio/
 
 export default function LoveGalaxyCreator() {
   const [lang, setLang] = useState<'en' | 'my'>(() => localStorage.getItem('metta-language') === 'en' ? 'en' : 'my');
-  const [title, setTitle] = useState('Our Love Galaxy');
+  const [title, setTitle] = useState(createGalaxyPlanetName);
   const [ringOne, setRingOne] = useState('MEMORIES ARE OUR STARS');
   const [ringTwo, setRingTwo] = useState('TWO HEARTS, ONE HORIZON');
   const [musicTrack, setMusicTrack] = useState<LoveGalaxyMusicTrack>('cosmic-orbit');
@@ -93,7 +94,7 @@ export default function LoveGalaxyCreator() {
           <div className="lg-creator-step"><span>02</span><div><h2 id="lg-rings-title">{t('Write your two ring messages', 'စာသားကွင်းနှစ်ခုတွင် စာရေးပါ')}</h2><p>{t('These phrases curve around the galaxy in your own words.', 'ဤစာသားများသည် သင့်စကားလုံးများအဖြစ် စကြဝဠာပတ်လည်တွင် ကွေးလှည့်မည်။')}</p></div></div>
           <label className="lg-ring-field"><span><i className="ring-dot pink"/> {t('Outer ring', 'အပြင်ကွင်း')}</span><input value={ringOne} onChange={event => setRingOne(event.target.value)} maxLength={64} required aria-label={t('Outer ring text', 'အပြင်စာသားကွင်း')}/><small>{ringOne.length}/64</small></label>
           <label className="lg-ring-field"><span><i className="ring-dot lilac"/> {t('Inner ring', 'အတွင်းကွင်း')}</span><input value={ringTwo} onChange={event => setRingTwo(event.target.value)} maxLength={64} required aria-label={t('Inner ring text', 'အတွင်းစာသားကွင်း')}/><small>{ringTwo.length}/64</small></label>
-          <label className="lg-title-field">{t('Galaxy title', 'စကြဝဠာအမည်')}<input value={title} onChange={event => setTitle(event.target.value)} maxLength={120} required /></label>
+          <label className="lg-title-field">{t('Galaxy name', 'စကြဝဠာအမည်')}<input value={title} onChange={event => setTitle(event.target.value)} maxLength={120} required aria-label={t('Galaxy name', 'စကြဝဠာအမည်')}/><small className="lg-title-hint">{t('A random planet-style name, ready to edit.', 'ဂြိုလ်အသစ်ပုံစံ အမည်ကို အလိုအလျောက်ပေးထားပြီး ပြင်နိုင်ပါသည်။')}</small></label>
         </section>
 
         <section className="lg-creator-card" aria-labelledby="lg-music-title">
