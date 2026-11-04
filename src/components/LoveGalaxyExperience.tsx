@@ -381,6 +381,7 @@ function mountGalaxy(
   canvas.dataset.sharedJourneyWorldPositions = JSON.stringify(reviewLayout?.worlds.map(world => world.position) ?? []);
   canvas.dataset.sharedJourneyWorldProfiles = JSON.stringify(reviewLayout?.worlds.map(({ id, label, color, pattern, radius }) => ({ id, label, color, pattern, radius })) ?? []);
   canvas.dataset.sharedJourneyTooltipWorldId = "none";
+  canvas.dataset.sharedJourneyTooltipScreenPosition = "none";
   canvas.dataset.sharedJourneySelectedWorldId = "none";
   canvas.dataset.sharedJourneyHopProgress = "0";
   canvas.dataset.curvedTextRingSweep = "360";
@@ -1031,6 +1032,10 @@ function mountGalaxy(
   const worldPosition = new THREE.Vector3();
   const localPosition = new THREE.Vector3();
   const framePosition = new THREE.Vector3();
+  const sharedWorldFrustum = new THREE.Frustum();
+  const sharedWorldFrustumMatrix = new THREE.Matrix4();
+  const sharedWorldBounds = new THREE.Sphere();
+  const sharedWorldScale = new THREE.Vector3();
   const previewDragOffset = new THREE.Vector3();
   const previewDragTargetOffset = new THREE.Vector3();
   const previewDragGestureOrigin = new THREE.Vector2();
@@ -1554,24 +1559,32 @@ function mountGalaxy(
     if (!sharedJourneyEnabled || !reviewJourneyArrived || sharedJourneyWorldTravel || !journeyStarted) {
       tooltip.hidden = true;
       canvas.dataset.sharedJourneyTooltipWorldId = "none";
+      canvas.dataset.sharedJourneyTooltipScreenPosition = "none";
       return;
     }
     camera.getWorldDirection(cameraForward);
+    sharedWorldFrustumMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    sharedWorldFrustum.setFromProjectionMatrix(sharedWorldFrustumMatrix);
     const focalLength = canvas.clientHeight / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
     const candidates: { target: SharedJourneyWorldTarget; distance: number; score: number; x: number; y: number; direction: THREE.Vector3 }[] = [];
     for (const target of sharedJourneyWorldTargets) {
       if (target.id === currentSharedJourneyWorldId) continue;
+      if (!target.group.visible || !target.surface.visible) continue;
       if ((target.group.userData.sharedJourneyReveal as number | undefined ?? 0) < 0.24) continue;
       target.group.updateWorldMatrix(true, false);
       target.group.getWorldPosition(projectedWorldPoint);
       const distance = camera.position.distanceTo(projectedWorldPoint);
       if (distance <= 0) continue;
-      const projectedRadius = target.radius * target.group.scale.x * focalLength / distance;
+      const worldRadius = target.radius * target.group.getWorldScale(sharedWorldScale).x;
+      const projectedRadius = worldRadius * focalLength / distance;
       if (projectedRadius < 2) continue;
+      sharedWorldBounds.center.copy(projectedWorldPoint);
+      sharedWorldBounds.radius = worldRadius;
+      if (!sharedWorldFrustum.intersectsSphere(sharedWorldBounds) || !sharedWorldFrustum.containsPoint(projectedWorldPoint)) continue;
       worldViewDirection.subVectors(projectedWorldPoint, camera.position).normalize();
       if (worldViewDirection.dot(cameraForward) <= 0) continue;
       projectedWorldPoint.project(camera);
-      if (projectedWorldPoint.z < -1 || projectedWorldPoint.z > 1 || Math.abs(projectedWorldPoint.x) > 0.94 || Math.abs(projectedWorldPoint.y) > 0.94) continue;
+      if (projectedWorldPoint.z < -1 || projectedWorldPoint.z > 1 || projectedWorldPoint.x < -1 || projectedWorldPoint.x > 1 || projectedWorldPoint.y < -1 || projectedWorldPoint.y > 1) continue;
       const centerScore = projectedWorldPoint.x * projectedWorldPoint.x + projectedWorldPoint.y * projectedWorldPoint.y;
       candidates.push({
         target,
@@ -1608,6 +1621,7 @@ function mountGalaxy(
     if (!nearestTarget) {
       tooltip.hidden = true;
       canvas.dataset.sharedJourneyTooltipWorldId = "none";
+      canvas.dataset.sharedJourneyTooltipScreenPosition = "none";
       return;
     }
     if (tooltip.dataset.worldId !== nearestTarget.id) {
@@ -1623,6 +1637,7 @@ function mountGalaxy(
     tooltip.style.top = `${THREE.MathUtils.clamp(nearestY, tooltipHeight + 18, canvas.clientHeight - 12)}px`;
     tooltip.hidden = false;
     canvas.dataset.sharedJourneyTooltipWorldId = nearestTarget.id;
+    canvas.dataset.sharedJourneyTooltipScreenPosition = `${nearestX.toFixed(2)},${nearestY.toFixed(2)}`;
   };
   const render = (timestamp: number) => {
     frameId = 0;
@@ -2026,7 +2041,6 @@ export default function LoveGalaxyExperience({ story, onBack, journeyEnabled = f
   const [entryError, setEntryError] = useState(false);
   const [sharedJourneyArrived, setSharedJourneyArrived] = useState(false);
   const [sharedJourneyWorldStatus, setSharedJourneyWorldStatus] = useState<SharedJourneyWorldStatus | null>(null);
-  const [selectedSharedWorldId, setSelectedSharedWorldId] = useState("");
   const sharedJourneyQuery = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const reviewSharedJourneyPrototypeEnabled = import.meta.env.VITE_LOVE_GALAXY_SHARED_JOURNEY === "true"
     && sharedJourneyQuery?.get("review") === "shared-journey";
@@ -2066,14 +2080,6 @@ export default function LoveGalaxyExperience({ story, onBack, journeyEnabled = f
   const musicSource = reviewSharedJourneyPrototypeEnabled ? backgroundMusic : story?.musicSrc || backgroundMusic;
   const memories = images === DEMO_IMAGES ? MEMORIES : Array.from({ length: MEMORY_COUNT }, (_, id) => ({ id, ...images[id % images.length] }));
   const showSharedWorldInteractions = sharedJourneyEnabled && (reviewSharedJourneyPrototypeEnabled || discoverableWorlds.length > 0);
-  const sharedPlanetOptions = journeyEnabled && !reviewSharedJourneyPrototypeEnabled
-    ? discoverableWorlds.flatMap(world => {
-      const href = createPublishedJourneyShareHref(world);
-      return href ? [{ world, href }] : [];
-    })
-    : [];
-  const selectedSharedPlanet = sharedPlanetOptions.find(option => option.world.username === selectedSharedWorldId);
-  const sharedWorldTravelInProgress = sharedJourneyWorldStatus?.phase === "traveling";
 
   const readMusicLevel = useCallback(() => {
     const audio = music.current;
@@ -2253,45 +2259,17 @@ export default function LoveGalaxyExperience({ story, onBack, journeyEnabled = f
     {onBack && <button className="lg-back-button" type="button" onClick={onBack} aria-label="Back to Love Galaxy creation"><ArrowLeft size={17}/><span>Back</span></button>}
 
     {journeyStarted && <header className="lg-hud-top">
-      {(reviewSharedJourneyPrototypeEnabled || (journeyEnabled && (discoverableWorlds.length > 0 || !!sharedJourneyWorldStatus))) && <div className={`lg-shared-journey-status${sharedPlanetOptions.length > 0 ? " lg-shared-journey-status-with-picker" : ""}`}>
+      {(reviewSharedJourneyPrototypeEnabled || (journeyEnabled && (discoverableWorlds.length > 0 || !!sharedJourneyWorldStatus))) && <div className="lg-shared-journey-status">
         <div role="status" aria-live="polite">
         <span>{reviewSharedJourneyPrototypeEnabled ? `FICTIONAL TEST RUN · ${reviewSampleId.toUpperCase()}` : "SHARED JOURNEY · OPTED-IN PLANETS"}</span>
         <strong>{sharedJourneyWorldStatus?.phase === "traveling"
           ? `TRAVELLING TO ${sharedJourneyWorldStatus.label}`
           : sharedJourneyWorldStatus
             ? `ARRIVED AT ${sharedJourneyWorldStatus.label}`
-            : reviewSharedJourneyPrototypeEnabled ? sharedJourneyArrived ? "ARRIVED AT PLACEHOLDER DESTINATION" : `PASSING ${SHARED_JOURNEY_WORLD_COUNT} FICTIONAL TEST WORLDS` : `PASSING ${discoverableWorlds.length} OPTED-IN PLANETS`}</strong>
+            : reviewSharedJourneyPrototypeEnabled ? sharedJourneyArrived ? "ARRIVED AT YOUR PLACEHOLDER PLANET · LOOK AROUND" : `PASSING ${SHARED_JOURNEY_WORLD_COUNT} FICTIONAL TEST WORLDS` : sharedJourneyArrived ? "ARRIVED AT YOUR PLANET · LOOK AROUND" : `PASSING ${discoverableWorlds.length} OPTED-IN PLANETS`}</strong>
         {!reviewSharedJourneyPrototypeEnabled && sharedJourneyWorldStatus?.phase === "arrived" && sharedJourneyWorldStatus.href && <a className="lg-open-journey-world" href={sharedJourneyWorldStatus.href} target="_blank" rel="noreferrer" title="Open this planet's published Love Galaxy in a new tab"><span>Open {sharedJourneyWorldStatus.label}</span><ArrowRight size={14} aria-hidden="true" /></a>}
         {(sharedJourneyWorldStatus?.phase === "arrived" || sharedJourneyArrived) && <small>LOCAL SPACE · {SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS} LY RADIUS</small>}
         </div>
-        {sharedPlanetOptions.length > 0 && <section className="lg-shared-planet-picker" aria-label="Travel to an opted-in shared planet">
-          <label htmlFor="lg-shared-planet-select"><span>SHARED PLANETS</span></label>
-          <div className="lg-shared-planet-picker-controls">
-            <select
-              id="lg-shared-planet-select"
-              aria-label="Choose an opted-in shared planet"
-              aria-describedby="lg-shared-planet-help"
-              value={selectedSharedWorldId}
-              onChange={event => setSelectedSharedWorldId(event.currentTarget.value)}
-            >
-              <option value="">Choose a planet ({sharedPlanetOptions.length})</option>
-              {sharedPlanetOptions.map(({ world }) => <option key={world.username} value={world.username}>{world.title}</option>)}
-            </select>
-            <button
-              type="button"
-              disabled={!selectedSharedPlanet || !sharedJourneyArrived || sharedWorldTravelInProgress}
-              onClick={() => {
-                if (selectedSharedPlanet && sharedJourneyArrived && !sharedWorldTravelInProgress) {
-                  mountedScene.current?.travelToWorld(selectedSharedPlanet.world.username);
-                }
-              }}
-            >
-              <ArrowRight size={14} aria-hidden="true" />
-              <span>Travel</span>
-            </button>
-          </div>
-          <p id="lg-shared-planet-help">{!sharedJourneyArrived ? "Reach your own planet first to unlock travel." : sharedWorldTravelInProgress ? "Your flight is underway." : "Fly to its planet, then open its published Love Galaxy."}</p>
-        </section>}
       </div>}
       <div className="lg-hud-actions">
         <button className="lg-music-toggle" type="button" aria-label={musicEnabled ? "Pause background music" : "Play background music"} aria-pressed={musicEnabled} onClick={toggleMusic}>
