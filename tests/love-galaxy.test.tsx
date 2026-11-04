@@ -12,7 +12,7 @@ import LoveGalaxyExperience, {
   fitRingWordsAroundCrossing,
   galaxyCameraPhase,
 } from "../src/components/LoveGalaxyExperience";
-import { createPublishedJourneyShareHref, createPublishedSharedJourneyLayout, createSharedJourneyLayout, createSharedJourneyLocalSpaceSpecs, normalizeSharedJourneySampleId, SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS, SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR, SHARED_JOURNEY_START_DISTANCE, SHARED_JOURNEY_WORLD_COUNT } from "../src/components/love-galaxy-shared-journey";
+import { createPublishedJourneyShareHref, createPublishedSharedJourneyLayout, createSharedJourneyLayout, createSharedJourneyLocalSpaceSpecs, normalizeSharedJourneySampleId, SHARED_JOURNEY_DURATION_SECONDS, SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS, SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR, SHARED_JOURNEY_START_DISTANCE, SHARED_JOURNEY_WORLD_COUNT } from "../src/components/love-galaxy-shared-journey";
 import Showcase from "../src/components/Showcase";
 
 const originalLocation = Object.getOwnPropertyDescriptor(globalThis, "location");
@@ -388,7 +388,8 @@ describe("standalone Love Galaxy experience", () => {
     expect(source).toContain('className="lg-return-home-button"');
     expect(source).toContain('returnToHome: () => void');
     expect(css).toContain(".lg-return-home-button");
-    expect(helper).toContain("const radiusFromRoute = 40 + random() * 300");
+    expect(helper).toContain("function createSurroundingWorldPositions(count: number, seed: number, center: readonly [number, number, number])");
+    expect(helper).toContain("const radius = 700 + random() * 350");
     expect(helper).toContain("export const SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS = 100");
     expect(helper).toContain("export const SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR = 1");
     expect(helper).toContain("const localStarsPerSpace = 4200");
@@ -416,8 +417,12 @@ describe("standalone Love Galaxy experience", () => {
     expect(new Set(firstVisit.worlds.map(world => world.label)).size).toBe(20);
     expect(new Set(firstVisit.worlds.map(world => world.color)).size).toBe(20);
     expect(new Set(firstVisit.worlds.map(world => world.pattern)).size).toBe(5);
-    const azimuthSectors = new Set(firstVisit.worlds.map(world => Math.floor(((Math.atan2(world.position[1], world.position[0]) + Math.PI * 2) % (Math.PI * 2)) / (Math.PI / 2))));
-    expect(azimuthSectors.size).toBe(4);
+    const azimuthCounts = [0, 0, 0, 0];
+    for (const world of firstVisit.worlds) {
+      const angle = Math.atan2(world.position[2] - firstVisit.destination[2], world.position[0] - firstVisit.destination[0]);
+      azimuthCounts[Math.floor(((angle + Math.PI * 2) % (Math.PI * 2)) / (Math.PI / 2))] += 1;
+    }
+    expect(azimuthCounts.every(count => count >= 3)).toBe(true);
     expect(firstVisit.galaxies.every(galaxy => galaxy.position.every(Number.isFinite) && galaxy.radius >= 9)).toBe(true);
     const localSpaces = createSharedJourneyLocalSpaceSpecs(firstVisit);
     expect(localSpaces).toHaveLength(SHARED_JOURNEY_WORLD_COUNT + 1);
@@ -426,22 +431,53 @@ describe("standalone Love Galaxy experience", () => {
     expect(new Set(localSpaces.map(space => space.id)).size).toBe(21);
     expect(localSpaces[0]).toMatchObject({ destinationId: `placeholder-${firstVisit.sampleId}`, label: "YOUR HOME", center: [0, 0, 0] });
     expect(localSpaces.slice(1).map(space => space.center)).toEqual(firstVisit.worlds.map(world => world.position));
-    const depths = firstVisit.worlds.map(world => world.position[2]).sort((a, b) => b - a);
+    const destination = new THREE.Vector3(...firstVisit.destination);
+    const shellDistances = firstVisit.worlds.map(world => new THREE.Vector3(...world.position).distanceTo(destination));
+    const depths = firstVisit.worlds.map(world => world.position[2] - firstVisit.destination[2]);
+    const finalCamera = destination.clone().add(new THREE.Vector3(0, 0, 37));
+    const finalCameraForward = new THREE.Vector3(0, 0, -1);
+    const frontOfCamera = firstVisit.worlds.filter(world => new THREE.Vector3(...world.position).sub(finalCamera).dot(finalCameraForward) > 0);
+    const behindCamera = firstVisit.worlds.filter(world => new THREE.Vector3(...world.position).sub(finalCamera).dot(finalCameraForward) < 0);
+    const verticals = firstVisit.worlds.map(world => world.position[1] - firstVisit.destination[1]);
+    expect(SHARED_JOURNEY_DURATION_SECONDS).toBe(14);
     expect(SHARED_JOURNEY_START_DISTANCE).toBe(6400);
-    expect(Math.min(...depths)).toBeGreaterThan(1020);
-    for (let index = 1; index < depths.length; index++) expect(depths[index - 1] - depths[index]).toBeGreaterThan(200);
+    expect(Math.min(...shellDistances)).toBeGreaterThanOrEqual(700);
+    expect(Math.max(...shellDistances)).toBeLessThan(1050);
+    expect(Math.min(...depths)).toBeLessThan(-400);
+    expect(Math.max(...depths)).toBeGreaterThan(400);
+    expect(Math.min(...verticals)).toBeLessThan(-600);
+    expect(Math.max(...verticals)).toBeGreaterThan(600);
+    expect(frontOfCamera.length).toBeGreaterThanOrEqual(8);
+    expect(behindCamera.length).toBeGreaterThanOrEqual(8);
     for (let left = 0; left < firstVisit.worlds.length; left++) {
       for (let right = left + 1; right < firstVisit.worlds.length; right++) {
         const a = new THREE.Vector3(...firstVisit.worlds[left].position);
         const b = new THREE.Vector3(...firstVisit.worlds[right].position);
-        expect(a.distanceTo(b)).toBeGreaterThan(200);
+        expect(a.distanceTo(b)).toBeGreaterThan(300);
       }
     }
-    const revealEase = 0.78 ** 2 * (3 - 2 * 0.78);
-    const farthestCameraAtReveal = THREE.MathUtils.lerp(SHARED_JOURNEY_START_DISTANCE, 76, revealEase);
-    expect(Math.min(...firstVisit.worlds.map(world => world.position[2] - world.radius))).toBeGreaterThan(farthestCameraAtReveal);
     expect(normalizeSharedJourneySampleId("demo-share-3")).toBe("demo-share-3");
     expect(normalizeSharedJourneySampleId("a-real-name-or-key")).toBe("demo-share-1");
+  });
+
+  test("published shared-journey layout surrounds the stop without changing the opted-in destination list", () => {
+    const optedIn = Array.from({ length: SHARED_JOURNEY_WORLD_COUNT }, (_, index) => ({
+      username: `galaxy-opted-in-${String(index + 1).padStart(2, "0")}`,
+      title: `Opted-in test destination ${index + 1}`,
+      public_key: String(index + 1).padStart(64, "0"),
+    }));
+    const layout = createPublishedSharedJourneyLayout(24680, optedIn);
+    expect(layout.worlds.map(world => world.id)).toEqual(optedIn.map(world => world.username));
+    expect(layout.worlds.map(world => world.label)).toEqual(optedIn.map(world => world.title));
+    expect(layout.worlds.every(world => world.source === "owner-opted-in" && world.href)).toBe(true);
+    expect(layout.worlds.some(world => world.id.startsWith("test-world-") || world.label.startsWith("TEST WORLD "))).toBe(false);
+    const cameraPosition = new THREE.Vector3(0, 0, 37);
+    const cameraForward = new THREE.Vector3(0, 0, -1);
+    const frontOfCamera = layout.worlds.filter(world => new THREE.Vector3(...world.position).sub(cameraPosition).dot(cameraForward) > 0);
+    const behindCamera = layout.worlds.filter(world => new THREE.Vector3(...world.position).sub(cameraPosition).dot(cameraForward) < 0);
+    expect(frontOfCamera.length).toBeGreaterThanOrEqual(8);
+    expect(behindCamera.length).toBeGreaterThanOrEqual(8);
+    expect(layout.worlds.every(world => Math.hypot(...world.position) >= 700 && Math.hypot(...world.position) < 1050)).toBe(true);
   });
 
   test("the review scene uses no creator lookup and preserves the existing photo and ring interaction scene", () => {

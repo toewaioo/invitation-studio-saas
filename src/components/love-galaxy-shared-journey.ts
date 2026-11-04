@@ -67,8 +67,6 @@ export type SharedJourneyLocalSpaceTarget = {
 type TestWorldStyle = Omit<SharedJourneyPlanetSpec, "label" | "source" | "position" | "seed"> & { name: string };
 
 const SAMPLE_IDS: readonly SharedJourneySampleId[] = ["demo-share-1", "demo-share-2", "demo-share-3"];
-const WORLD_DEPTH_START = 5210;
-const WORLD_DEPTH_GAP = 220;
 const GALAXY_DEPTHS = [5450, 4950, 4450, 3950, 3450, 2950, 2450, 1950, 1450, 900, 450] as const;
 // Hand-authored fictional art fixtures. These IDs, labels and styles do not refer to real creators.
 const TEST_WORLD_STYLES: readonly TestWorldStyle[] = [
@@ -115,6 +113,24 @@ function seeded(seed: number) {
   };
 }
 
+function createSurroundingWorldPositions(count: number, seed: number, center: readonly [number, number, number]) {
+  if (count <= 0) return [] as [number, number, number][];
+  const random = seeded(seed >>> 0);
+  const phase = random() * Math.PI * 2;
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  return Array.from({ length: count }, (_, index): [number, number, number] => {
+    const vertical = 1 - 2 * (index + 0.5) / count;
+    const horizontal = Math.sqrt(Math.max(0, 1 - vertical * vertical));
+    const angle = phase + index * goldenAngle;
+    const radius = 700 + random() * 350;
+    return [
+      center[0] + Math.cos(angle) * horizontal * radius,
+      center[1] + vertical * radius,
+      center[2] + Math.sin(angle) * horizontal * radius,
+    ];
+  });
+}
+
 export function normalizeSharedJourneySampleId(value: string | null | undefined): SharedJourneySampleId {
   return SAMPLE_IDS.includes(value as SharedJourneySampleId) ? value as SharedJourneySampleId : SAMPLE_IDS[0];
 }
@@ -135,8 +151,7 @@ export function createSharedJourneyLayout(sampleId: string, visitSeed: number): 
   const destinationX = ((identity & 0xff) / 255 - 0.5) * 30;
   const destinationY = (((identity >>> 8) & 0xff) / 255 - 0.5) * 22;
   const styles = [...TEST_WORLD_STYLES];
-  const depths = Array.from({ length: SHARED_JOURNEY_WORLD_COUNT }, (_, index) => WORLD_DEPTH_START - index * WORLD_DEPTH_GAP);
-  const azimuthAngles = Array.from({ length: SHARED_JOURNEY_WORLD_COUNT }, (_, index) => ((index % 4) + random()) * Math.PI / 2);
+  const positions = createSurroundingWorldPositions(SHARED_JOURNEY_WORLD_COUNT, (visitSeed ^ identity) >>> 0, [destinationX, destinationY, 0]);
   const colors = [...GALAXY_COLORS];
   const shuffle = <T,>(items: T[]) => {
     for (let index = items.length - 1; index > 0; index -= 1) {
@@ -145,17 +160,13 @@ export function createSharedJourneyLayout(sampleId: string, visitSeed: number): 
     }
   };
   shuffle(styles);
-  shuffle(depths);
-  shuffle(azimuthAngles);
   shuffle(colors);
   const worlds = styles.map((style, index): SharedJourneyPlanetSpec => {
-    const angle = azimuthAngles[index];
-    const radiusFromRoute = 40 + random() * 300;
     return {
       id: style.id,
       label: `TEST WORLD ${style.id.slice(-2)} · ${style.name}`,
       source: "fictional-review-test-only",
-      position: [Math.cos(angle) * radiusFromRoute, Math.sin(angle) * radiusFromRoute, depths[index] + (random() - 0.5) * 18],
+      position: positions[index],
       radius: style.radius * (0.94 + random() * 0.12),
       color: style.color,
       accentColor: style.accentColor,
@@ -181,6 +192,8 @@ export function createSharedJourneyLayout(sampleId: string, visitSeed: number): 
 
 export function createPublishedSharedJourneyLayout(visitSeed: number, discoverableWorlds: readonly { username: string; title: string; public_key: string }[] = []): SharedJourneyLayout {
   const seen = new Set<string>();
+  const positions = createSurroundingWorldPositions(SHARED_JOURNEY_WORLD_COUNT, visitSeed, [0, 0, 0]);
+  let placementIndex = 0;
   const worlds = discoverableWorlds.flatMap((world, index): SharedJourneyPlanetSpec[] => {
     const href = createPublishedJourneyShareHref(world);
     if (!href || seen.has(world.username)) return [];
@@ -189,14 +202,12 @@ export function createPublishedSharedJourneyLayout(visitSeed: number, discoverab
     const style = TEST_WORLD_STYLES[index % TEST_WORLD_STYLES.length];
     const worldSeed = hashString(`${world.username}:${world.public_key}`);
     const random = seeded((visitSeed ^ worldSeed) >>> 0);
-    const angle = ((index % 4) + random()) * Math.PI / 2;
-    const radiusFromRoute = 52 + random() * 220;
     return [{
       id: world.username,
       label: world.title.trim(),
       source: "owner-opted-in",
       href,
-      position: [Math.cos(angle) * radiusFromRoute, Math.sin(angle) * radiusFromRoute, WORLD_DEPTH_START - index * WORLD_DEPTH_GAP + (random() - 0.5) * 18],
+      position: positions[placementIndex++],
       radius: style.radius * (0.94 + random() * 0.12),
       color: style.color,
       accentColor: style.accentColor,
