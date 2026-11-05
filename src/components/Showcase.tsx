@@ -3,7 +3,7 @@ import { ArrowRight, ArrowUpRight, BookOpen, Check, ChevronLeft, ChevronRight, L
 import type { Design, Language } from '../types';
 import './showcase.css';
 
-const showcasePreviewAssets = {
+export const showcasePreviewAssets = {
   thazin: {
     src: '/assets/showcase-preview/thazin.webp',
     enAlt: 'Rendered Thazin wedding invitation with a botanical pop-up arch and Burmese couple names.',
@@ -20,9 +20,9 @@ const showcasePreviewAssets = {
     myAlt: 'အလွှာလိုက် ပန်းရောင်စက္ကူနှင့် စုံတွဲပုံပါဝင်သော Rose Reverie မင်္ဂလာဖိတ်စာ နမူနာ။',
   },
   'love-galaxy': {
-    src: '/assets/showcase-preview/love-galaxy.webp',
-    enAlt: 'Live Love Galaxy 3D scene with a glowing pink planet and orbiting photo memories in a star field.',
-    myAlt: 'ကြယ်စင်များကြားရှိ ပန်းရောင်ဂြိုဟ်နှင့် ပတ်လည်လှည့်နေသော အမှတ်တရပုံများပါဝင်သည့် Love Galaxy 3D မြင်ကွင်း။',
+    src: '/assets/showcase-preview/love-galaxy-shared-journey.webp',
+    enAlt: 'Current shared-journey sample at arrival, with photo memories and an in-scene neighboring-planet label.',
+    myAlt: 'မျှဝေခရီးလမ်းအဆုံးတွင် အမှတ်တရဓာတ်ပုံများနှင့် ရွေးချယ်နိုင်သော အနီးအနားဂြိုဟ်အမည် ပါဝင်သည့် လက်ရှိသုံးဖက်မြင်နမူနာ။',
   },
 } as const;
 
@@ -69,7 +69,8 @@ export const showcaseDesigns: { id: Design; name: string; en: string; my: string
   { id: 'rose', name: 'Rose Reverie', en: 'Floral · Layered paper', my: 'ပန်းရောင် စက္ကူပန်း', category: 'wedding' },
 ];
 
-const loveGalaxyReviewPreviewUrl = 'https://love-birds-mm.vercel.app/love-galaxy?review=shared-journey&sample=1';
+// Keep the review journey on this preview build instead of the production build where its flag is off.
+const loveGalaxyReviewPreviewUrl = '/love-galaxy?review=shared-journey&sample=1';
 
 export const showcaseFeaturedProjects: readonly ShowcaseFeaturedProject[] = [
   {

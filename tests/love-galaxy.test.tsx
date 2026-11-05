@@ -250,7 +250,7 @@ describe("standalone Love Galaxy experience", () => {
     expect(galaxy).toMatchObject({
       nameEn: "Love Galaxy",
       titleEn: "A universe of memories, made for you.",
-      href: "https://love-birds-mm.vercel.app/love-galaxy?review=shared-journey&sample=1",
+      href: "/love-galaxy?review=shared-journey&sample=1",
       previewIds: ["love-galaxy"],
       secondaryAction: { kind: "link", href: "/love-galaxy/create" },
     });
@@ -260,6 +260,11 @@ describe("standalone Love Galaxy experience", () => {
     expect(weddingGrid).toContain("Rose Reverie");
     expect(weddingGrid).not.toContain("Love Galaxy");
     expect(weddingGrid).not.toContain("galaxy-memory");
+  });
+
+  test("enables the shared-journey sample only for preview build targets", () => {
+    const config = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
+    expect(config.buildCommand).toBe('if [ "$VERCEL_ENV" = "preview" ]; then VITE_LOVE_GALAXY_SHARED_JOURNEY=true npm run build; else npm run build; fi');
   });
 
   test("the shared-journey prototype is explicitly gated and keeps the normal experience disabled by default", () => {

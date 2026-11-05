@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "if [ \"$VERCEL_ENV\" = \"preview\" ]; then VITE_LOVE_GALAXY_SHARED_JOURNEY=true npm run build; else npm run build; fi",
   "outputDirectory": "dist",
   "rewrites": [
     {

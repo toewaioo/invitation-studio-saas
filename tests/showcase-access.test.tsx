@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import React from "react";
 import App from "../src/App";
 import Editor from "../src/components/Editor";
-import Showcase, { getShowcaseDesigns, showcaseCategories, showcaseDesigns, showcaseFeaturedProjects } from "../src/components/Showcase";
+import Showcase, { getShowcaseDesigns, showcaseCategories, showcaseDesigns, showcaseFeaturedProjects, showcasePreviewAssets } from "../src/components/Showcase";
 import { guestPublicInput } from "../src/lib/guestInvitation";
 import { studioRoute, workspaceAccess } from "../src/lib/access";
 import type { ProjectInput } from "../src/types";
@@ -130,8 +130,10 @@ describe("public and management access", () => {
     ]);
     expect(showcaseFeaturedProjects.map(({ href }) => href)).toEqual([
       "#featured",
-      "https://love-birds-mm.vercel.app/love-galaxy?review=shared-journey&sample=1",
+      "/love-galaxy?review=shared-journey&sample=1",
     ]);
+    expect(showcasePreviewAssets["love-galaxy"].src).toBe("/assets/showcase-preview/love-galaxy-shared-journey.webp");
+    expect(showcasePreviewAssets["love-galaxy"].enAlt).toContain("Current shared-journey sample");
 
     for (const lang of ["en", "my"] as const) {
       const html = renderToStaticMarkup(
