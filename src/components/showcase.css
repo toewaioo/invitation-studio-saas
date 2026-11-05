@@ -480,3 +480,36 @@ html[lang="my"] .showcase-hero-project-copy h2{font-family:'Noto Serif Myanmar',
   .showcase-project-images-3{gap:6px;padding:10px}
   .showcase-project-slide-invitation .showcase-hero-project-visual{aspect-ratio:1.6 / 1}
 }
+
+
+/* Clearly labeled demo reviews; no real-user claims or ratings are implied. */
+.showcase-facts-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+.showcase-reviews{margin:45px 0 0;padding:29px 0 31px;border-top:1px solid #e2e6f0;color:#172342;scroll-margin-top:24px}
+.showcase-reviews-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:26px;margin-bottom:21px}
+.showcase-reviews-heading .showcase-section-kicker{color:#7458c8;font-weight:750}
+.showcase-reviews-heading h2{margin-top:7px;color:#172342;font-family:'Cormorant Garamond','Noto Serif Myanmar',Georgia,serif;font-size:clamp(28px,3vw,38px);font-weight:500;letter-spacing:-.025em;line-height:1.25}
+.showcase-reviews-heading>p{max-width:360px;padding:10px 13px;border-left:2px solid #9b8bd0;background:#f5f3fb;color:#535c72;font-size:10px;line-height:1.85}
+.showcase-review-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid #dfe3ed;border-bottom:1px solid #dfe3ed}
+.showcase-review{min-width:0;padding:15px 21px 14px 0}
+.showcase-review+.showcase-review{padding-left:20px;border-left:1px solid #e2e6ef}
+.showcase-review-mark{color:#8a78ca;font-family:'Cormorant Garamond',Georgia,serif;font-size:36px;line-height:1}
+.showcase-review blockquote{margin:8px 0 17px;color:#344058;font-size:11px;line-height:1.95}
+.showcase-review-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#7458c8;font-size:8px;font-weight:700;letter-spacing:.08em}
+.showcase-review-meta span:last-child{color:#9aa0ae}
+html[lang="my"] .showcase-reviews-heading h2{font-family:'Noto Serif Myanmar','Cormorant Garamond',serif;font-size:clamp(20px,2.3vw,27px);letter-spacing:0;line-height:1.7}
+html[lang="my"] .showcase-review blockquote{line-height:2}
+@media(max-width:760px){
+  .showcase-reviews{margin-top:36px;padding:24px 0 27px}
+  .showcase-reviews-heading{align-items:flex-start;flex-direction:column;gap:10px}
+  .showcase-reviews-heading>p{max-width:520px}
+  .showcase-review-grid{grid-template-columns:1fr}
+  .showcase-review,.showcase-review+.showcase-review{padding:15px 0 14px;border-left:0;border-bottom:1px solid #e2e6ef}
+  .showcase-review:last-child{border-bottom:0}
+}
+@media(max-width:520px){
+  .showcase-reviews{margin-top:30px;padding:21px 0 23px}
+  .showcase-reviews-heading h2{font-size:26px}
+  .showcase-reviews-heading>p{font-size:10px}
+  .showcase-review blockquote{font-size:10px}
+  html[lang="my"] .showcase-reviews-heading h2{font-size:21px}
+}

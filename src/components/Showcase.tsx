@@ -149,6 +149,19 @@ export const showcaseFaqs: Record<Language, readonly { question: string; answer:
   ],
 };
 
+export const showcaseDemoReviews: Record<Language, readonly { quote: string }[]> = {
+  en: [
+    { quote: 'The event details and photos come together in one invitation that is easy to share.' },
+    { quote: 'Choosing a style and adding our own details feels simple, then one link is ready to send.' },
+    { quote: 'Seeing a preview first makes it easier to picture the invitation we want to create.' },
+  ],
+  my: [
+    { quote: 'ပွဲအချက်အလက်နဲ့ ဓာတ်ပုံတွေကို ဖိတ်စာတစ်ခုထဲမှာ စုစည်းပြီး လင့်ခ်တစ်ခုတည်းနဲ့ မျှဝေနိုင်တာ အဆင်ပြေတယ်။' },
+    { quote: 'ဒီဇိုင်းရွေးပြီး ကိုယ်ပိုင်အချက်အလက်တွေ ထည့်ပြင်ဆင်တာ ရိုးရှင်းတယ်။ ဧည့်သည်တွေဆီ လင့်ခ်တစ်ခု ပို့ရုံပါပဲ။' },
+    { quote: 'ဖိတ်စာကို မျှဝေမီ နမူနာကြည့်နိုင်တာက ကိုယ်လိုချင်တဲ့ပုံစံကို စဉ်းစားရလွယ်စေတယ်။' },
+  ],
+};
+
 export function getShowcaseDesigns(category: CategoryFilter) {
   return category === 'all' ? showcaseDesigns : showcaseDesigns.filter(design => design.category === category);
 }
@@ -206,6 +219,7 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
         <a className="showcase-nav-link" href="#categories">{t('Categories', 'အမျိုးအစားများ')}</a>
         <a className="showcase-nav-link" href="#featured">{t('Featured designs', 'ရွေးချယ်ထားသော ဒီဇိုင်းများ')}</a>
         <a className="showcase-nav-link" href="#featured" onClick={() => setSelectedCategory('3d-experiences')}>3D Experiences</a>
+        <a className="showcase-nav-link" href="#reviews">{t('User reviews', 'နမူနာသုံးသပ်ချက်များ')}</a>
         <a className="showcase-nav-link" href="#faq">{t('FAQ', 'မေးလေ့ရှိသော မေးခွန်းများ')}</a>
         <div className="language-switch" aria-label={t('Language', 'ဘာသာစကား')}><button aria-pressed={lang === 'my'} onClick={() => onLanguage('my')}>မြန်မာ</button><button aria-pressed={lang === 'en'} onClick={() => onLanguage('en')}>EN</button></div>
         <button className="secondary small showcase-header-cta" aria-label={t('Create invitation', 'ဖိတ်စာဖန်တီးမယ်')} onClick={onCreate}>{t('Create invitation', 'ဖိတ်စာဖန်တီးမယ်')}<ArrowUpRight size={14}/></button>
@@ -284,7 +298,6 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
           <p>{t('We show verified offerings, not estimated audience numbers.', 'အတည်ပြုနိုင်သော အချက်အလက်များကိုသာ ဖော်ပြပြီး ခန့်မှန်းအသုံးပြုသူအရေအတွက်ကို မထည့်ပါ။')}</p>
         </div>
         <dl className="showcase-facts-list">
-          <div className="showcase-fact"><dt>{t('Invitation templates', 'ဖိတ်စာဒီဇိုင်းများ')}</dt><dd><strong>{showcaseDesigns.length.toLocaleString(lang === 'my' ? 'my-MM' : 'en')}</strong><span>{t('wedding designs available', 'မင်္ဂလာဒီဇိုင်းများ ရရှိနိုင်သည်')}</span><small>{t('Thazin · Golden Vow · Rose Reverie', 'Thazin · Golden Vow · Rose Reverie')}</small></dd></div>
           <div className="showcase-fact"><dt>{t('3D experiences', '3D အတွေ့အကြုံများ')}</dt><dd><strong>{showcaseExperiences.length.toLocaleString(lang === 'my' ? 'my-MM' : 'en')}</strong><span>{t('experience available', 'အတွေ့အကြုံ ရရှိနိုင်သည်')}</span><small>{t('Love Galaxy is a separate experience', 'Love Galaxy သည် သီးခြားအတွေ့အကြုံဖြစ်သည်')}</small></dd></div>
           <div className="showcase-fact"><dt>{t('Unique user total', 'သီးခြားအသုံးပြုသူအရေအတွက်')}</dt><dd><strong className="showcase-fact-untracked">{t('Not tracked', 'မမှတ်တမ်းတင်ထားပါ')}</strong><small>{t('Guests can create without an account, so a reliable unique-user count is not available.', 'ဧည့်သည်များ အကောင့်မဖွင့်ဘဲ ဖန်တီးနိုင်သောကြောင့် သီးခြားအသုံးပြုသူအရေအတွက်ကို အတည်ပြုမရပါ။')}</small></dd></div>
         </dl>
@@ -331,6 +344,18 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
       </section>
 
       <section className="showcase-how" aria-labelledby="showcase-how-title"><div className="showcase-how-heading"><span className="showcase-section-kicker">{t('SIMPLE BY DESIGN', 'ရိုးရှင်းစွာ ဖန်တီးထားသည်')}</span><h2 id="showcase-how-title">{t('Choose. Customize. Share.', 'ရွေးချယ်ပါ။ ပြင်ဆင်ပါ။ မျှဝေပါ။')}</h2><p>{t('A lovely design is only the beginning. Make it yours, then send it on its way.', 'လှပသော ဒီဇိုင်းတစ်ခုမှ စတင်ပါ။ သင့်စိတ်ကြိုက် ပြင်ဆင်ပြီး မျှဝေလိုက်ပါ။')}</p></div><div className="showcase-steps"><div><span className="showcase-step-number">01</span><h3>{t('Choose', 'ရွေးချယ်ပါ')}</h3><p>{t('Open the samples and choose a style that feels right.', 'နမူနာများထဲမှ သင့်စိတ်ကြိုက် ဒီဇိုင်းကို ရွေးပါ။')}</p></div><div><span className="showcase-step-number">02</span><h3>{t('Customize', 'ပြင်ဆင်ပါ')}</h3><p>{t('Add your event details and photos—no account needed.', 'ပွဲအချက်အလက်နှင့် ဓာတ်ပုံများ ထည့်ပါ။ အကောင့်မလိုပါ။')}</p></div><div><span className="showcase-step-number">03</span><h3>{t('Share', 'မျှဝေပါ')}</h3><p>{t('Get a share link and Heart QR. Keep the link—there is no account or edit link.', 'မျှဝေရန် လင့်ခ်နှင့် Heart QR ရယူပါ။ လင့်ခ်ကို သိမ်းထားပါ။ အကောင့်နှင့် ပြန်ပြင်ရန်လင့်ခ် မရှိပါ။')}</p></div></div></section>
+
+      <section className="showcase-reviews" id="reviews" aria-labelledby="showcase-reviews-title">
+        <div className="showcase-reviews-heading">
+          <div><span className="showcase-section-kicker">{t('SAMPLE REVIEWS · DEMO COPY', 'နမူနာသုံးသပ်ချက်')}</span><h2 id="showcase-reviews-title">{t('User review examples', 'အသုံးပြုသူသုံးသပ်ချက် နမူနာများ')}</h2></div>
+          <p>{t('Illustrative demo data only—these are not reviews from real users.', 'ဤသုံးသပ်ချက်များသည် ဒီမိုအတွက် ဖန်တီးထားသော နမူနာစာသားများသာဖြစ်ပြီး တကယ့်အသုံးပြုသူများထံမှ ကောက်ယူထားခြင်း မဟုတ်ပါ။')}</p>
+        </div>
+        <div className="showcase-review-grid">{showcaseDemoReviews[lang].map((review, index) => <article className="showcase-review" key={`demo-review-${index}`}>
+          <span className="showcase-review-mark" aria-hidden="true">“</span>
+          <blockquote>{review.quote}</blockquote>
+          <div className="showcase-review-meta"><span>{t('DEMO SAMPLE TEXT', 'နမူနာစာသား')}</span><span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span></div>
+        </article>)}</div>
+      </section>
 
       <section className="showcase-faq" id="faq" aria-labelledby="showcase-faq-title">
         <div className="showcase-faq-heading"><span className="showcase-section-kicker">{t('GOOD TO KNOW', 'သိထားသင့်သော အချက်များ')}</span><h2 id="showcase-faq-title">{t('Frequently asked questions', 'မေးလေ့ရှိသော မေးခွန်းများ')}</h2></div>
