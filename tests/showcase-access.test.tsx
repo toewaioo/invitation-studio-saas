@@ -99,18 +99,24 @@ describe("public and management access", () => {
       expect(html).toContain("/assets/showcase-preview/thazin.webp");
       expect(html).toContain("/assets/showcase-preview/golden-vow.webp");
       expect(html).toContain("/assets/showcase-preview/rose-reverie.webp");
-      expect(html).toContain("/assets/showcase-preview/love-galaxy.webp");
+      expect(html).not.toContain("/assets/showcase-preview/love-galaxy.webp");
       expect(html).not.toContain('class="cover-paper"');
       expect(html).toContain(lang === "en" ? "Coming soon" : "မကြာမီလာမည်");
-      const featuredStart = html.indexOf('<section class="showcase-designs"');
-      const galaxyStart = html.indexOf('<section class="showcase-love-galaxy"');
-      expect(galaxyStart).toBeGreaterThan(featuredStart);
-      expect(html.slice(featuredStart, galaxyStart)).not.toContain("Love Galaxy</h2>");
+      expect(html).not.toContain('class="showcase-love-galaxy"');
+      expect(html).not.toContain('id="love-galaxy"');
     }
   });
 
   test("renders the project carousel inside the hero from an extensible list in both languages", () => {
     expect(showcaseFeaturedProjects.map(({ id }) => id)).toEqual(["invitations", "love-galaxy"]);
+    expect(showcaseFeaturedProjects.map(({ titleEn }) => titleEn)).toEqual(["Invitation Project", "Love Galaxy"]);
+    expect(showcaseFeaturedProjects.map(({ descriptionEn }) => descriptionEn)).toEqual([
+      "A collection of immersive wedding invitations, ready to personalize and share.",
+      "A separate 3D memory universe featuring your photos, a personal soundtrack, and an orbit among the stars.",
+    ]);
+    expect(showcaseFeaturedProjects.map(({ actionEn }) => actionEn)).toEqual(["Explore invitations", "Explore Love Galaxy"]);
+    expect(showcaseFeaturedProjects[0].secondaryAction).toEqual({ kind: "create-invitation", labelEn: "Create your invitation", labelMy: "ဖိတ်စာဖန်တီးမယ်" });
+    expect(showcaseFeaturedProjects[1].secondaryAction).toEqual({ kind: "link", href: "/love-galaxy/create", labelEn: "Create your own", labelMy: "ကိုယ်ပိုင် ဖန်တီးရန်" });
     expect(showcaseFeaturedProjects.map(({ previewIds }) => previewIds)).toEqual([
       ["thazin", "noir", "rose"], ["love-galaxy"],
     ]);
@@ -136,12 +142,13 @@ describe("public and management access", () => {
       expect(html).toContain(lang === "en" ? "Pause automatic project rotation" : "အလိုအလျောက်ပြသမှု ခဏရပ်ရန်");
       expect(html).toContain(lang === "en" ? "Invitation Project" : "ဖိတ်စာပရောဂျက်");
       expect(html).toContain(lang === "en" ? 'aria-label="Show next project"' : 'aria-label="နောက်ပရောဂျက် ပြရန်"');
-      expect(html).toContain(lang === "en" ? "Thoughtful invitations for moments worth sharing." : "မျှဝေချင်စရာ အမှတ်တရများအတွက် ဖိတ်စာများ။");
+      expect(html).toContain(lang === "en" ? "A collection of immersive wedding invitations, ready to personalize and share." : "စိတ်ကြိုက်ပြင်ဆင်ပြီး မျှဝေနိုင်သည့် အမှတ်တရမင်္ဂလာဖိတ်စာများ။");
+      expect(html).toContain(lang === "en" ? "Explore invitations" : "ဖိတ်စာများ ကြည့်ရန်");
       expect(html).toContain(lang === "en" ? "Create your invitation" : "ဖိတ်စာဖန်တီးမယ်");
     }
   });
 
-  test("puts the rotating project previews in the editorial hero and keeps guest trust and steps clear", () => {
+  test("keeps the rotating project content in Hero without a duplicated promo below", () => {
     for (const lang of ["en", "my"] as const) {
       const html = renderToStaticMarkup(
         <Showcase lang={lang} onLanguage={() => {}} onPreview={() => {}} onCreate={() => {}} onSignIn={() => {}} checking={false} configured={false} />,
@@ -152,8 +159,10 @@ describe("public and management access", () => {
       expect(html).toContain('/assets/showcase-preview/thazin.webp');
       expect(html).toContain('/assets/showcase-preview/golden-vow.webp');
       expect(html).toContain('/assets/showcase-preview/rose-reverie.webp');
-      expect(html).toContain(lang === "en" ? "No account needed" : "အကောင့်မလိုပါ");
-      expect(html).toContain(lang === "en" ? "Owner space stays private" : "ပိုင်ရှင်နေရာ သီးသန့်ဖြစ်သည်");
+      expect(html).toContain(lang === "en" ? "Invitation Project" : "ဖိတ်စာပရောဂျက်");
+      expect(html).toContain(lang === "en" ? "Explore invitations" : "ဖိတ်စာများ ကြည့်ရန်");
+      expect(html).not.toContain(lang === "en" ? "Thoughtful invitations for moments worth sharing." : "မျှဝေချင်စရာ အမှတ်တရများအတွက် ဖိတ်စာများ။");
+      expect(html).not.toContain('class="showcase-love-galaxy"');
       expect(html).toContain("Toewaioo&#x27;s Studio");
       expect(html).toContain(lang === "en" ? "Choose. Customize. Share." : "ရွေးချယ်ပါ။ ပြင်ဆင်ပါ။ မျှဝေပါ။");
       expect(html).not.toContain("Download HTML");

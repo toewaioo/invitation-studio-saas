@@ -13,7 +13,7 @@ import LoveGalaxyExperience, {
   galaxyCameraPhase,
 } from "../src/components/LoveGalaxyExperience";
 import { createPublishedJourneyShareHref, createPublishedSharedJourneyLayout, createSharedJourneyLayout, createSharedJourneyLocalSpaceSpecs, normalizeSharedJourneySampleId, SHARED_JOURNEY_DURATION_SECONDS, SHARED_JOURNEY_LOCAL_SPACE_RADIUS_LIGHT_YEARS, SHARED_JOURNEY_SCENE_UNITS_PER_LIGHT_YEAR, SHARED_JOURNEY_START_DISTANCE, SHARED_JOURNEY_WORLD_COUNT } from "../src/components/love-galaxy-shared-journey";
-import Showcase from "../src/components/Showcase";
+import Showcase, { showcaseFeaturedProjects } from "../src/components/Showcase";
 
 const originalLocation = Object.getOwnPropertyDescriptor(globalThis, "location");
 afterEach(() => {
@@ -235,16 +235,24 @@ describe("standalone Love Galaxy experience", () => {
     expect(html.toLowerCase()).not.toContain("wedding");
   });
 
-  test("keeps three wedding templates and features Love Galaxy separately outside their grid", () => {
+  test("keeps three wedding templates and puts Love Galaxy in the rotating Hero instead of a duplicate promo", () => {
     const html = renderToStaticMarkup(<Showcase lang="en" onLanguage={() => {}} onPreview={() => {}} onCreate={() => {}} onSignIn={() => {}} checking={false} configured={false} />);
     expect(html).toContain("Thazin");
     expect(html).toContain("Golden Vow");
     expect(html).toContain("Rose Reverie");
     expect((html.match(/class="library-design\s/g) ?? []).length).toBe(3);
-    expect(html).toContain('class="showcase-love-galaxy"');
-    expect(html).toContain('href="https://love-birds-mm.vercel.app/love-galaxy?review=shared-journey&amp;sample=1"');
-    expect(html).toContain('href="/love-galaxy/create"');
-    expect(html).toContain("not a wedding invitation template");
+    expect(html).toContain('id="hero-featured-projects"');
+    expect(html).toContain('data-featured-project="invitations"');
+    expect(html).not.toContain('class="showcase-love-galaxy"');
+    expect(html).not.toContain('id="love-galaxy"');
+    expect(html).toContain('aria-label="Show project Love Galaxy"');
+    const galaxy = showcaseFeaturedProjects.find(project => project.id === "love-galaxy");
+    expect(galaxy).toMatchObject({
+      titleEn: "Love Galaxy",
+      href: "https://love-birds-mm.vercel.app/love-galaxy?review=shared-journey&sample=1",
+      previewIds: ["love-galaxy"],
+      secondaryAction: { kind: "link", href: "/love-galaxy/create" },
+    });
     const weddingGrid = html.match(/<div class="design-library-grid">([\s\S]*?)<\/div><\/section>/)?.[1] ?? "";
     expect(weddingGrid).toContain("Thazin");
     expect(weddingGrid).toContain("Golden Vow");

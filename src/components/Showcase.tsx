@@ -38,6 +38,10 @@ export type ShowcaseFeaturedProject = {
   descriptionMy: string;
   actionEn: string;
   actionMy: string;
+  secondaryAction?: { labelEn: string; labelMy: string } & (
+    | { kind: 'link'; href: string }
+    | { kind: 'create-invitation' }
+  );
   href: string;
   previewIds: readonly ShowcasePreviewId[];
   theme: 'invitation' | 'galaxy';
@@ -75,6 +79,7 @@ export const showcaseFeaturedProjects: readonly ShowcaseFeaturedProject[] = [
     descriptionMy: 'စိတ်ကြိုက်ပြင်ဆင်ပြီး မျှဝေနိုင်သည့် အမှတ်တရမင်္ဂလာဖိတ်စာများ။',
     actionEn: 'Explore invitations',
     actionMy: 'ဖိတ်စာများ ကြည့်ရန်',
+    secondaryAction: { kind: 'create-invitation', labelEn: 'Create your invitation', labelMy: 'ဖိတ်စာဖန်တီးမယ်' },
     href: '#featured',
     previewIds: ['thazin', 'noir', 'rose'],
     theme: 'invitation',
@@ -89,6 +94,7 @@ export const showcaseFeaturedProjects: readonly ShowcaseFeaturedProject[] = [
     descriptionMy: 'ကိုယ်ပိုင်ဓာတ်ပုံများနှင့် တေးသံပါဝင်သည့် ကြယ်စင်များကြား 3D အမှတ်တရကမ္ဘာ။',
     actionEn: 'Explore Love Galaxy',
     actionMy: 'Love Galaxy ကို ကြည့်ရန်',
+    secondaryAction: { kind: 'link', href: '/love-galaxy/create', labelEn: 'Create your own', labelMy: 'ကိုယ်ပိုင် ဖန်တီးရန်' },
     href: loveGalaxyReviewPreviewUrl,
     previewIds: ['love-galaxy'],
     theme: 'galaxy',
@@ -171,71 +177,64 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
     <main id="showcase-main" className="showcase-main">
       {workspace && <section className="showcase-access" aria-labelledby="access-title"><span className="showcase-access-icon"><LockKeyhole size={19}/></span><div><h1 id="access-title">{admin ? t('Private management', 'သီးသန့်စီမံခန့်ခွဲမှု') : t('Your invitations, your space', 'သင့်ဖိတ်စာများအတွက် သီးသန့်နေရာ')}</h1><p>{checking ? t('Checking your session…', 'အကောင့်စစ်ဆေးနေပါသည်…') : !configured ? t('Account access is not configured. You can still explore every sample below.', 'အကောင့်အသုံးပြုမှု မချိတ်ဆက်ရသေးပါ။ အောက်ပါနမူနာများကို ကြည့်ရှုနိုင်ပါသည်။') : admin && signedIn ? t('This area is restricted to the configured studio owner.', 'ဤနေရာကို သတ်မှတ်ထားသော ပိုင်ရှင်အကောင့်သာ အသုံးပြုနိုင်သည်။') : t('Only the studio owner can sign in here. Visitors can create an invitation without an account.', 'ဤနေရာကို ပိုင်ရှင်အကောင့်သာ ဝင်ရောက်နိုင်သည်။ ဧည့်သည်များက အကောင့်မလိုဘဲ ဖိတ်စာဖန်တီးနိုင်သည်။')}</p></div>{configured && !signedIn && <button className="primary" disabled={checking} onClick={onSignIn}>{t('Sign in', 'အကောင့်ဝင်ရန်')}<ArrowRight size={15}/></button>}</section>}
 
-      <section className="showcase-hero" aria-labelledby="showcase-title">
-        <div className="showcase-hero-copy">
-          <span className="showcase-eyebrow"><Sparkles size={14}/>{t('A SMALL STUDIO FOR MANY KINDS OF MOMENTS', 'အမှတ်တရအမျိုးမျိုးအတွက် ဒီဇိုင်းစတူဒီယို')}</span>
-          <h1 id="showcase-title">{t('Thoughtful invitations for moments worth sharing.', 'မျှဝေချင်စရာ အမှတ်တရများအတွက် ဖိတ်စာများ။')}</h1>
-          <p>{t('Explore Wedding invitations and a separate 3D experience; more collections are on the way.', 'မင်္ဂလာဖိတ်စာများနှင့် သီးခြား 3D အတွေ့အကြုံကို လေ့လာပါ။ အခြားစုစည်းမှုများလည်း မကြာမီလာပါမည်။')}</p>
-          <div className="showcase-hero-actions"><button className="primary" onClick={onCreate}>{t('Create your invitation', 'ဖိတ်စာဖန်တီးမယ်')}<ArrowRight size={16}/></button><a className="text-button" href="#categories">{t('Explore categories', 'အမျိုးအစားများ ကြည့်ရန်')}<ArrowRight size={15}/></a></div>
-          <div className="showcase-proof"><span><Check size={14}/>{t('No account needed', 'အကောင့်မလိုပါ')}</span><i aria-hidden="true"/><span>{t('Share with one link', 'လင့်ခ်တစ်ခုဖြင့် မျှဝေပါ')}</span><i aria-hidden="true"/><span>{t('Owner space stays private', 'ပိုင်ရှင်နေရာ သီးသန့်ဖြစ်သည်')}</span></div>
-        </div>
-        <div
-          className="showcase-hero-projects"
-          id="hero-featured-projects"
-          role="region"
-          aria-label={t('Featured studio projects', 'စတူဒီယို၏ အဓိကပရောဂျက်များ')}
-          aria-roledescription={t('carousel', 'အလိုအလျောက်ပြောင်းလဲပြသမှု')}
-          onMouseEnter={() => setFeaturedPointerInside(true)}
-          onMouseLeave={() => setFeaturedPointerInside(false)}
-          onFocusCapture={() => setFeaturedHasFocus(true)}
-          onBlurCapture={event => {
-            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFeaturedHasFocus(false);
-          }}
+      <section
+        className="showcase-hero"
+        id="hero-featured-projects"
+        aria-labelledby="showcase-title"
+        aria-roledescription={t('carousel', 'အလိုအလျောက်ပြောင်းလဲပြသမှု')}
+        onMouseEnter={() => setFeaturedPointerInside(true)}
+        onMouseLeave={() => setFeaturedPointerInside(false)}
+        onFocusCapture={() => setFeaturedHasFocus(true)}
+        onBlurCapture={event => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFeaturedHasFocus(false);
+        }}
+      >
+        {activeFeaturedProject && <article
+          className={`showcase-hero-project-slide showcase-project-slide-${activeFeaturedProject.theme}`}
+          data-featured-project={activeFeaturedProject.id}
+          aria-roledescription={t('slide', 'ပရောဂျက်')}
+          aria-label={`${featuredProjectIndex + 1} ${t('of', 'မှ')} ${featuredProjectCount}`}
+          aria-live={featuredRotationPaused || featuredPointerInside || featuredHasFocus || prefersReducedMotion ? 'polite' : 'off'}
         >
-          <div className="showcase-hero-projects-top">
-            <span className="showcase-hero-projects-label">{t('STUDIO PROJECTS', 'စတူဒီယို၏ လက်ရာများ')}</span>
-          <div className="showcase-project-carousel-controls">
-            <button type="button" aria-label={t('Show previous project', 'ယခင်ပရောဂျက် ပြရန်')} onClick={() => moveFeaturedProject(-1)}><ChevronLeft size={17}/></button>
-            <button type="button" aria-label={featuredRotationPaused ? t('Resume automatic project rotation', 'အလိုအလျောက်ပြသမှု ပြန်စရန်') : t('Pause automatic project rotation', 'အလိုအလျောက်ပြသမှု ခဏရပ်ရန်')} aria-pressed={featuredRotationPaused} onClick={() => setFeaturedRotationPaused(current => !current)}>{featuredRotationPaused ? <Play size={14}/> : <Pause size={14}/>}</button>
-            <button type="button" aria-label={t('Show next project', 'နောက်ပရောဂျက် ပြရန်')} onClick={() => moveFeaturedProject(1)}><ChevronRight size={17}/></button>
+          <div className="showcase-hero-copy">
+            <span className="showcase-eyebrow"><Sparkles size={14}/>{t(activeFeaturedProject.eyebrowEn, activeFeaturedProject.eyebrowMy)}</span>
+            <h1 id="showcase-title">{t(activeFeaturedProject.titleEn, activeFeaturedProject.titleMy)}</h1>
+            <p>{t(activeFeaturedProject.descriptionEn, activeFeaturedProject.descriptionMy)}</p>
+            <div className="showcase-hero-actions">
+              <a className="primary" href={activeFeaturedProject.href}>{t(activeFeaturedProject.actionEn, activeFeaturedProject.actionMy)}<ArrowRight size={16}/></a>
+              {activeFeaturedProject.secondaryAction?.kind === 'create-invitation' && <button type="button" className="text-button" onClick={onCreate}>{t(activeFeaturedProject.secondaryAction.labelEn, activeFeaturedProject.secondaryAction.labelMy)}<ArrowRight size={15}/></button>}
+              {activeFeaturedProject.secondaryAction?.kind === 'link' && <a className="text-button" href={activeFeaturedProject.secondaryAction.href}>{t(activeFeaturedProject.secondaryAction.labelEn, activeFeaturedProject.secondaryAction.labelMy)}<ArrowRight size={15}/></a>}
+            </div>
           </div>
-          </div>
-          {activeFeaturedProject && <article
-            className={`showcase-hero-project-slide showcase-project-slide-${activeFeaturedProject.theme}`}
-            data-featured-project={activeFeaturedProject.id}
-            aria-roledescription={t('slide', 'ပရောဂျက်')}
-            aria-label={`${featuredProjectIndex + 1} ${t('of', 'မှ')} ${featuredProjectCount}`}
-            aria-live={featuredRotationPaused || featuredPointerInside || featuredHasFocus || prefersReducedMotion ? 'polite' : 'off'}
-          >
+          <div className="showcase-hero-projects">
+            <div className="showcase-hero-projects-top">
+              <span className="showcase-hero-projects-label">{t('STUDIO PROJECTS', 'စတူဒီယို၏ လက်ရာများ')}</span>
+              <div className="showcase-project-carousel-controls">
+                <button type="button" aria-label={t('Show previous project', 'ယခင်ပရောဂျက် ပြရန်')} onClick={() => moveFeaturedProject(-1)}><ChevronLeft size={17}/></button>
+                <button type="button" aria-label={featuredRotationPaused ? t('Resume automatic project rotation', 'အလိုအလျောက်ပြသမှု ပြန်စရန်') : t('Pause automatic project rotation', 'အလိုအလျောက်ပြသမှု ခဏရပ်ရန်')} aria-pressed={featuredRotationPaused} onClick={() => setFeaturedRotationPaused(current => !current)}>{featuredRotationPaused ? <Play size={14}/> : <Pause size={14}/>}</button>
+                <button type="button" aria-label={t('Show next project', 'နောက်ပရောဂျက် ပြရန်')} onClick={() => moveFeaturedProject(1)}><ChevronRight size={17}/></button>
+              </div>
+            </div>
             <a className={`showcase-hero-project-visual showcase-hero-project-visual-${activeFeaturedProject.theme}`} href={activeFeaturedProject.href} aria-label={t(activeFeaturedProject.actionEn, activeFeaturedProject.actionMy)}>
               <div className={`showcase-project-images showcase-project-images-${activeFeaturedProject.previewIds.length}`} aria-hidden="true">
                 {activeFeaturedProject.previewIds.map(previewId => <div className="showcase-project-image-frame" key={previewId}>{previewImage(previewId, 'eager', 'showcase-project-image')}</div>)}
               </div>
               <span className="showcase-project-art-label">{String(featuredProjectIndex + 1).padStart(2, '0')} <i>/</i> {String(featuredProjectCount).padStart(2, '0')}</span>
             </a>
-            <div className="showcase-hero-projects-caption">
-              <div className="showcase-hero-project-copy">
-                <span className="showcase-project-eyebrow">{t(activeFeaturedProject.eyebrowEn, activeFeaturedProject.eyebrowMy)}</span>
-                <h2>{t(activeFeaturedProject.titleEn, activeFeaturedProject.titleMy)}</h2>
-                <p>{t(activeFeaturedProject.descriptionEn, activeFeaturedProject.descriptionMy)}</p>
+            <div className="showcase-hero-projects-footer">
+              <div className="showcase-project-pagination" role="group" aria-label={t('Choose a project', 'ပရောဂျက်ရွေးရန်')}>
+                {showcaseFeaturedProjects.map((project, index) => <button
+                  type="button"
+                  key={project.id}
+                  aria-label={`${t('Show project', 'ပရောဂျက်ပြရန်')} ${t(project.titleEn, project.titleMy)}`}
+                  aria-pressed={featuredProjectIndex === index}
+                  onClick={() => setFeaturedProjectIndex(index)}
+                ><span/></button>)}
               </div>
-              <a className="showcase-project-action" href={activeFeaturedProject.href}>{t(activeFeaturedProject.actionEn, activeFeaturedProject.actionMy)}<ArrowUpRight size={15}/></a>
+              <span className="showcase-project-carousel-status" aria-hidden="true">{String(featuredProjectIndex + 1).padStart(2, '0')} <i>/</i> {String(featuredProjectCount).padStart(2, '0')}</span>
             </div>
-          </article>}
-
-          <div className="showcase-hero-projects-footer">
-            <div className="showcase-project-pagination" role="group" aria-label={t('Choose a project', 'ပရောဂျက်ရွေးရန်')}>
-              {showcaseFeaturedProjects.map((project, index) => <button
-                type="button"
-                key={project.id}
-                aria-label={`${t('Show project', 'ပရောဂျက်ပြရန်')} ${t(project.titleEn, project.titleMy)}`}
-                aria-pressed={featuredProjectIndex === index}
-                onClick={() => setFeaturedProjectIndex(index)}
-              ><span/></button>)}
-            </div>
-            <span className="showcase-project-carousel-status" aria-hidden="true">{String(featuredProjectIndex + 1).padStart(2, '0')} <i>/</i> {String(featuredProjectCount).padStart(2, '0')}</span>
           </div>
-        </div>
+        </article>}
       </section>
 
       <section className="showcase-categories" id="categories" aria-labelledby="categories-title">
@@ -277,19 +276,6 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
           <button type="button" className="empty-state-link" onClick={() => setSelectedCategory('wedding')}>{t('Explore wedding designs', 'မင်္ဂလာဖိတ်စာများ ကြည့်ရန်')}<ArrowRight size={15}/></button>
         </div>}
       </section>
-
-      {selectedCategory === 'all' && <section className="showcase-love-galaxy" id="love-galaxy" aria-labelledby="showcase-galaxy-title">
-        <div className="showcase-galaxy-copy">
-          <span className="showcase-galaxy-eyebrow">{t('A SEPARATE 3D MEMORY EXPERIENCE', 'သီးခြား 3D အမှတ်တရ အတွေ့အကြုံ')}</span>
-          <h2 id="showcase-galaxy-title">Love Galaxy</h2>
-          <p>{t('Turn four favorite photos into a 1,200-card orbit through the stars, with your own soundtrack. This is a separate creation and sharing experience—not a wedding invitation template.', 'နှစ်သက်ရာ ဓာတ်ပုံလေးပုံမှ ကတ် ၁,၂၀၀ ပါ ကြယ်စင်ဝန်းကျင် 3D အမှတ်တရကမ္ဘာ ဖန်တီးပြီး ကိုယ်ပိုင်တေးသံဖြင့် မျှဝေလိုက်ပါ။ ဤအရာသည် မင်္ဂလာဖိတ်စာ template မဟုတ်ဘဲ သီးခြားဖန်တီးမျှဝေမှု အတွေ့အကြုံဖြစ်သည်။')}</p>
-          <div className="showcase-galaxy-actions">
-            <a className="showcase-galaxy-primary" href={loveGalaxyReviewPreviewUrl}>{t('Explore Love Galaxy', 'Love Galaxy ကို ကြည့်ရန်')}<ArrowUpRight size={15}/></a>
-            <a className="showcase-galaxy-secondary" href="/love-galaxy/create">{t('Create your own', 'ကိုယ်ပိုင် ဖန်တီးရန်')}<ArrowRight size={15}/></a>
-          </div>
-        </div>
-        <div className="showcase-galaxy-art">{previewImage('love-galaxy', 'lazy', 'showcase-galaxy-preview-image')}</div>
-      </section>}
 
       <section className="showcase-how" aria-labelledby="showcase-how-title"><div className="showcase-how-heading"><span className="showcase-section-kicker">{t('SIMPLE BY DESIGN', 'ရိုးရှင်းစွာ ဖန်တီးထားသည်')}</span><h2 id="showcase-how-title">{t('Choose. Customize. Share.', 'ရွေးချယ်ပါ။ ပြင်ဆင်ပါ။ မျှဝေပါ။')}</h2><p>{t('A lovely design is only the beginning. Make it yours, then send it on its way.', 'လှပသော ဒီဇိုင်းတစ်ခုမှ စတင်ပါ။ သင့်စိတ်ကြိုက် ပြင်ဆင်ပြီး မျှဝေလိုက်ပါ။')}</p></div><div className="showcase-steps"><div><span className="showcase-step-number">01</span><h3>{t('Choose', 'ရွေးချယ်ပါ')}</h3><p>{t('Open the samples and choose a style that feels right.', 'နမူနာများထဲမှ သင့်စိတ်ကြိုက် ဒီဇိုင်းကို ရွေးပါ။')}</p></div><div><span className="showcase-step-number">02</span><h3>{t('Customize', 'ပြင်ဆင်ပါ')}</h3><p>{t('Add your event details and photos—no account needed.', 'ပွဲအချက်အလက်နှင့် ဓာတ်ပုံများ ထည့်ပါ။ အကောင့်မလိုပါ။')}</p></div><div><span className="showcase-step-number">03</span><h3>{t('Share', 'မျှဝေပါ')}</h3><p>{t('Get a share link and Heart QR. Keep the link—there is no account or edit link.', 'မျှဝေရန် လင့်ခ်နှင့် Heart QR ရယူပါ။ လင့်ခ်ကို သိမ်းထားပါ။ အကောင့်နှင့် ပြန်ပြင်ရန်လင့်ခ် မရှိပါ။')}</p></div></div></section>
     </main>
