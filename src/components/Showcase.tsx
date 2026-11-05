@@ -48,6 +48,8 @@ export const showcaseDesigns: { id: Design; name: string; en: string; my: string
   { id: 'rose', name: 'Rose Reverie', en: 'Floral · Layered paper', my: 'ပန်းရောင် စက္ကူပန်း', category: 'wedding' },
 ];
 
+const loveGalaxyReviewPreviewUrl = 'https://love-birds-mm.vercel.app/love-galaxy?review=shared-journey&sample=1';
+
 const showcaseExperiences = [
   {
     id: 'love-galaxy',
@@ -55,7 +57,7 @@ const showcaseExperiences = [
     category: '3d-experiences' as const,
     en: '3D memories · A 1,200-card photo orbit',
     my: '3D အမှတ်တရ · ဓာတ်ပုံကတ် ၁,၂၀၀ ပါ ဝန်းကျင်',
-    href: '/love-galaxy',
+    href: loveGalaxyReviewPreviewUrl,
   },
 ];
 
@@ -88,7 +90,7 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
   return <div className="showcase">
     <a className="skip-link" href="#showcase-main">{t('Skip to content', 'အကြောင်းအရာသို့ သွားရန်')}</a>
     <header className="showcase-header">
-      <a className="workspace-brand" href="/" aria-label={t('Metta Invitation Studio home', 'မေတ္တာစာ ပင်မစာမျက်နှာ')}><span className="brand-mark"><BookOpen size={19} strokeWidth={1.7}/></span><span>မေတ္တာစာ<small>Invitation Studio</small></span></a>
+      <a className="workspace-brand" href="/" aria-label="Toewaioo's Studio home"><span className="brand-mark"><BookOpen size={19} strokeWidth={1.7}/></span><span>Toewaioo's Studio</span></a>
       <nav className="showcase-navigation" aria-label={t('Showcase navigation', 'မီနူး')}>
         <a className="showcase-nav-link" href="#categories">{t('Categories', 'အမျိုးအစားများ')}</a>
         <a className="showcase-nav-link" href="#featured">{t('Featured designs', 'ရွေးချယ်ထားသော ဒီဇိုင်းများ')}</a>
@@ -175,7 +177,7 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
           <h2 id="showcase-galaxy-title">Love Galaxy</h2>
           <p>{t('Turn four favorite photos into a 1,200-card orbit through the stars, with your own soundtrack. This is a separate creation and sharing experience—not a wedding invitation template.', 'နှစ်သက်ရာ ဓာတ်ပုံလေးပုံမှ ကတ် ၁,၂၀၀ ပါ ကြယ်စင်ဝန်းကျင် 3D အမှတ်တရကမ္ဘာ ဖန်တီးပြီး ကိုယ်ပိုင်တေးသံဖြင့် မျှဝေလိုက်ပါ။ ဤအရာသည် မင်္ဂလာဖိတ်စာ template မဟုတ်ဘဲ သီးခြားဖန်တီးမျှဝေမှု အတွေ့အကြုံဖြစ်သည်။')}</p>
           <div className="showcase-galaxy-actions">
-            <a className="showcase-galaxy-primary" href="/love-galaxy">{t('Explore Love Galaxy', 'Love Galaxy ကို ကြည့်ရန်')}<ArrowUpRight size={15}/></a>
+            <a className="showcase-galaxy-primary" href={loveGalaxyReviewPreviewUrl}>{t('Explore Love Galaxy', 'Love Galaxy ကို ကြည့်ရန်')}<ArrowUpRight size={15}/></a>
             <a className="showcase-galaxy-secondary" href="/love-galaxy/create">{t('Create your own', 'ကိုယ်ပိုင် ဖန်တီးရန်')}<ArrowRight size={15}/></a>
           </div>
         </div>
@@ -185,6 +187,6 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
       <section className="showcase-how" aria-labelledby="showcase-how-title"><div className="showcase-how-heading"><span className="showcase-section-kicker">{t('SIMPLE BY DESIGN', 'ရိုးရှင်းစွာ ဖန်တီးထားသည်')}</span><h2 id="showcase-how-title">{t('Choose. Customize. Share.', 'ရွေးချယ်ပါ။ ပြင်ဆင်ပါ။ မျှဝေပါ။')}</h2><p>{t('A lovely design is only the beginning. Make it yours, then send it on its way.', 'လှပသော ဒီဇိုင်းတစ်ခုမှ စတင်ပါ။ သင့်စိတ်ကြိုက် ပြင်ဆင်ပြီး မျှဝေလိုက်ပါ။')}</p></div><div className="showcase-steps"><div><span className="showcase-step-number">01</span><h3>{t('Choose', 'ရွေးချယ်ပါ')}</h3><p>{t('Open the samples and choose a style that feels right.', 'နမူနာများထဲမှ သင့်စိတ်ကြိုက် ဒီဇိုင်းကို ရွေးပါ။')}</p></div><div><span className="showcase-step-number">02</span><h3>{t('Customize', 'ပြင်ဆင်ပါ')}</h3><p>{t('Add your event details and photos—no account needed.', 'ပွဲအချက်အလက်နှင့် ဓာတ်ပုံများ ထည့်ပါ။ အကောင့်မလိုပါ။')}</p></div><div><span className="showcase-step-number">03</span><h3>{t('Share', 'မျှဝေပါ')}</h3><p>{t('Get a share link and Heart QR. Keep the link—there is no account or edit link.', 'မျှဝေရန် လင့်ခ်နှင့် Heart QR ရယူပါ။ လင့်ခ်ကို သိမ်းထားပါ။ အကောင့်နှင့် ပြန်ပြင်ရန်လင့်ခ် မရှိပါ။')}</p></div></div></section>
     </main>
 
-    <footer className="showcase-footer"><div className="showcase-footer-brand"><a href="/" aria-label={t('Metta Invitation Studio home', 'မေတ္တာစာ ပင်မစာမျက်နှာ')}><span>မေတ္တာစာ</span><i>·</i><span>Invitation Studio</span></a><small>{t('Thoughtful designs, made to be shared.', 'မျှဝေဖို့ ဖန်တီးထားသော ဒီဇိုင်းများ။')}</small></div><div className="showcase-footer-explore"><span>{t('EXPLORE', 'လေ့လာရန်')}</span><nav aria-label={t('Browse categories', 'အမျိုးအစားများ ကြည့်ရန်')}>{showcaseCategories.map(category => <a href="#featured" key={category.id} onClick={() => setSelectedCategory(category.id)}>{lang === 'en' ? category.en : category.my}</a>)}</nav></div><div className="showcase-footer-utility"><a href="#featured" onClick={() => setSelectedCategory('3d-experiences')}>Love Galaxy<ArrowUpRight size={13}/></a><a href="/manage"><LockKeyhole size={13}/>{t('Private management', 'သီးသန့်စီမံခန့်ခွဲမှု')}</a><button type="button" onClick={onCreate}>{t('Create an invitation', 'ဖိတ်စာဖန်တီးမယ်')}<ArrowRight size={13}/></button></div></footer>
+    <footer className="showcase-footer"><div className="showcase-footer-brand"><a href="/" aria-label="Toewaioo's Studio home"><span>Toewaioo's Studio</span></a><small>{t('Thoughtful designs, made to be shared.', 'မျှဝေဖို့ ဖန်တီးထားသော ဒီဇိုင်းများ။')}</small></div><div className="showcase-footer-explore"><span>{t('EXPLORE', 'လေ့လာရန်')}</span><nav aria-label={t('Browse categories', 'အမျိုးအစားများ ကြည့်ရန်')}>{showcaseCategories.map(category => <a href="#featured" key={category.id} onClick={() => setSelectedCategory(category.id)}>{lang === 'en' ? category.en : category.my}</a>)}</nav></div><div className="showcase-footer-utility"><a href="#featured" onClick={() => setSelectedCategory('3d-experiences')}>Love Galaxy<ArrowUpRight size={13}/></a><a href="/manage"><LockKeyhole size={13}/>{t('Private management', 'သီးသန့်စီမံခန့်ခွဲမှု')}</a><button type="button" onClick={onCreate}>{t('Create an invitation', 'ဖိတ်စာဖန်တီးမယ်')}<ArrowRight size={13}/></button></div></footer>
   </div>;
 }

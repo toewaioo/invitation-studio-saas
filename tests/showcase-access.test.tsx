@@ -119,6 +119,7 @@ describe("public and management access", () => {
       expect(html).toContain('data-showcase-design="rose"');
       expect(html).toContain(lang === "en" ? "No account needed" : "အကောင့်မလိုပါ");
       expect(html).toContain(lang === "en" ? "Owner space stays private" : "ပိုင်ရှင်နေရာ သီးသန့်ဖြစ်သည်");
+      expect(html).toContain("Toewaioo&#x27;s Studio");
       expect(html).toContain(lang === "en" ? "Choose. Customize. Share." : "ရွေးချယ်ပါ။ ပြင်ဆင်ပါ။ မျှဝေပါ။");
       expect(html).not.toContain("Download HTML");
       expect(html).not.toContain("Online shop");

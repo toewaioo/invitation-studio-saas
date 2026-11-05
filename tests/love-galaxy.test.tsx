@@ -242,7 +242,7 @@ describe("standalone Love Galaxy experience", () => {
     expect(html).toContain("Rose Reverie");
     expect((html.match(/class="library-design\s/g) ?? []).length).toBe(3);
     expect(html).toContain('class="showcase-love-galaxy"');
-    expect(html).toContain('href="/love-galaxy"');
+    expect(html).toContain('href="https://love-birds-mm.vercel.app/love-galaxy?review=shared-journey&amp;sample=1"');
     expect(html).toContain('href="/love-galaxy/create"');
     expect(html).toContain("not a wedding invitation template");
     const weddingGrid = html.match(/<div class="design-library-grid">([\s\S]*?)<\/div><\/section>/)?.[1] ?? "";
