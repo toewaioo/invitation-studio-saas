@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import React from "react";
 import App from "../src/App";
 import Editor from "../src/components/Editor";
-import Showcase, { getShowcaseDesigns, showcaseCategories, showcaseDesigns } from "../src/components/Showcase";
+import Showcase, { getShowcaseDesigns, showcaseCategories, showcaseDesigns, showcaseFeaturedProjects } from "../src/components/Showcase";
 import { guestPublicInput } from "../src/lib/guestInvitation";
 import { studioRoute, workspaceAccess } from "../src/lib/access";
 import type { ProjectInput } from "../src/types";
@@ -106,6 +106,31 @@ describe("public and management access", () => {
       const galaxyStart = html.indexOf('<section class="showcase-love-galaxy"');
       expect(galaxyStart).toBeGreaterThan(featuredStart);
       expect(html.slice(featuredStart, galaxyStart)).not.toContain("Love Galaxy</h2>");
+    }
+  });
+
+  test("renders the main project carousel from an extensible list in both languages", () => {
+    expect(showcaseFeaturedProjects.map(({ id }) => id)).toEqual(["invitations", "love-galaxy"]);
+    expect(showcaseFeaturedProjects.map(({ previewIds }) => previewIds)).toEqual([
+      ["thazin", "noir", "rose"], ["love-galaxy"],
+    ]);
+    expect(showcaseFeaturedProjects.map(({ href }) => href)).toEqual([
+      "#featured",
+      "https://love-birds-mm.vercel.app/love-galaxy?review=shared-journey&sample=1",
+    ]);
+
+    for (const lang of ["en", "my"] as const) {
+      const html = renderToStaticMarkup(
+        <Showcase lang={lang} onLanguage={() => {}} onPreview={() => {}} onCreate={() => {}} onSignIn={() => {}} checking={false} configured={false} />,
+      );
+      expect(html).toContain('id="main-projects"');
+      expect(html).toContain("aria-roledescription=");
+      expect(html).toContain(lang === "en" ? 'aria-roledescription="carousel"' : 'aria-roledescription="အလိုအလျောက်ပြောင်းလဲပြသမှု"');
+      expect(html).toContain('data-featured-project="invitations"');
+      expect(html).toContain(lang === "en" ? "Main projects" : "အဓိကပရောဂျက်များ");
+      expect(html).toContain(lang === "en" ? "Pause automatic project rotation" : "အလိုအလျောက်ပြသမှု ခဏရပ်ရန်");
+      expect(html).toContain(lang === "en" ? "Invitation Project" : "ဖိတ်စာပရောဂျက်");
+      expect(html).toContain(lang === "en" ? 'aria-label="Show next project"' : 'aria-label="နောက်ပရောဂျက် ပြရန်"');
     }
   });
 

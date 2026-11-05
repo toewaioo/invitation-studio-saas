@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ArrowRight, ArrowUpRight, BookOpen, Check, LockKeyhole, Sparkles } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowRight, ArrowUpRight, BookOpen, Check, ChevronLeft, ChevronRight, LockKeyhole, Pause, Play, Sparkles } from 'lucide-react';
 import type { Design, Language } from '../types';
 import './showcase.css';
 
@@ -28,6 +28,20 @@ const showcasePreviewAssets = {
 
 type ShowcasePreviewId = keyof typeof showcasePreviewAssets;
 type PreviewLoading = 'eager' | 'lazy';
+export type ShowcaseFeaturedProject = {
+  id: string;
+  titleEn: string;
+  titleMy: string;
+  eyebrowEn: string;
+  eyebrowMy: string;
+  descriptionEn: string;
+  descriptionMy: string;
+  actionEn: string;
+  actionMy: string;
+  href: string;
+  previewIds: readonly ShowcasePreviewId[];
+  theme: 'invitation' | 'galaxy';
+};
 
 export const showcaseCategories = [
   { id: 'wedding', en: 'Wedding', my: 'မင်္ဂလာ', mark: 'W', enDescription: 'Invitations for a day to remember.', myDescription: 'အမှတ်တရနေ့အတွက် ဖိတ်စာများ။' },
@@ -50,6 +64,37 @@ export const showcaseDesigns: { id: Design; name: string; en: string; my: string
 
 const loveGalaxyReviewPreviewUrl = 'https://love-birds-mm.vercel.app/love-galaxy?review=shared-journey&sample=1';
 
+export const showcaseFeaturedProjects: readonly ShowcaseFeaturedProject[] = [
+  {
+    id: 'invitations',
+    titleEn: 'Invitation Project',
+    titleMy: 'ဖိတ်စာပရောဂျက်',
+    eyebrowEn: 'INVITATION TEMPLATES',
+    eyebrowMy: 'မင်္ဂလာဖိတ်စာများ',
+    descriptionEn: 'A collection of immersive wedding invitations, ready to personalize and share.',
+    descriptionMy: 'စိတ်ကြိုက်ပြင်ဆင်ပြီး မျှဝေနိုင်သည့် အမှတ်တရမင်္ဂလာဖိတ်စာများ။',
+    actionEn: 'Explore invitations',
+    actionMy: 'ဖိတ်စာများ ကြည့်ရန်',
+    href: '#featured',
+    previewIds: ['thazin', 'noir', 'rose'],
+    theme: 'invitation',
+  },
+  {
+    id: 'love-galaxy',
+    titleEn: 'Love Galaxy',
+    titleMy: 'Love Galaxy',
+    eyebrowEn: 'SEPARATE 3D EXPERIENCE',
+    eyebrowMy: 'သီးခြား 3D အတွေ့အကြုံ',
+    descriptionEn: 'A separate 3D memory universe featuring your photos, a personal soundtrack, and an orbit among the stars.',
+    descriptionMy: 'ကိုယ်ပိုင်ဓာတ်ပုံများနှင့် တေးသံပါဝင်သည့် ကြယ်စင်များကြား 3D အမှတ်တရကမ္ဘာ။',
+    actionEn: 'Explore Love Galaxy',
+    actionMy: 'Love Galaxy ကို ကြည့်ရန်',
+    href: loveGalaxyReviewPreviewUrl,
+    previewIds: ['love-galaxy'],
+    theme: 'galaxy',
+  },
+];
+
 const showcaseExperiences = [
   {
     id: 'love-galaxy',
@@ -70,6 +115,11 @@ type Props = { lang: Language; onLanguage: (lang: Language) => void; onPreview: 
 export default function Showcase({ lang, onLanguage, onPreview, workspace, onSignIn, checking, configured, admin, signedIn, onCreate }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
   const [failedPreviews, setFailedPreviews] = useState<Partial<Record<ShowcasePreviewId, boolean>>>({});
+  const [featuredProjectIndex, setFeaturedProjectIndex] = useState(0);
+  const [featuredRotationPaused, setFeaturedRotationPaused] = useState(false);
+  const [featuredPointerInside, setFeaturedPointerInside] = useState(false);
+  const [featuredHasFocus, setFeaturedHasFocus] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const t = (en: string, my: string) => lang === 'en' ? en : my;
   const previewImage = (id: ShowcasePreviewId, loading: PreviewLoading = 'lazy', className = 'showcase-preview-image') => {
     const asset = showcasePreviewAssets[id];
@@ -86,6 +136,24 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
   const categoryCount = (categoryId: ShowcaseCategoryId) => categoryId === '3d-experiences' ? showcaseExperiences.length : designCount(categoryId);
   const weddingDesignCount = designCount('wedding');
   const showExperienceCard = selectedCategory === '3d-experiences';
+  const featuredProjectCount = showcaseFeaturedProjects.length;
+  const activeFeaturedProject = showcaseFeaturedProjects[featuredProjectIndex];
+
+  useEffect(() => {
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const updatePreference = () => setPrefersReducedMotion(preference.matches);
+    updatePreference();
+    preference.addEventListener('change', updatePreference);
+    return () => preference.removeEventListener('change', updatePreference);
+  }, []);
+
+  useEffect(() => {
+    if (featuredProjectCount < 2 || featuredRotationPaused || featuredPointerInside || featuredHasFocus || prefersReducedMotion) return;
+    const timer = window.setInterval(() => setFeaturedProjectIndex(current => (current + 1) % featuredProjectCount), 6500);
+    return () => window.clearInterval(timer);
+  }, [featuredProjectCount, featuredRotationPaused, featuredPointerInside, featuredHasFocus, prefersReducedMotion]);
+
+  const moveFeaturedProject = (direction: number) => setFeaturedProjectIndex(current => (current + direction + featuredProjectCount) % featuredProjectCount);
 
   return <div className="showcase">
     <a className="skip-link" href="#showcase-main">{t('Skip to content', 'အကြောင်းအရာသို့ သွားရန်')}</a>
@@ -130,6 +198,62 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
           <span className="showcase-art-sparkle" aria-hidden="true">✳</span>
         </div>
       </section>
+
+      {activeFeaturedProject && <section
+        className="showcase-project-carousel"
+        id="main-projects"
+        aria-label={t('Featured studio projects', 'စတူဒီယို၏ အဓိကပရောဂျက်များ')}
+        aria-roledescription={t('carousel', 'အလိုအလျောက်ပြောင်းလဲပြသမှု')}
+        onMouseEnter={() => setFeaturedPointerInside(true)}
+        onMouseLeave={() => setFeaturedPointerInside(false)}
+        onFocusCapture={() => setFeaturedHasFocus(true)}
+        onBlurCapture={event => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFeaturedHasFocus(false);
+        }}
+      >
+        <div className="showcase-project-carousel-heading">
+          <div><span className="showcase-section-kicker">{t('A LOOK AT THE STUDIO', 'စတူဒီယို၏ လက်ရာများ')}</span><h2 id="showcase-projects-title">{t('Main projects', 'အဓိကပရောဂျက်များ')}</h2></div>
+          <div className="showcase-project-carousel-controls">
+            <button type="button" aria-label={t('Show previous project', 'ယခင်ပရောဂျက် ပြရန်')} onClick={() => moveFeaturedProject(-1)}><ChevronLeft size={17}/></button>
+            <button type="button" aria-label={featuredRotationPaused ? t('Resume automatic project rotation', 'အလိုအလျောက်ပြသမှု ပြန်စရန်') : t('Pause automatic project rotation', 'အလိုအလျောက်ပြသမှု ခဏရပ်ရန်')} aria-pressed={featuredRotationPaused} onClick={() => setFeaturedRotationPaused(current => !current)}>{featuredRotationPaused ? <Play size={14}/> : <Pause size={14}/>}</button>
+            <button type="button" aria-label={t('Show next project', 'နောက်ပရောဂျက် ပြရန်')} onClick={() => moveFeaturedProject(1)}><ChevronRight size={17}/></button>
+          </div>
+        </div>
+
+        <article
+          className={`showcase-project-slide showcase-project-slide-${activeFeaturedProject.theme}`}
+          data-featured-project={activeFeaturedProject.id}
+          aria-roledescription={t('slide', 'ပရောဂျက်')}
+          aria-label={`${featuredProjectIndex + 1} ${t('of', 'မှ')} ${featuredProjectCount}`}
+          aria-live={featuredRotationPaused || featuredPointerInside || featuredHasFocus || prefersReducedMotion ? 'polite' : 'off'}
+        >
+          <div className="showcase-project-copy">
+            <span className="showcase-project-eyebrow">{t(activeFeaturedProject.eyebrowEn, activeFeaturedProject.eyebrowMy)}</span>
+            <h3>{t(activeFeaturedProject.titleEn, activeFeaturedProject.titleMy)}</h3>
+            <p>{t(activeFeaturedProject.descriptionEn, activeFeaturedProject.descriptionMy)}</p>
+            <a className="showcase-project-action" href={activeFeaturedProject.href}>{t(activeFeaturedProject.actionEn, activeFeaturedProject.actionMy)}<ArrowUpRight size={15}/></a>
+          </div>
+          <a className={`showcase-project-visual showcase-project-visual-${activeFeaturedProject.theme}`} href={activeFeaturedProject.href} aria-label={t(activeFeaturedProject.actionEn, activeFeaturedProject.actionMy)}>
+            <div className={`showcase-project-images showcase-project-images-${activeFeaturedProject.previewIds.length}`} aria-hidden="true">
+              {activeFeaturedProject.previewIds.map(previewId => <div className="showcase-project-image-frame" key={previewId}>{previewImage(previewId, 'eager', 'showcase-project-image')}</div>)}
+            </div>
+            <span className="showcase-project-art-label">{String(featuredProjectIndex + 1).padStart(2, '0')} <i>/</i> {String(featuredProjectCount).padStart(2, '0')}</span>
+          </a>
+        </article>
+
+        <div className="showcase-project-carousel-footer">
+          <div className="showcase-project-pagination" role="group" aria-label={t('Choose a project', 'ပရောဂျက်ရွေးရန်')}>
+            {showcaseFeaturedProjects.map((project, index) => <button
+              type="button"
+              key={project.id}
+              aria-label={`${t('Show project', 'ပရောဂျက်ပြရန်')} ${t(project.titleEn, project.titleMy)}`}
+              aria-pressed={featuredProjectIndex === index}
+              onClick={() => setFeaturedProjectIndex(index)}
+            ><span/></button>)}
+          </div>
+          <span className="showcase-project-carousel-status" aria-hidden="true">{String(featuredProjectIndex + 1).padStart(2, '0')} <i>/</i> {String(featuredProjectCount).padStart(2, '0')}</span>
+        </div>
+      </section>}
 
       <section className="showcase-categories" id="categories" aria-labelledby="categories-title">
         <div className="showcase-section-heading">
