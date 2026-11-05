@@ -431,3 +431,16 @@ html[lang="my"] .showcase-hero-project-copy h2{font-family:'Noto Serif Myanmar',
   .showcase-hero-highlights li{font-size:9px}
   html[lang="my"] .showcase-hero h1{font-size:28px;line-height:1.55}
 }
+
+
+/* Compact screens show each invitation at a useful portrait size. */
+@media(max-width:1020px){
+  .showcase-project-images-3{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:8px;padding:12px}
+  .showcase-project-images-3 .showcase-project-image-frame:first-child{grid-row:auto;transform:none}
+  .showcase-project-images-3 .showcase-project-image-frame:nth-child(2),.showcase-project-images-3 .showcase-project-image-frame:nth-child(3){transform:none}
+  .showcase-project-slide-invitation .showcase-hero-project-visual{aspect-ratio:1.45 / 1}
+}
+@media(max-width:520px){
+  .showcase-project-images-3{gap:6px;padding:10px}
+  .showcase-project-slide-invitation .showcase-hero-project-visual{aspect-ratio:1.6 / 1}
+}
