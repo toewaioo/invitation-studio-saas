@@ -162,6 +162,42 @@ html[lang="my"] .showcase-category-card-title,html[lang="my"] .showcase-empty-st
 html[lang="my"] .showcase-galaxy-copy h2{font-family:'Noto Serif Myanmar','Cormorant Garamond',serif;font-size:clamp(27px,3.2vw,38px);line-height:1.5;letter-spacing:0}
 @media(max-width:760px){html[lang="my"] .showcase-hero h1{font-size:clamp(29px,6vw,38px)}html[lang="my"] .showcase-section-heading h2,html[lang="my"] .showcase-how-heading h2{font-size:23px}html[lang="my"] .showcase-galaxy-copy h2{font-size:30px}}
 @media(max-width:520px){html[lang="my"] .showcase-hero h1{font-size:29px}html[lang="my"] .showcase-section-heading h2,html[lang="my"] .showcase-how-heading h2{font-size:20px}html[lang="my"] .showcase-category-card-title,html[lang="my"] .showcase-empty-state h3,html[lang="my"] .showcase .library-design-info h3{font-size:14px}}
+
+/* Facts and FAQ: an open, card-free layout in the studio's navy and purple palette. */
+.showcase-facts{padding:10px 0 48px;border-bottom:1px solid #e2e6f0;scroll-margin-top:24px;color:#172342}
+.showcase-facts-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:26px;margin-bottom:22px}
+.showcase-facts-heading .showcase-section-kicker,.showcase-faq-heading .showcase-section-kicker{color:#7458c8}
+.showcase-facts-heading h2,.showcase-faq-heading h2{margin-top:7px;color:#172342;font-family:'Cormorant Garamond','Noto Serif Myanmar',Georgia,serif;font-size:clamp(28px,3vw,38px);font-weight:500;letter-spacing:-.025em;line-height:1.25}
+.showcase-facts-heading>p{max-width:330px;color:#697287;font-size:11px;line-height:1.85}
+.showcase-facts-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0;border-block:1px solid #dfe3ed}
+.showcase-fact{min-width:0;padding:17px 22px 19px;border-right:1px solid #e2e6ef}
+.showcase-fact:first-child{padding-left:0}
+.showcase-fact:last-child{padding-right:0;border-right:0}
+.showcase-fact dt{color:#7458c8;font-size:9px;font-weight:700;letter-spacing:.1em;line-height:1.7;text-transform:uppercase}
+.showcase-fact dd{display:grid;grid-template-columns:auto 1fr;align-items:baseline;gap:2px 9px;margin:8px 0 0}
+.showcase-fact dd strong{color:#172342;font-size:38px;font-weight:550;letter-spacing:-.045em;line-height:1.05}
+.showcase-fact dd>span{color:#37445f;font-size:10px;line-height:1.6}
+.showcase-fact dd small{grid-column:1/-1;margin-top:5px;color:#778096;font-size:9px;line-height:1.7}
+.showcase-fact dd .showcase-fact-untracked{font-size:21px;letter-spacing:-.015em}
+.showcase-faq{margin:49px 0 55px;padding-top:29px;border-top:1px solid #e2e6f0;scroll-margin-top:24px}
+.showcase-faq-heading{margin-bottom:19px}
+.showcase-faq-heading h2{font-size:clamp(30px,3.3vw,42px)}
+.showcase-faq-list{border-top:1px solid #dfe3ed}
+.showcase-faq-item{border-bottom:1px solid #dfe3ed}
+.showcase-faq-item summary{display:grid;grid-template-columns:39px minmax(0,1fr) 25px;align-items:center;gap:10px;padding:17px 0;color:#192643;cursor:pointer;list-style:none}
+.showcase-faq-item summary::-webkit-details-marker{display:none}
+.showcase-faq-item summary:focus-visible{outline:2px solid #7458c8;outline-offset:3px}
+.showcase-faq-index{color:#8a79c7;font-size:9px;font-weight:700;letter-spacing:.08em}
+.showcase-faq-question{font-size:12px;font-weight:600;line-height:1.75}
+.showcase-faq-toggle{width:22px;height:22px;display:grid;place-items:center;justify-self:end;border:1px solid #dcd8ed;border-radius:50%;color:#7458c8}
+.showcase-faq-toggle:before{content:'+';font-size:15px;font-weight:400;line-height:1}
+.showcase-faq-item[open] .showcase-faq-toggle:before{content:'−'}
+.showcase-faq-answer{padding:0 34px 17px 49px}
+.showcase-faq-answer p{max-width:700px;color:#697287;font-size:11px;line-height:1.9}
+html[lang="my"] .showcase-facts-heading h2,html[lang="my"] .showcase-faq-heading h2{font-family:'Noto Serif Myanmar','Cormorant Garamond',serif;letter-spacing:0;line-height:1.7}
+html[lang="my"] .showcase-faq-question{line-height:1.9}
+@media(max-width:760px){.showcase-facts{padding-bottom:37px}.showcase-facts-heading{align-items:flex-start;flex-direction:column;gap:8px}.showcase-facts-heading>p{max-width:520px}.showcase-facts-list{grid-template-columns:1fr}.showcase-fact,.showcase-fact:first-child,.showcase-fact:last-child{padding:14px 0;border-right:0;border-bottom:1px solid #e2e6ef}.showcase-fact:last-child{border-bottom:0}.showcase-fact dd{grid-template-columns:auto 1fr}.showcase-faq{margin:39px 0 41px;padding-top:23px}}
+@media(max-width:520px){.showcase-facts-heading h2{font-size:26px}.showcase-fact dd strong{font-size:34px}.showcase-faq-heading h2{font-size:27px}.showcase-faq-item summary{grid-template-columns:27px minmax(0,1fr) 22px;gap:7px;padding:14px 0}.showcase-faq-question{font-size:11px}.showcase-faq-answer{padding:0 25px 15px 34px}.showcase-faq-answer p{font-size:10px}.showcase-faq-toggle{width:20px;height:20px}html[lang="my"] .showcase-facts-heading h2,html[lang="my"] .showcase-faq-heading h2{font-size:21px}}
 @media(prefers-reduced-motion:reduce){.showcase *,.showcase *:before,.showcase *:after{scroll-behavior:auto!important;transition:none!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
 
 

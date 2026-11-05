@@ -130,6 +130,25 @@ const showcaseExperiences = [
   },
 ];
 
+export const showcaseFaqs: Record<Language, readonly { question: string; answer: string }[]> = {
+  en: [
+    { question: 'Can I create an invitation without an account?', answer: 'Yes. Guests can create and publish a wedding invitation without signing up. Keep the share link: anyone who has it can view the invitation.' },
+    { question: 'How many invitation templates are available?', answer: 'There are three wedding designs: Thazin, Golden Vow and Rose Reverie. Love Galaxy is a separate 3D experience.' },
+    { question: 'Can I edit a guest invitation after publishing?', answer: 'Guest invitations do not have a saved draft or an edit link. Review the details before publishing and keep the share link.' },
+    { question: 'Which photos can I upload?', answer: 'Add up to three JPG, PNG or WEBP photos. Each photo can be up to 4.49 MB.' },
+    { question: 'How many unique people use the studio?', answer: 'We do not have a reliable unique-user total. Guests do not need accounts, and the studio does not identify individual guest creators for counting.' },
+    { question: 'What do I receive when I publish?', answer: 'You receive a share link and a matching Heart QR. Anyone with the link can open the published invitation.' },
+  ],
+  my: [
+    { question: 'အကောင့်မဖွင့်ဘဲ ဖိတ်စာဖန်တီးနိုင်ပါသလား။', answer: 'ရပါတယ်။ ဧည့်သည်များသည် အကောင့်မဖွင့်ဘဲ မင်္ဂလာဖိတ်စာဖန်တီးပြီး မျှဝေနိုင်ပါသည်။ မျှဝေရန်လင့်ခ်ကို သိမ်းထားပါ—လင့်ခ်ရသူတိုင်း ဖိတ်စာကို ကြည့်နိုင်ပါသည်။' },
+    { question: 'လက်ရှိ ဖိတ်စာဒီဇိုင်း ဘယ်နှမျိုးရှိပါသလဲ။', answer: 'လက်ရှိ မင်္ဂလာဖိတ်စာဒီဇိုင်း ၃ မျိုးရှိပါသည်—Thazin၊ Golden Vow နှင့် Rose Reverie။ Love Galaxy သည် သီးခြား 3D အတွေ့အကြုံဖြစ်သည်။' },
+    { question: 'မျှဝေပြီးနောက် ဧည့်သည်ဖန်တီးထားသော ဖိတ်စာကို ပြန်ပြင်နိုင်ပါသလား။', answer: 'ဧည့်သည်ဖန်တီးသော ဖိတ်စာတွင် သိမ်းထားသော မူကြမ်း သို့မဟုတ် ပြန်ပြင်ရန်လင့်ခ် မရှိပါ။ မျှဝေမီ အချက်အလက်များကို စစ်ဆေးပြီး လင့်ခ်ကို သိမ်းထားပါ။' },
+    { question: 'ဘယ်လိုဓာတ်ပုံတွေ တင်နိုင်ပါသလဲ။', answer: 'JPG၊ PNG သို့မဟုတ် WEBP ဓာတ်ပုံ ၃ ပုံအထိ တင်နိုင်ပြီး တစ်ပုံလျှင် 4.49 MB အထိ ရပါသည်။' },
+    { question: 'စတူဒီယိုကို သီးခြားအသုံးပြုသူ ဘယ်နှဦး သုံးနေပါသလဲ။', answer: 'သီးခြားအသုံးပြုသူအရေအတွက်ကို အတည်ပြုနိုင်သည့် စာရင်းမရှိပါ။ ဧည့်သည်များ အကောင့်မဖွင့်ရသည့်အပြင် တစ်ဦးချင်းအသုံးပြုသူကို ခွဲခြားရေတွက်ရန်လည်း စနစ်က မသတ်မှတ်ထားပါ။' },
+    { question: 'ဖိတ်စာမျှဝေသောအခါ ဘာရရှိပါသလဲ။', answer: 'မျှဝေရန်လင့်ခ်နှင့် ၎င်းနှင့်ကိုက်ညီသော Heart QR ကို ရရှိပါသည်။ လင့်ခ်ရသူတိုင်း မျှဝေထားသောဖိတ်စာကို ဖွင့်ကြည့်နိုင်ပါသည်။' },
+  ],
+};
+
 export function getShowcaseDesigns(category: CategoryFilter) {
   return category === 'all' ? showcaseDesigns : showcaseDesigns.filter(design => design.category === category);
 }
@@ -187,6 +206,7 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
         <a className="showcase-nav-link" href="#categories">{t('Categories', 'အမျိုးအစားများ')}</a>
         <a className="showcase-nav-link" href="#featured">{t('Featured designs', 'ရွေးချယ်ထားသော ဒီဇိုင်းများ')}</a>
         <a className="showcase-nav-link" href="#featured" onClick={() => setSelectedCategory('3d-experiences')}>3D Experiences</a>
+        <a className="showcase-nav-link" href="#faq">{t('FAQ', 'မေးလေ့ရှိသော မေးခွန်းများ')}</a>
         <div className="language-switch" aria-label={t('Language', 'ဘာသာစကား')}><button aria-pressed={lang === 'my'} onClick={() => onLanguage('my')}>မြန်မာ</button><button aria-pressed={lang === 'en'} onClick={() => onLanguage('en')}>EN</button></div>
         <button className="secondary small showcase-header-cta" aria-label={t('Create invitation', 'ဖိတ်စာဖန်တီးမယ်')} onClick={onCreate}>{t('Create invitation', 'ဖိတ်စာဖန်တီးမယ်')}<ArrowUpRight size={14}/></button>
       </nav>
@@ -258,6 +278,18 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
         </article>}
       </section>
 
+      <section className="showcase-facts" aria-labelledby="showcase-facts-title">
+        <div className="showcase-facts-heading">
+          <div><span className="showcase-section-kicker">{t('THE STUDIO, BY THE NUMBERS', 'စတူဒီယို၏ အချက်အလက်များ')}</span><h2 id="showcase-facts-title">{t('A clear picture of what is here', 'လက်ရှိရရှိနိုင်သည့် အချက်အလက်များ')}</h2></div>
+          <p>{t('We show verified offerings, not estimated audience numbers.', 'အတည်ပြုနိုင်သော အချက်အလက်များကိုသာ ဖော်ပြပြီး ခန့်မှန်းအသုံးပြုသူအရေအတွက်ကို မထည့်ပါ။')}</p>
+        </div>
+        <dl className="showcase-facts-list">
+          <div className="showcase-fact"><dt>{t('Invitation templates', 'ဖိတ်စာဒီဇိုင်းများ')}</dt><dd><strong>{showcaseDesigns.length.toLocaleString(lang === 'my' ? 'my-MM' : 'en')}</strong><span>{t('wedding designs available', 'မင်္ဂလာဒီဇိုင်းများ ရရှိနိုင်သည်')}</span><small>{t('Thazin · Golden Vow · Rose Reverie', 'Thazin · Golden Vow · Rose Reverie')}</small></dd></div>
+          <div className="showcase-fact"><dt>{t('3D experiences', '3D အတွေ့အကြုံများ')}</dt><dd><strong>{showcaseExperiences.length.toLocaleString(lang === 'my' ? 'my-MM' : 'en')}</strong><span>{t('experience available', 'အတွေ့အကြုံ ရရှိနိုင်သည်')}</span><small>{t('Love Galaxy is a separate experience', 'Love Galaxy သည် သီးခြားအတွေ့အကြုံဖြစ်သည်')}</small></dd></div>
+          <div className="showcase-fact"><dt>{t('Unique user total', 'သီးခြားအသုံးပြုသူအရေအတွက်')}</dt><dd><strong className="showcase-fact-untracked">{t('Not tracked', 'မမှတ်တမ်းတင်ထားပါ')}</strong><small>{t('Guests can create without an account, so a reliable unique-user count is not available.', 'ဧည့်သည်များ အကောင့်မဖွင့်ဘဲ ဖန်တီးနိုင်သောကြောင့် သီးခြားအသုံးပြုသူအရေအတွက်ကို အတည်ပြုမရပါ။')}</small></dd></div>
+        </dl>
+      </section>
+
       <section className="showcase-categories" id="categories" aria-labelledby="categories-title">
         <div className="showcase-section-heading">
           <div><span className="showcase-section-kicker">{t('EXPLORE THE STUDIO', 'ဒီဇိုင်းစတူဒီယိုကို လေ့လာပါ')}</span><h2 id="categories-title">{t('Browse by occasion', 'အခမ်းအနားအလိုက် ရွေးချယ်ပါ')}</h2></div>
@@ -299,6 +331,14 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
       </section>
 
       <section className="showcase-how" aria-labelledby="showcase-how-title"><div className="showcase-how-heading"><span className="showcase-section-kicker">{t('SIMPLE BY DESIGN', 'ရိုးရှင်းစွာ ဖန်တီးထားသည်')}</span><h2 id="showcase-how-title">{t('Choose. Customize. Share.', 'ရွေးချယ်ပါ။ ပြင်ဆင်ပါ။ မျှဝေပါ။')}</h2><p>{t('A lovely design is only the beginning. Make it yours, then send it on its way.', 'လှပသော ဒီဇိုင်းတစ်ခုမှ စတင်ပါ။ သင့်စိတ်ကြိုက် ပြင်ဆင်ပြီး မျှဝေလိုက်ပါ။')}</p></div><div className="showcase-steps"><div><span className="showcase-step-number">01</span><h3>{t('Choose', 'ရွေးချယ်ပါ')}</h3><p>{t('Open the samples and choose a style that feels right.', 'နမူနာများထဲမှ သင့်စိတ်ကြိုက် ဒီဇိုင်းကို ရွေးပါ။')}</p></div><div><span className="showcase-step-number">02</span><h3>{t('Customize', 'ပြင်ဆင်ပါ')}</h3><p>{t('Add your event details and photos—no account needed.', 'ပွဲအချက်အလက်နှင့် ဓာတ်ပုံများ ထည့်ပါ။ အကောင့်မလိုပါ။')}</p></div><div><span className="showcase-step-number">03</span><h3>{t('Share', 'မျှဝေပါ')}</h3><p>{t('Get a share link and Heart QR. Keep the link—there is no account or edit link.', 'မျှဝေရန် လင့်ခ်နှင့် Heart QR ရယူပါ။ လင့်ခ်ကို သိမ်းထားပါ။ အကောင့်နှင့် ပြန်ပြင်ရန်လင့်ခ် မရှိပါ။')}</p></div></div></section>
+
+      <section className="showcase-faq" id="faq" aria-labelledby="showcase-faq-title">
+        <div className="showcase-faq-heading"><span className="showcase-section-kicker">{t('GOOD TO KNOW', 'သိထားသင့်သော အချက်များ')}</span><h2 id="showcase-faq-title">{t('Frequently asked questions', 'မေးလေ့ရှိသော မေးခွန်းများ')}</h2></div>
+        <div className="showcase-faq-list">{showcaseFaqs[lang].map((item, index) => <details className="showcase-faq-item" key={item.question}>
+          <summary><span className="showcase-faq-index">{String(index + 1).padStart(2, '0')}</span><span className="showcase-faq-question">{item.question}</span><span className="showcase-faq-toggle" aria-hidden="true"/></summary>
+          <div className="showcase-faq-answer"><p>{item.answer}</p></div>
+        </details>)}</div>
+      </section>
     </main>
 
     <footer className="showcase-footer"><div className="showcase-footer-brand"><a href="/" aria-label="Toewaioo's Studio home"><span>Toewaioo's Studio</span></a><small>{t('Thoughtful designs, made to be shared.', 'မျှဝေဖို့ ဖန်တီးထားသော ဒီဇိုင်းများ။')}</small></div><div className="showcase-footer-explore"><span>{t('EXPLORE', 'လေ့လာရန်')}</span><nav aria-label={t('Browse categories', 'အမျိုးအစားများ ကြည့်ရန်')}>{showcaseCategories.map(category => <a href="#featured" key={category.id} onClick={() => setSelectedCategory(category.id)}>{lang === 'en' ? category.en : category.my}</a>)}</nav></div><div className="showcase-footer-utility"><a href="#featured" onClick={() => setSelectedCategory('3d-experiences')}>Love Galaxy<ArrowUpRight size={13}/></a><a href="/manage"><LockKeyhole size={13}/>{t('Private management', 'သီးသန့်စီမံခန့်ခွဲမှု')}</a><button type="button" onClick={onCreate}>{t('Create an invitation', 'ဖိတ်စာဖန်တီးမယ်')}<ArrowRight size={13}/></button></div></footer>

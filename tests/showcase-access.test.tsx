@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import React from "react";
 import App from "../src/App";
 import Editor from "../src/components/Editor";
-import Showcase, { getShowcaseDesigns, showcaseCategories, showcaseDesigns, showcaseFeaturedProjects, showcasePreviewAssets } from "../src/components/Showcase";
+import Showcase, { getShowcaseDesigns, showcaseCategories, showcaseDesigns, showcaseFaqs, showcaseFeaturedProjects, showcasePreviewAssets } from "../src/components/Showcase";
 import { guestPublicInput } from "../src/lib/guestInvitation";
 import { studioRoute, workspaceAccess } from "../src/lib/access";
 import type { ProjectInput } from "../src/types";
@@ -200,6 +200,25 @@ describe("public and management access", () => {
     expect(manage).not.toContain("Invitation projects");
     expect(manage).not.toContain("Search projects");
     expect(manage).not.toContain("New invitation");
+  });
+
+  test("shows data-backed template counts and does not invent a unique-user total", () => {
+    expect(showcaseDesigns).toHaveLength(3);
+    expect(showcaseFaqs.en).toHaveLength(6);
+    expect(showcaseFaqs.my).toHaveLength(6);
+
+    for (const lang of ["en", "my"] as const) {
+      const html = renderToStaticMarkup(
+        <Showcase lang={lang} onLanguage={() => {}} onPreview={() => {}} onCreate={() => {}} onSignIn={() => {}} checking={false} configured={false} />,
+      );
+      expect(html).toContain('class="showcase-facts"');
+      expect((html.match(/class="showcase-fact"/g) ?? []).length).toBe(3);
+      expect(html).toContain(lang === "en" ? "Not tracked" : "မမှတ်တမ်းတင်ထားပါ");
+      expect(html).toContain(lang === "en" ? "Guests can create without an account" : "ဧည့်သည်များ အကောင့်မဖွင့်ဘဲ ဖန်တီးနိုင်သောကြောင့်");
+      expect(html).toContain('id="faq"');
+      expect((html.match(/class="showcase-faq-item"/g) ?? []).length).toBe(showcaseFaqs[lang].length);
+      expect(html).toContain(lang === "en" ? "Which photos can I upload?" : "ဘယ်လိုဓာတ်ပုံတွေ တင်နိုင်ပါသလဲ။");
+    }
   });
 });
 
