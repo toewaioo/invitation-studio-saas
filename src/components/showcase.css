@@ -398,3 +398,36 @@ html[lang="my"] .showcase-project-copy h3{font-size:clamp(22px,3vw,34px)}
 html[lang="my"] .showcase-hero-project-copy h2{font-family:'Noto Serif Myanmar','Cormorant Garamond',serif;font-size:clamp(18px,2vw,23px);letter-spacing:0;line-height:1.65}
 @media(max-width:760px){html[lang="my"] .showcase-hero-project-copy h2{font-size:21px}}
 @media(max-width:520px){html[lang="my"] .showcase-hero-project-copy h2{font-size:18px}}
+
+
+/* Compact Hero spacing, fuller project copy, and viewport-aware project imagery. */
+.showcase-hero{align-items:start;padding-block:clamp(18px,2vw,28px) clamp(44px,5vw,66px)}
+.showcase-hero-project-slide{align-items:start}
+.showcase-hero-copy{min-width:0;max-width:620px}
+.showcase-hero-highlights{display:flex;flex-wrap:wrap;gap:8px 14px;margin:17px 0 0;padding:0;list-style:none}
+.showcase-hero-highlights li{min-width:0;display:inline-flex;align-items:flex-start;gap:6px;color:var(--showcase-muted);font-size:10px;line-height:1.65}
+.showcase-hero-highlights svg{flex:0 0 auto;margin-top:2px;color:#65816a}
+.showcase-hero-projects{width:100%;min-width:0}
+.showcase-hero-project-visual{width:100%;height:auto;min-height:0;aspect-ratio:1.45 / 1;max-height:none}
+.showcase-hero-projects .showcase-project-image-frame{background:#f7f5ef}
+.showcase-hero-projects .showcase-project-image{width:100%;height:100%;object-fit:contain;object-position:center}
+.showcase-hero-projects .showcase-project-images-1 .showcase-project-image-frame{background:#100c18}
+@media(max-width:760px){
+  .showcase-hero{gap:23px;padding-block:20px 42px}
+  .showcase-hero-project-slide{gap:12px}
+  .showcase-hero-project-visual{aspect-ratio:1.34 / 1}
+  .showcase-hero-highlights{gap:7px 12px;margin-top:15px}
+  .showcase-hero-highlights li{font-size:10px}
+  .showcase-hero h1{font-size:clamp(36px,9vw,50px);line-height:1.12}
+  html[lang="my"] .showcase-hero h1{font-size:clamp(28px,5vw,36px);line-height:1.55}
+}
+@media(max-width:520px){
+  .showcase-hero{gap:18px;padding-block:16px 34px}
+  .showcase-hero-project-visual{aspect-ratio:1.25 / 1}
+  .showcase-hero h1{margin:10px 0 12px;font-size:clamp(33px,8.5vw,42px);line-height:1.12}
+  .showcase-hero-copy>p{font-size:11px;line-height:1.8}
+  .showcase-hero-actions{gap:12px;margin-top:16px}
+  .showcase-hero-highlights{gap:6px 10px;margin-top:13px}
+  .showcase-hero-highlights li{font-size:9px}
+  html[lang="my"] .showcase-hero h1{font-size:28px;line-height:1.55}
+}

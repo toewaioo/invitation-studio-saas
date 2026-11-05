@@ -109,10 +109,18 @@ describe("public and management access", () => {
 
   test("renders the project carousel inside the hero from an extensible list in both languages", () => {
     expect(showcaseFeaturedProjects.map(({ id }) => id)).toEqual(["invitations", "love-galaxy"]);
-    expect(showcaseFeaturedProjects.map(({ titleEn }) => titleEn)).toEqual(["Invitation Project", "Love Galaxy"]);
+    expect(showcaseFeaturedProjects.map(({ nameEn }) => nameEn)).toEqual(["Invitation Project", "Love Galaxy"]);
+    expect(showcaseFeaturedProjects.map(({ titleEn }) => titleEn)).toEqual([
+      "Thoughtful invitations for moments worth sharing.",
+      "A universe of memories, made for you.",
+    ]);
     expect(showcaseFeaturedProjects.map(({ descriptionEn }) => descriptionEn)).toEqual([
-      "A collection of immersive wedding invitations, ready to personalize and share.",
-      "A separate 3D memory universe featuring your photos, a personal soundtrack, and an orbit among the stars.",
+      "Explore our wedding invitation collection, add your event details and photos, then share your finished design with one simple link—no account needed.",
+      "Turn four favorite photos into a 1,200-card orbit through the stars. Add your own soundtrack and explore a 3D memory world built around your story.",
+    ]);
+    expect(showcaseFeaturedProjects.map(project => project.highlights.map(highlight => highlight.en))).toEqual([
+      ["3 ready-to-personalize designs", "No account needed", "Share with one link"],
+      ["Four favorite photos", "Personal soundtrack", "Explore in 3D"],
     ]);
     expect(showcaseFeaturedProjects.map(({ actionEn }) => actionEn)).toEqual(["Explore invitations", "Explore Love Galaxy"]);
     expect(showcaseFeaturedProjects[0].secondaryAction).toEqual({ kind: "create-invitation", labelEn: "Create your invitation", labelMy: "ဖိတ်စာဖန်တီးမယ်" });
@@ -140,9 +148,11 @@ describe("public and management access", () => {
       expect(html).toContain(lang === "en" ? 'aria-roledescription="carousel"' : 'aria-roledescription="အလိုအလျောက်ပြောင်းလဲပြသမှု"');
       expect(html).toContain('data-featured-project="invitations"');
       expect(html).toContain(lang === "en" ? "Pause automatic project rotation" : "အလိုအလျောက်ပြသမှု ခဏရပ်ရန်");
-      expect(html).toContain(lang === "en" ? "Invitation Project" : "ဖိတ်စာပရောဂျက်");
+      expect(html).toContain(lang === "en" ? "Thoughtful invitations for moments worth sharing." : "မျှဝေချင်စရာ အမှတ်တရများအတွက် ဖိတ်စာများ။");
+      expect(html).toContain(lang === "en" ? 'aria-label="Show project Invitation Project"' : 'aria-label="ပရောဂျက်ပြရန် ဖိတ်စာပရောဂျက်"');
       expect(html).toContain(lang === "en" ? 'aria-label="Show next project"' : 'aria-label="နောက်ပရောဂျက် ပြရန်"');
-      expect(html).toContain(lang === "en" ? "A collection of immersive wedding invitations, ready to personalize and share." : "စိတ်ကြိုက်ပြင်ဆင်ပြီး မျှဝေနိုင်သည့် အမှတ်တရမင်္ဂလာဖိတ်စာများ။");
+      expect(html).toContain(lang === "en" ? "Explore our wedding invitation collection" : "မင်္ဂလာဖိတ်စာဒီဇိုင်းများကို ကြည့်ရှုပြီး");
+      expect(html).toContain(lang === "en" ? "No account needed" : "အကောင့်မလိုပါ");
       expect(html).toContain(lang === "en" ? "Explore invitations" : "ဖိတ်စာများ ကြည့်ရန်");
       expect(html).toContain(lang === "en" ? "Create your invitation" : "ဖိတ်စာဖန်တီးမယ်");
     }
@@ -159,9 +169,9 @@ describe("public and management access", () => {
       expect(html).toContain('/assets/showcase-preview/thazin.webp');
       expect(html).toContain('/assets/showcase-preview/golden-vow.webp');
       expect(html).toContain('/assets/showcase-preview/rose-reverie.webp');
-      expect(html).toContain(lang === "en" ? "Invitation Project" : "ဖိတ်စာပရောဂျက်");
+      expect(html).toContain(lang === "en" ? "Thoughtful invitations for moments worth sharing." : "မျှဝေချင်စရာ အမှတ်တရများအတွက် ဖိတ်စာများ။");
       expect(html).toContain(lang === "en" ? "Explore invitations" : "ဖိတ်စာများ ကြည့်ရန်");
-      expect(html).not.toContain(lang === "en" ? "Thoughtful invitations for moments worth sharing." : "မျှဝေချင်စရာ အမှတ်တရများအတွက် ဖိတ်စာများ။");
+      expect(html).toContain(lang === "en" ? "Share with one link" : "လင့်ခ်တစ်ခုဖြင့် မျှဝေပါ");
       expect(html).not.toContain('class="showcase-love-galaxy"');
       expect(html).toContain("Toewaioo&#x27;s Studio");
       expect(html).toContain(lang === "en" ? "Choose. Customize. Share." : "ရွေးချယ်ပါ။ ပြင်ဆင်ပါ။ မျှဝေပါ။");

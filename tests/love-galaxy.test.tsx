@@ -248,7 +248,8 @@ describe("standalone Love Galaxy experience", () => {
     expect(html).toContain('aria-label="Show project Love Galaxy"');
     const galaxy = showcaseFeaturedProjects.find(project => project.id === "love-galaxy");
     expect(galaxy).toMatchObject({
-      titleEn: "Love Galaxy",
+      nameEn: "Love Galaxy",
+      titleEn: "A universe of memories, made for you.",
       href: "https://love-birds-mm.vercel.app/love-galaxy?review=shared-journey&sample=1",
       previewIds: ["love-galaxy"],
       secondaryAction: { kind: "link", href: "/love-galaxy/create" },

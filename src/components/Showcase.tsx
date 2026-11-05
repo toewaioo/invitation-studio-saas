@@ -30,12 +30,15 @@ type ShowcasePreviewId = keyof typeof showcasePreviewAssets;
 type PreviewLoading = 'eager' | 'lazy';
 export type ShowcaseFeaturedProject = {
   id: string;
+  nameEn: string;
+  nameMy: string;
   titleEn: string;
   titleMy: string;
   eyebrowEn: string;
   eyebrowMy: string;
   descriptionEn: string;
   descriptionMy: string;
+  highlights: readonly { en: string; my: string }[];
   actionEn: string;
   actionMy: string;
   secondaryAction?: { labelEn: string; labelMy: string } & (
@@ -71,12 +74,19 @@ const loveGalaxyReviewPreviewUrl = 'https://love-birds-mm.vercel.app/love-galaxy
 export const showcaseFeaturedProjects: readonly ShowcaseFeaturedProject[] = [
   {
     id: 'invitations',
-    titleEn: 'Invitation Project',
-    titleMy: 'ဖိတ်စာပရောဂျက်',
-    eyebrowEn: 'INVITATION TEMPLATES',
-    eyebrowMy: 'မင်္ဂလာဖိတ်စာများ',
-    descriptionEn: 'A collection of immersive wedding invitations, ready to personalize and share.',
-    descriptionMy: 'စိတ်ကြိုက်ပြင်ဆင်ပြီး မျှဝေနိုင်သည့် အမှတ်တရမင်္ဂလာဖိတ်စာများ။',
+    nameEn: 'Invitation Project',
+    nameMy: 'ဖိတ်စာပရောဂျက်',
+    titleEn: 'Thoughtful invitations for moments worth sharing.',
+    titleMy: 'မျှဝေချင်စရာ အမှတ်တရများအတွက် ဖိတ်စာများ။',
+    eyebrowEn: 'INVITATION PROJECT · WEDDING COLLECTION',
+    eyebrowMy: 'ဖိတ်စာပရောဂျက် · မင်္ဂလာဖိတ်စာများ',
+    descriptionEn: 'Explore our wedding invitation collection, add your event details and photos, then share your finished design with one simple link—no account needed.',
+    descriptionMy: 'မင်္ဂလာဖိတ်စာဒီဇိုင်းများကို ကြည့်ရှုပြီး ပွဲအချက်အလက်နှင့် ဓာတ်ပုံများကို စိတ်ကြိုက်ထည့်ပါ။ ပြီးလျှင် အကောင့်ဖွင့်စရာမလိုဘဲ လင့်ခ်တစ်ခုတည်းဖြင့် မျှဝေနိုင်ပါသည်။',
+    highlights: [
+      { en: '3 ready-to-personalize designs', my: 'စိတ်ကြိုက်ပြင်ဆင်နိုင်သော ဒီဇိုင်း ၃ မျိုး' },
+      { en: 'No account needed', my: 'အကောင့်မလိုပါ' },
+      { en: 'Share with one link', my: 'လင့်ခ်တစ်ခုဖြင့် မျှဝေပါ' },
+    ],
     actionEn: 'Explore invitations',
     actionMy: 'ဖိတ်စာများ ကြည့်ရန်',
     secondaryAction: { kind: 'create-invitation', labelEn: 'Create your invitation', labelMy: 'ဖိတ်စာဖန်တီးမယ်' },
@@ -86,12 +96,19 @@ export const showcaseFeaturedProjects: readonly ShowcaseFeaturedProject[] = [
   },
   {
     id: 'love-galaxy',
-    titleEn: 'Love Galaxy',
-    titleMy: 'Love Galaxy',
-    eyebrowEn: 'SEPARATE 3D EXPERIENCE',
-    eyebrowMy: 'သီးခြား 3D အတွေ့အကြုံ',
-    descriptionEn: 'A separate 3D memory universe featuring your photos, a personal soundtrack, and an orbit among the stars.',
-    descriptionMy: 'ကိုယ်ပိုင်ဓာတ်ပုံများနှင့် တေးသံပါဝင်သည့် ကြယ်စင်များကြား 3D အမှတ်တရကမ္ဘာ။',
+    nameEn: 'Love Galaxy',
+    nameMy: 'Love Galaxy',
+    titleEn: 'A universe of memories, made for you.',
+    titleMy: 'သင့်အမှတ်တရများအတွက် ကိုယ်ပိုင်ကြယ်စင်ကမ္ဘာ။',
+    eyebrowEn: 'LOVE GALAXY · SEPARATE 3D EXPERIENCE',
+    eyebrowMy: 'LOVE GALAXY · သီးခြား 3D အတွေ့အကြုံ',
+    descriptionEn: 'Turn four favorite photos into a 1,200-card orbit through the stars. Add your own soundtrack and explore a 3D memory world built around your story.',
+    descriptionMy: 'နှစ်သက်ရာ ဓာတ်ပုံ ၄ ပုံကို ကြယ်စင်များကြား လှည့်ပတ်နေသော အမှတ်တရကတ် ၁,၂၀၀ အဖြစ် ဖန်တီးပါ။ ကိုယ်ပိုင်တေးသံထည့်ပြီး သင့်ဇာတ်လမ်းအတွက် 3D အမှတ်တရကမ္ဘာကို စူးစမ်းလိုက်ပါ။',
+    highlights: [
+      { en: 'Four favorite photos', my: 'နှစ်သက်ရာ ဓာတ်ပုံ ၄ ပုံ' },
+      { en: 'Personal soundtrack', my: 'ကိုယ်ပိုင်တေးသံ' },
+      { en: 'Explore in 3D', my: '3D ဖြင့် စူးစမ်းပါ' },
+    ],
     actionEn: 'Explore Love Galaxy',
     actionMy: 'Love Galaxy ကို ကြည့်ရန်',
     secondaryAction: { kind: 'link', href: '/love-galaxy/create', labelEn: 'Create your own', labelMy: 'ကိုယ်ပိုင် ဖန်တီးရန်' },
@@ -200,6 +217,9 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
             <span className="showcase-eyebrow"><Sparkles size={14}/>{t(activeFeaturedProject.eyebrowEn, activeFeaturedProject.eyebrowMy)}</span>
             <h1 id="showcase-title">{t(activeFeaturedProject.titleEn, activeFeaturedProject.titleMy)}</h1>
             <p>{t(activeFeaturedProject.descriptionEn, activeFeaturedProject.descriptionMy)}</p>
+            <ul className="showcase-hero-highlights" aria-label={t('Project highlights', 'ပရောဂျက်၏ အဓိကအချက်များ')}>
+              {activeFeaturedProject.highlights.map(highlight => <li key={highlight.en}><Check size={13} aria-hidden="true"/>{t(highlight.en, highlight.my)}</li>)}
+            </ul>
             <div className="showcase-hero-actions">
               <a className="primary" href={activeFeaturedProject.href}>{t(activeFeaturedProject.actionEn, activeFeaturedProject.actionMy)}<ArrowRight size={16}/></a>
               {activeFeaturedProject.secondaryAction?.kind === 'create-invitation' && <button type="button" className="text-button" onClick={onCreate}>{t(activeFeaturedProject.secondaryAction.labelEn, activeFeaturedProject.secondaryAction.labelMy)}<ArrowRight size={15}/></button>}
@@ -226,7 +246,7 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
                 {showcaseFeaturedProjects.map((project, index) => <button
                   type="button"
                   key={project.id}
-                  aria-label={`${t('Show project', 'ပရောဂျက်ပြရန်')} ${t(project.titleEn, project.titleMy)}`}
+                  aria-label={`${t('Show project', 'ပရောဂျက်ပြရန်')} ${t(project.nameEn, project.nameMy)}`}
                   aria-pressed={featuredProjectIndex === index}
                   onClick={() => setFeaturedProjectIndex(index)}
                 ><span/></button>)}
