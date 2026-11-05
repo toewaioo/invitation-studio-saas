@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://love-birds-mm.vercel.app/sitemap.xml

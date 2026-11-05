@@ -1,6 +1,20 @@
 {
   "buildCommand": "if [ \"$VERCEL_ENV\" = \"preview\" ]; then VITE_LOVE_GALAXY_SHARED_JOURNEY=true npm run build; else npm run build; fi",
   "outputDirectory": "dist",
+  "headers": [
+    { "source": "/manage", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+    { "source": "/manage/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+    { "source": "/dashboard", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+    { "source": "/dashboard/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+    { "source": "/create", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+    { "source": "/create/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+    { "source": "/studio", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+    { "source": "/studio/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+    { "source": "/i/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+    { "source": "/love/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+    { "source": "/love-galaxy", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] },
+    { "source": "/love-galaxy/:path*", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] }
+  ],
   "rewrites": [
     {
       "source": "/((?!api(?:/|$)|assets/).*)",
