@@ -213,6 +213,25 @@ function client(fetcher: typeof fetch, access?: string): SupabaseClient {
   })
 }
 
+type StudioAuthUser = { id: string }
+type StudioAuthSession = { access_token: string; refresh_token: string; expires_at?: number }
+type StudioAuthApi = {
+  getUser(jwt?: string): Promise<{ data: { user: StudioAuthUser | null }; error: unknown }>
+  refreshSession(session?: { refresh_token?: string }): Promise<{
+    data: { user: StudioAuthUser | null; session: StudioAuthSession | null }
+    error: unknown
+  }>
+  signInWithPassword(credentials: { email: string; password: string }): Promise<{
+    data: { user: StudioAuthUser | null; session: StudioAuthSession | null }
+    error: unknown
+  }>
+  signOut(options?: { scope?: 'global' | 'local' | 'others' }): Promise<{ error: unknown }>
+}
+
+function studioAuth(sb: SupabaseClient): StudioAuthApi {
+  return sb.auth as unknown as StudioAuthApi
+}
+
 async function auth(
   req: IncomingMessage,
   fetcher: typeof fetch,
@@ -230,12 +249,12 @@ async function auth(
   let sb = client(fetcher, access)
   let user: any = null
   if (access) {
-    const result = await sb.auth.getUser(access)
+    const result = await studioAuth(sb).getUser(access)
     user = result.data.user || null
   }
   let refreshed: any
   if (!user && cookies.studio_refresh) {
-    const result = await client(fetcher).auth.refreshSession({ refresh_token: cookies.studio_refresh })
+    const result = await studioAuth(client(fetcher)).refreshSession({ refresh_token: cookies.studio_refresh })
     user = result.data.user || null
     if (result.data.session) {
       refreshed = result.data.session
@@ -364,9 +383,10 @@ async function handle(
         throw Object.assign(new Error('Invalid credentials'), { status: 400 })
       }
       const authClient = client(fetcher)
-      const result = await authClient.auth.signInWithPassword({ email: body.email, password: body.password })
+      const auth = studioAuth(authClient)
+      const result = await auth.signInWithPassword({ email: body.email, password: body.password })
       if (result.error || !result.data.user || result.data.user.id !== getConfig().owner) {
-        if (result.data.session) await authClient.auth.signOut({ scope: 'local' })
+        if (result.data.session) await auth.signOut({ scope: 'local' })
         throw Object.assign(new Error('Invalid credentials'), { status: 403 })
       }
       res.setHeader('Set-Cookie', [
@@ -441,7 +461,7 @@ async function handle(
     if (action === 'list') {
       const result = await owner.sb.from('projects').select('*, project_photos(*)').order('updated_at', { ascending: false })
       if (result.error) throw result.error
-      send(res, 200, { data: (result.data || []).map((row) => projectRow(row)) })
+      send(res, 200, { data: (result.data || []).map((row: any) => projectRow(row)) })
       return
     }
     if (action === 'get') {
