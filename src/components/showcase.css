@@ -360,3 +360,40 @@ html[lang="my"] .showcase-project-copy h3{font-size:clamp(22px,3vw,34px)}
 @media(max-width:760px){html[lang="my"] .showcase-project-carousel-heading h2{font-size:21px}html[lang="my"] .showcase-project-copy h3{font-size:28px}}
 @media(max-width:520px){html[lang="my"] .showcase-project-carousel-heading h2{font-size:17px}html[lang="my"] .showcase-project-copy h3{font-size:23px}}
 @media(prefers-reduced-motion:reduce){.showcase-project-slide{animation:none}.showcase-project-pagination button span,.showcase-project-image-frame,.showcase-project-images-1 .showcase-project-image{transition:none}}
+
+
+/* The rotating portfolio lives inside the hero canvas, not in a separate card. */
+.showcase-hero-projects{position:relative;min-width:0;display:flex;flex-direction:column;gap:11px;align-self:center;background:transparent;border:0;border-radius:0;box-shadow:none}
+.showcase-hero-projects-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.showcase-hero-projects-label{color:#758070;font-size:8px;font-weight:700;letter-spacing:.14em;line-height:1.6}
+.showcase-hero-projects .showcase-project-carousel-controls{gap:6px}
+.showcase-hero-projects .showcase-project-carousel-controls button{width:32px;height:32px;border-color:#dfe4da;border-radius:50%;background:transparent;color:#53634f}
+.showcase-hero-projects .showcase-project-carousel-controls button:hover{border-color:#9bab91;background:#f2f4ed;color:#365b47}
+.showcase-hero-projects .showcase-project-carousel-controls button[aria-pressed=true]{background:#eef1e9;color:#365b47}
+.showcase-hero-project-slide{min-width:0;display:flex;flex-direction:column;gap:13px;animation:showcase-project-arrive .32s ease-out}
+.showcase-hero-project-visual{position:relative;width:100%;height:clamp(260px,29vw,360px);display:block;overflow:hidden;background:transparent;text-decoration:none}
+.showcase-hero-project-visual-galaxy{background:transparent}
+.showcase-hero-project-visual:hover .showcase-project-images-3 .showcase-project-image-frame{box-shadow:0 18px 38px #17233c31}
+.showcase-hero-project-visual:hover .showcase-project-images-1 .showcase-project-image{transform:scale(1.025);opacity:1}
+.showcase-hero-projects-caption{min-width:0;display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding-inline:1px}
+.showcase-hero-project-copy{min-width:0;max-width:350px;display:flex;flex-direction:column;align-items:flex-start}
+.showcase-hero-project-copy h2{max-width:100%;margin:5px 0 4px;color:var(--showcase-ink);font-family:'Cormorant Garamond','Noto Serif Myanmar',Georgia,serif;font-size:clamp(22px,2.4vw,30px);font-weight:500;letter-spacing:-.025em;line-height:1.2;text-wrap:balance}
+.showcase-hero-project-copy p{max-width:345px;color:var(--showcase-muted);font-size:10px;line-height:1.75}
+.showcase-hero-projects .showcase-project-action{flex:0 0 auto;min-height:36px;margin:0;padding:8px 11px;border-color:#365b47;border-radius:7px;background:#365b47;color:#fff;font-size:10px;box-shadow:0 5px 14px #365b471b}
+.showcase-hero-projects .showcase-project-action:hover{background:#294936}
+.showcase-hero-projects-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:-3px}
+.showcase-hero-projects .showcase-project-pagination button span{border-color:#9ca994}
+.showcase-hero-projects .showcase-project-pagination button[aria-pressed=true] span{border-color:#52785a;background:#52785a}
+.showcase-hero-projects .showcase-project-carousel-status{color:#778276;font-size:8px}
+.showcase-hero-projects .showcase-project-carousel-status i{color:#9aa393}
+.showcase-hero-projects .showcase-project-slide-galaxy .showcase-project-eyebrow{color:#6c806d}
+.showcase-hero-projects .showcase-project-slide-galaxy .showcase-project-eyebrow:before{background:#8b9d78;box-shadow:0 0 10px #8b9d7855}
+.showcase-hero-projects .showcase-project-slide-galaxy .showcase-hero-project-copy h2{color:var(--showcase-ink)}
+.showcase-hero-projects .showcase-project-slide-galaxy .showcase-hero-project-copy p{color:var(--showcase-muted)}
+@media(max-width:1020px){.showcase-hero-project-visual{height:clamp(250px,31vw,330px)}.showcase-hero-project-copy h2{font-size:clamp(21px,2.8vw,27px)}}
+@media(max-width:760px){.showcase-hero-projects{width:100%;max-width:640px;gap:10px}.showcase-hero-project-slide{gap:11px}.showcase-hero-project-visual{height:clamp(250px,46vw,320px)}.showcase-hero-projects-caption{gap:12px}.showcase-hero-project-copy{max-width:420px}.showcase-hero-project-copy p{max-width:400px}}
+@media(max-width:520px){.showcase-hero-projects{gap:8px}.showcase-hero-projects-label{font-size:7px;letter-spacing:.11em}.showcase-hero-projects .showcase-project-carousel-controls{gap:4px}.showcase-hero-projects .showcase-project-carousel-controls button{width:29px;height:29px}.showcase-hero-project-slide{gap:9px}.showcase-hero-project-visual{height:clamp(208px,64vw,270px)}.showcase-hero-projects-caption{align-items:flex-start;flex-direction:column;gap:10px}.showcase-hero-project-copy h2{margin:3px 0;font-size:23px}.showcase-hero-project-copy p{font-size:9px;line-height:1.7}.showcase-hero-projects .showcase-project-action{min-height:34px;padding:7px 9px;font-size:9px}.showcase-hero-projects-footer{margin-top:0}.showcase-hero-projects .showcase-project-images{gap:8px;padding:18px}.showcase-hero-projects .showcase-project-images-1{padding:0}.showcase-hero-projects .showcase-project-image-frame{border-width:4px}.showcase-hero-projects .showcase-project-art-label{right:10px;bottom:9px;font-size:7px}}
+@media(max-width:370px){.showcase-hero-project-visual{height:200px}.showcase-hero-project-copy h2{font-size:21px}}
+html[lang="my"] .showcase-hero-project-copy h2{font-family:'Noto Serif Myanmar','Cormorant Garamond',serif;font-size:clamp(18px,2vw,23px);letter-spacing:0;line-height:1.65}
+@media(max-width:760px){html[lang="my"] .showcase-hero-project-copy h2{font-size:21px}}
+@media(max-width:520px){html[lang="my"] .showcase-hero-project-copy h2{font-size:18px}}

@@ -109,7 +109,7 @@ describe("public and management access", () => {
     }
   });
 
-  test("renders the main project carousel from an extensible list in both languages", () => {
+  test("renders the project carousel inside the hero from an extensible list in both languages", () => {
     expect(showcaseFeaturedProjects.map(({ id }) => id)).toEqual(["invitations", "love-galaxy"]);
     expect(showcaseFeaturedProjects.map(({ previewIds }) => previewIds)).toEqual([
       ["thazin", "noir", "rose"], ["love-galaxy"],
@@ -123,25 +123,35 @@ describe("public and management access", () => {
       const html = renderToStaticMarkup(
         <Showcase lang={lang} onLanguage={() => {}} onPreview={() => {}} onCreate={() => {}} onSignIn={() => {}} checking={false} configured={false} />,
       );
-      expect(html).toContain('id="main-projects"');
+      const heroStart = html.indexOf('class="showcase-hero"');
+      const heroCarousel = html.indexOf('id="hero-featured-projects"');
+      const categories = html.indexOf('<section class="showcase-categories"');
+      expect(heroCarousel).toBeGreaterThan(heroStart);
+      expect(heroCarousel).toBeLessThan(categories);
+      expect(html).not.toContain('id="main-projects"');
+      expect(html).not.toContain('class="showcase-project-carousel"');
       expect(html).toContain("aria-roledescription=");
       expect(html).toContain(lang === "en" ? 'aria-roledescription="carousel"' : 'aria-roledescription="အလိုအလျောက်ပြောင်းလဲပြသမှု"');
       expect(html).toContain('data-featured-project="invitations"');
-      expect(html).toContain(lang === "en" ? "Main projects" : "အဓိကပရောဂျက်များ");
       expect(html).toContain(lang === "en" ? "Pause automatic project rotation" : "အလိုအလျောက်ပြသမှု ခဏရပ်ရန်");
       expect(html).toContain(lang === "en" ? "Invitation Project" : "ဖိတ်စာပရောဂျက်");
       expect(html).toContain(lang === "en" ? 'aria-label="Show next project"' : 'aria-label="နောက်ပရောဂျက် ပြရန်"');
+      expect(html).toContain(lang === "en" ? "Thoughtful invitations for moments worth sharing." : "မျှဝေချင်စရာ အမှတ်တရများအတွက် ဖိတ်စာများ။");
+      expect(html).toContain(lang === "en" ? "Create your invitation" : "ဖိတ်စာဖန်တီးမယ်");
     }
   });
 
-  test("puts the three real wedding previews in an editorial hero and keeps guest trust and steps clear", () => {
+  test("puts the rotating project previews in the editorial hero and keeps guest trust and steps clear", () => {
     for (const lang of ["en", "my"] as const) {
       const html = renderToStaticMarkup(
         <Showcase lang={lang} onLanguage={() => {}} onPreview={() => {}} onCreate={() => {}} onSignIn={() => {}} checking={false} configured={false} />,
       );
-      expect(html).toContain('data-showcase-design="thazin"');
-      expect(html).toContain('data-showcase-design="noir"');
-      expect(html).toContain('data-showcase-design="rose"');
+      expect(html).toContain('id="hero-featured-projects"');
+      expect(html).toContain('data-featured-project="invitations"');
+      expect(html).toContain('class="showcase-project-images showcase-project-images-3"');
+      expect(html).toContain('/assets/showcase-preview/thazin.webp');
+      expect(html).toContain('/assets/showcase-preview/golden-vow.webp');
+      expect(html).toContain('/assets/showcase-preview/rose-reverie.webp');
       expect(html).toContain(lang === "en" ? "No account needed" : "အကောင့်မလိုပါ");
       expect(html).toContain(lang === "en" ? "Owner space stays private" : "ပိုင်ရှင်နေရာ သီးသန့်ဖြစ်သည်");
       expect(html).toContain("Toewaioo&#x27;s Studio");

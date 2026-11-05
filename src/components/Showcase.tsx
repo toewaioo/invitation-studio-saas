@@ -179,81 +179,64 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
           <div className="showcase-hero-actions"><button className="primary" onClick={onCreate}>{t('Create your invitation', 'ဖိတ်စာဖန်တီးမယ်')}<ArrowRight size={16}/></button><a className="text-button" href="#categories">{t('Explore categories', 'အမျိုးအစားများ ကြည့်ရန်')}<ArrowRight size={15}/></a></div>
           <div className="showcase-proof"><span><Check size={14}/>{t('No account needed', 'အကောင့်မလိုပါ')}</span><i aria-hidden="true"/><span>{t('Share with one link', 'လင့်ခ်တစ်ခုဖြင့် မျှဝေပါ')}</span><i aria-hidden="true"/><span>{t('Owner space stays private', 'ပိုင်ရှင်နေရာ သီးသန့်ဖြစ်သည်')}</span></div>
         </div>
-        <div className="showcase-hero-art">
-          <div className="showcase-art-topline"><span>{t('A closer look', 'ဒီဇိုင်းနမူနာ')}</span><span>{t('THREE WEDDING DESIGNS', 'မင်္ဂလာဒီဇိုင်း ၃ မျိုး')}</span></div>
-          <div className="showcase-art-decoration showcase-art-decoration-one" aria-hidden="true"/>
-          <div className="showcase-art-decoration showcase-art-decoration-two" aria-hidden="true"/>
-          <div className="showcase-art-orbit" aria-hidden="true"><span>W</span><span>+</span><span>✳</span></div>
-          <button className="showcase-mini-card showcase-mini-card-noir" data-showcase-design="noir" onClick={() => onPreview('noir')} aria-label={`${t('Preview design', 'ဒီဇိုင်းနမူနာကြည့်ရန်')} Golden Vow`}>
-            {cover('noir', 'eager')}<span className="showcase-mini-caption">02 <i>GOLDEN VOW</i></span>
-          </button>
-          <button className="showcase-mini-card showcase-mini-card-rose" data-showcase-design="rose" onClick={() => onPreview('rose')} aria-label={`${t('Preview design', 'ဒီဇိုင်းနမူနာကြည့်ရန်')} Rose Reverie`}>
-            {cover('rose', 'eager')}<span className="showcase-mini-caption">03 <i>ROSE REVERIE</i></span>
-          </button>
-          <button className="showcase-feature-card" data-showcase-design="thazin" onClick={() => onPreview('thazin')} aria-label={`${t('Open 3D preview', '3D နမူနာကြည့်ရန်')} Thazin`}>
-            {cover('thazin', 'eager')}
-            <span className="showcase-feature-label">{t('Explore this design', 'ဒီဇိုင်းကို ကြည့်ရန်')}<ArrowUpRight size={14}/></span>
-          </button>
-          <div className="showcase-art-note"><span className="showcase-art-note-number">01</span><span><b>{t('Wedding', 'မင်္ဂလာ')}</b><small>{t(`${weddingDesignCount} designs to explore`, `ကြည့်ရှုရန် ဒီဇိုင်း ${weddingDesignCount} မျိုး`)}</small></span></div>
-          <span className="showcase-art-sparkle" aria-hidden="true">✳</span>
-        </div>
-      </section>
-
-      {activeFeaturedProject && <section
-        className="showcase-project-carousel"
-        id="main-projects"
-        aria-label={t('Featured studio projects', 'စတူဒီယို၏ အဓိကပရောဂျက်များ')}
-        aria-roledescription={t('carousel', 'အလိုအလျောက်ပြောင်းလဲပြသမှု')}
-        onMouseEnter={() => setFeaturedPointerInside(true)}
-        onMouseLeave={() => setFeaturedPointerInside(false)}
-        onFocusCapture={() => setFeaturedHasFocus(true)}
-        onBlurCapture={event => {
-          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFeaturedHasFocus(false);
-        }}
-      >
-        <div className="showcase-project-carousel-heading">
-          <div><span className="showcase-section-kicker">{t('A LOOK AT THE STUDIO', 'စတူဒီယို၏ လက်ရာများ')}</span><h2 id="showcase-projects-title">{t('Main projects', 'အဓိကပရောဂျက်များ')}</h2></div>
+        <div
+          className="showcase-hero-projects"
+          id="hero-featured-projects"
+          role="region"
+          aria-label={t('Featured studio projects', 'စတူဒီယို၏ အဓိကပရောဂျက်များ')}
+          aria-roledescription={t('carousel', 'အလိုအလျောက်ပြောင်းလဲပြသမှု')}
+          onMouseEnter={() => setFeaturedPointerInside(true)}
+          onMouseLeave={() => setFeaturedPointerInside(false)}
+          onFocusCapture={() => setFeaturedHasFocus(true)}
+          onBlurCapture={event => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFeaturedHasFocus(false);
+          }}
+        >
+          <div className="showcase-hero-projects-top">
+            <span className="showcase-hero-projects-label">{t('STUDIO PROJECTS', 'စတူဒီယို၏ လက်ရာများ')}</span>
           <div className="showcase-project-carousel-controls">
             <button type="button" aria-label={t('Show previous project', 'ယခင်ပရောဂျက် ပြရန်')} onClick={() => moveFeaturedProject(-1)}><ChevronLeft size={17}/></button>
             <button type="button" aria-label={featuredRotationPaused ? t('Resume automatic project rotation', 'အလိုအလျောက်ပြသမှု ပြန်စရန်') : t('Pause automatic project rotation', 'အလိုအလျောက်ပြသမှု ခဏရပ်ရန်')} aria-pressed={featuredRotationPaused} onClick={() => setFeaturedRotationPaused(current => !current)}>{featuredRotationPaused ? <Play size={14}/> : <Pause size={14}/>}</button>
             <button type="button" aria-label={t('Show next project', 'နောက်ပရောဂျက် ပြရန်')} onClick={() => moveFeaturedProject(1)}><ChevronRight size={17}/></button>
           </div>
-        </div>
-
-        <article
-          className={`showcase-project-slide showcase-project-slide-${activeFeaturedProject.theme}`}
-          data-featured-project={activeFeaturedProject.id}
-          aria-roledescription={t('slide', 'ပရောဂျက်')}
-          aria-label={`${featuredProjectIndex + 1} ${t('of', 'မှ')} ${featuredProjectCount}`}
-          aria-live={featuredRotationPaused || featuredPointerInside || featuredHasFocus || prefersReducedMotion ? 'polite' : 'off'}
-        >
-          <div className="showcase-project-copy">
-            <span className="showcase-project-eyebrow">{t(activeFeaturedProject.eyebrowEn, activeFeaturedProject.eyebrowMy)}</span>
-            <h3>{t(activeFeaturedProject.titleEn, activeFeaturedProject.titleMy)}</h3>
-            <p>{t(activeFeaturedProject.descriptionEn, activeFeaturedProject.descriptionMy)}</p>
-            <a className="showcase-project-action" href={activeFeaturedProject.href}>{t(activeFeaturedProject.actionEn, activeFeaturedProject.actionMy)}<ArrowUpRight size={15}/></a>
           </div>
-          <a className={`showcase-project-visual showcase-project-visual-${activeFeaturedProject.theme}`} href={activeFeaturedProject.href} aria-label={t(activeFeaturedProject.actionEn, activeFeaturedProject.actionMy)}>
-            <div className={`showcase-project-images showcase-project-images-${activeFeaturedProject.previewIds.length}`} aria-hidden="true">
-              {activeFeaturedProject.previewIds.map(previewId => <div className="showcase-project-image-frame" key={previewId}>{previewImage(previewId, 'eager', 'showcase-project-image')}</div>)}
+          {activeFeaturedProject && <article
+            className={`showcase-hero-project-slide showcase-project-slide-${activeFeaturedProject.theme}`}
+            data-featured-project={activeFeaturedProject.id}
+            aria-roledescription={t('slide', 'ပရောဂျက်')}
+            aria-label={`${featuredProjectIndex + 1} ${t('of', 'မှ')} ${featuredProjectCount}`}
+            aria-live={featuredRotationPaused || featuredPointerInside || featuredHasFocus || prefersReducedMotion ? 'polite' : 'off'}
+          >
+            <a className={`showcase-hero-project-visual showcase-hero-project-visual-${activeFeaturedProject.theme}`} href={activeFeaturedProject.href} aria-label={t(activeFeaturedProject.actionEn, activeFeaturedProject.actionMy)}>
+              <div className={`showcase-project-images showcase-project-images-${activeFeaturedProject.previewIds.length}`} aria-hidden="true">
+                {activeFeaturedProject.previewIds.map(previewId => <div className="showcase-project-image-frame" key={previewId}>{previewImage(previewId, 'eager', 'showcase-project-image')}</div>)}
+              </div>
+              <span className="showcase-project-art-label">{String(featuredProjectIndex + 1).padStart(2, '0')} <i>/</i> {String(featuredProjectCount).padStart(2, '0')}</span>
+            </a>
+            <div className="showcase-hero-projects-caption">
+              <div className="showcase-hero-project-copy">
+                <span className="showcase-project-eyebrow">{t(activeFeaturedProject.eyebrowEn, activeFeaturedProject.eyebrowMy)}</span>
+                <h2>{t(activeFeaturedProject.titleEn, activeFeaturedProject.titleMy)}</h2>
+                <p>{t(activeFeaturedProject.descriptionEn, activeFeaturedProject.descriptionMy)}</p>
+              </div>
+              <a className="showcase-project-action" href={activeFeaturedProject.href}>{t(activeFeaturedProject.actionEn, activeFeaturedProject.actionMy)}<ArrowUpRight size={15}/></a>
             </div>
-            <span className="showcase-project-art-label">{String(featuredProjectIndex + 1).padStart(2, '0')} <i>/</i> {String(featuredProjectCount).padStart(2, '0')}</span>
-          </a>
-        </article>
+          </article>}
 
-        <div className="showcase-project-carousel-footer">
-          <div className="showcase-project-pagination" role="group" aria-label={t('Choose a project', 'ပရောဂျက်ရွေးရန်')}>
-            {showcaseFeaturedProjects.map((project, index) => <button
-              type="button"
-              key={project.id}
-              aria-label={`${t('Show project', 'ပရောဂျက်ပြရန်')} ${t(project.titleEn, project.titleMy)}`}
-              aria-pressed={featuredProjectIndex === index}
-              onClick={() => setFeaturedProjectIndex(index)}
-            ><span/></button>)}
+          <div className="showcase-hero-projects-footer">
+            <div className="showcase-project-pagination" role="group" aria-label={t('Choose a project', 'ပရောဂျက်ရွေးရန်')}>
+              {showcaseFeaturedProjects.map((project, index) => <button
+                type="button"
+                key={project.id}
+                aria-label={`${t('Show project', 'ပရောဂျက်ပြရန်')} ${t(project.titleEn, project.titleMy)}`}
+                aria-pressed={featuredProjectIndex === index}
+                onClick={() => setFeaturedProjectIndex(index)}
+              ><span/></button>)}
+            </div>
+            <span className="showcase-project-carousel-status" aria-hidden="true">{String(featuredProjectIndex + 1).padStart(2, '0')} <i>/</i> {String(featuredProjectCount).padStart(2, '0')}</span>
           </div>
-          <span className="showcase-project-carousel-status" aria-hidden="true">{String(featuredProjectIndex + 1).padStart(2, '0')} <i>/</i> {String(featuredProjectCount).padStart(2, '0')}</span>
         </div>
-      </section>}
+      </section>
 
       <section className="showcase-categories" id="categories" aria-labelledby="categories-title">
         <div className="showcase-section-heading">
