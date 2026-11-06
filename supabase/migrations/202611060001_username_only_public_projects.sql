@@ -61,8 +61,9 @@ begin
 end;
 $$;
 
--- Preserve every claimed name, even if its project is renamed or deleted, so an
--- old public URL can never later point to a different invitation.
+-- Preserve every prior name while its invitation exists, even after a rename,
+-- so old public URLs cannot point to a different invitation. Migration 004
+-- releases all of a record's claims after its hard deletion.
 create table if not exists public.share_username_claims (
   username text primary key check (username ~ '^[a-z][a-z0-9-]{2,39}$'),
   source text not null check (source in ('project', 'guest')),

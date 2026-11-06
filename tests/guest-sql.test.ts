@@ -26,6 +26,7 @@ test('guest SQL: private anonymous records, redacted lookup, immutability and ra
     await db.exec(await Bun.file(new URL('../supabase/migrations/202611060001_username_only_public_projects.sql', import.meta.url)).text());
     await db.exec(await Bun.file(new URL('../supabase/migrations/202610280002_guest_signed_upload_sessions.sql', import.meta.url)).text());
     await db.exec(await Bun.file(new URL('../supabase/migrations/202611060002_username_only_guest_shares.sql', import.meta.url)).text());
+    await db.exec(await Bun.file(new URL('../supabase/migrations/202611060004_username_claim_release_on_delete.sql', import.meta.url)).text());
 
     await db.exec(`SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','11111111-1111-4111-a111-111111111111',false);`);
     await db.query(`INSERT INTO public.projects(title,username,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ('Claimed first','guest-project-first','Private','A','B','2027-02-14','09:00','Hall','Welcome')`);

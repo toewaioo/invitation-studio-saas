@@ -23,6 +23,7 @@ test('SQL migration: owner isolation, private storage, publication and edit revo
  await db.exec(await Bun.file(new URL('../supabase/migrations/202610220001_guest_invitations.sql',import.meta.url)).text());
  await db.exec(await Bun.file(new URL('../supabase/migrations/202610220002_schedule.sql',import.meta.url)).text());
  await db.exec(await Bun.file(new URL('../supabase/migrations/202611060001_username_only_public_projects.sql',import.meta.url)).text());
+ await db.exec(await Bun.file(new URL('../supabase/migrations/202611060004_username_claim_release_on_delete.sql',import.meta.url)).text());
  const privileges=await db.query<{owner_rpc:boolean;public_rpc:boolean}>(`SELECT has_function_privilege('anon','public.publish_project(uuid)','EXECUTE') AS owner_rpc,has_function_privilege('anon','public.public_project(text,text)','EXECUTE') AS public_rpc`);
  expect(privileges.rows[0].owner_rpc).toBe(false);expect(privileges.rows[0].public_rpc).toBe(true);
  const management=await db.query<{owner_read:boolean;photo_read:boolean}>(`SELECT has_table_privilege('anon','public.projects','SELECT') owner_read,has_table_privilege('anon','public.project_photos','SELECT') photo_read`);
@@ -73,5 +74,10 @@ test('SQL migration: owner isolation, private storage, publication and edit revo
  await db.query(`SELECT public.revoke_project($1)`,[pid]);
  await db.query(`DELETE FROM public.project_photos WHERE id=$1`,[photo]);
  expect((await db.query(`SELECT * FROM public.project_photos`)).rows).toHaveLength(0);
+ await db.query(`DELETE FROM public.projects WHERE id=$1`,[pid]);
+ expect((await db.query<{ available:boolean }>(`SELECT public.username_available('sql-story') available`)).rows[0].available).toBe(true);
+ expect((await db.query<{ available:boolean }>(`SELECT public.username_available('renamed-story') available`)).rows[0].available).toBe(true);
+ await db.query(`INSERT INTO public.projects(title,username,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ('Replacement','sql-story','Private','A','B','2027-02-14','09:00','Hall','Welcome')`);
+ expect((await db.query<{ available:boolean }>(`SELECT public.username_available('sql-story') available`)).rows[0].available).toBe(false);
  }finally{await db.close();}
 },20000);
