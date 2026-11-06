@@ -38,6 +38,7 @@ export class ServerRepository implements StudioRepository {
   removePhoto(projectId: string, photoId: string) { return apiRequest<Project>('removePhoto', { body: { projectId, photoId } }) }
   publish(projectId: string) { return apiRequest<Project>('publish', { body: { projectId } }) }
   revoke(projectId: string) { return apiRequest<Project>('revoke', { body: { projectId } }) }
+  async deleteProject(projectId: string, confirmUsername: string) { await apiRequest('deleteProject', { body: { projectId, confirmUsername } }) }
   publicProject(username: string, key?: string) { return apiRequest<Project>('publicProject', { query: { username, ...(key ? { key } : {}) } }) }
   usernameAvailable(username: string, exceptId?: string) { return apiRequest<boolean>('usernameAvailable', { query: { username, exceptId } }) }
 }

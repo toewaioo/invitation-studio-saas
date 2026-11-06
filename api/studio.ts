@@ -88,6 +88,9 @@ function genericError(error: unknown) {
     'Photo not found',
     'Not found',
     'Project not found',
+    'Username confirmation does not match',
+    'Unable to delete invitation',
+    'Sharing was stopped, but deletion did not complete. Please retry.',
     'Invalid JSON',
     'Invalid credentials',
     'Please sign in first',
@@ -328,7 +331,7 @@ const methods: Record<string, string> = {
   session: 'GET', login: 'POST', logout: 'POST', publicPhoto: 'GET', guest: 'POST',
   guestUploadStart: 'POST', guestUploadFile: 'POST', guestUploadFinalize: 'POST', guestUploadCancel: 'POST',
   publicProject: 'GET', usernameAvailable: 'GET', list: 'GET', get: 'GET', save: 'POST',
-  upload: 'POST', removePhoto: 'POST', publish: 'POST', revoke: 'POST', ownerPhoto: 'GET',
+  upload: 'POST', removePhoto: 'POST', publish: 'POST', revoke: 'POST', deleteProject: 'POST', ownerPhoto: 'GET',
 }
 
 async function handle(
@@ -536,6 +539,38 @@ async function handle(
       const result = await owner.sb.rpc(action === 'publish' ? 'publish_project' : 'revoke_project', { p_project_id: String(body.projectId || '') })
       if (result.error) throw result.error
       send(res, 200, { data: await ownerResult(owner.sb, String(body.projectId || '')) })
+      return
+    }
+    if (action === 'deleteProject') {
+      const body = await readJson(req)
+      const id = typeof body.projectId === 'string' ? body.projectId.trim() : ''
+      const project = await getProject(owner.sb, id)
+      const confirmation = typeof body.confirmUsername === 'string' ? body.confirmUsername.trim().toLowerCase() : ''
+      if (confirmation !== String(project.username || '').toLowerCase()) throw new Error('Username confirmation does not match')
+
+      const wasPublished = project.status === 'published'
+      const deletionError = () => new Error(wasPublished
+        ? 'Sharing was stopped, but deletion did not complete. Please retry.'
+        : 'Unable to delete invitation')
+      if (wasPublished) {
+        const revoked = await owner.sb.rpc('revoke_project', { p_project_id: id })
+        if (revoked.error || !revoked.data) throw revoked.error || new Error('Unable to delete invitation')
+      }
+
+      const photoRows = Array.isArray(project.project_photos) ? project.project_photos : []
+      const prefix = `${owner.user.id}/${id}/`
+      const paths = photoRows.map((photo: any) => photo.storage_path)
+      if (paths.some((path: unknown) => typeof path !== 'string' || !path.startsWith(prefix))) {
+        throw deletionError()
+      }
+      if (paths.length) {
+        const removed = await owner.sb.storage.from('project-photos').remove(paths as string[])
+        if (removed.error) throw deletionError()
+      }
+
+      const deleted = await owner.sb.from('projects').delete().eq('id', id).eq('owner_id', owner.user.id).select('id').maybeSingle()
+      if (deleted.error || !deleted.data) throw deletionError()
+      send(res, 200, { data: { deleted: true } })
       return
     }
     if (action === 'ownerPhoto') {

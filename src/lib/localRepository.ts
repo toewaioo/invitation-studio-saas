@@ -44,6 +44,11 @@ class LocalRepository implements StudioRepository {
   async revoke(id: string): Promise<Project> {
     const p = await this.get(id), previous = new Map(memory); p.status = 'draft'; p.public_key = null; p.updated_at = now(); memory.set(id, p); writeLocal(previous); return p;
   }
+  async deleteProject(id: string, confirmUsername: string): Promise<void> {
+    const p = await this.get(id);
+    if (confirmUsername.trim().toLowerCase() !== p.username.toLowerCase()) throw new Error('Username confirmation does not match');
+    const previous = new Map(memory); memory.delete(id); writeLocal(previous);
+  }
   async publicProject(username: string, key?: string): Promise<Project> {
     if (!username) throw new Error('Invalid invitation link');
     const p = [...getLocal().values()].find(x => x.username === username && x.status === 'published' && (!key || x.public_key === key));

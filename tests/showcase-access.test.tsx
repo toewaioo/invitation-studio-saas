@@ -201,6 +201,7 @@ describe("public and management access", () => {
     expect(manage).not.toContain("Invitation projects");
     expect(manage).not.toContain("Search projects");
     expect(manage).not.toContain("New invitation");
+    expect(manage).not.toContain("Delete permanently");
   });
 
   test("removes the template-count fact, adds clearly labeled demo reviews, and preserves the FAQ", () => {

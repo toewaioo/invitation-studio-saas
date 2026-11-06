@@ -24,6 +24,7 @@ test('SQL migration: owner isolation, private storage, publication and edit revo
  await db.exec(await Bun.file(new URL('../supabase/migrations/202610220002_schedule.sql',import.meta.url)).text());
  await db.exec(await Bun.file(new URL('../supabase/migrations/202611060001_username_only_public_projects.sql',import.meta.url)).text());
  await db.exec(await Bun.file(new URL('../supabase/migrations/202611060004_username_claim_release_on_delete.sql',import.meta.url)).text());
+ await db.exec(await Bun.file(new URL('../supabase/migrations/202611060005_project_photo_delete_cascade.sql',import.meta.url)).text());
  const privileges=await db.query<{owner_rpc:boolean;public_rpc:boolean}>(`SELECT has_function_privilege('anon','public.publish_project(uuid)','EXECUTE') AS owner_rpc,has_function_privilege('anon','public.public_project(text,text)','EXECUTE') AS public_rpc`);
  expect(privileges.rows[0].owner_rpc).toBe(false);expect(privileges.rows[0].public_rpc).toBe(true);
  const management=await db.query<{owner_read:boolean;photo_read:boolean}>(`SELECT has_table_privilege('anon','public.projects','SELECT') owner_read,has_table_privilege('anon','public.project_photos','SELECT') photo_read`);
@@ -32,6 +33,7 @@ test('SQL migration: owner isolation, private storage, publication and edit revo
  await db.exec(`SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','11111111-1111-4111-a111-111111111111',false);`);
  const pid='33333333-3333-4333-a333-333333333333', photo='44444444-4444-4444-a444-444444444444';
  await db.query(`INSERT INTO public.projects(id,title,username,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ($1,'Story','sql-story','Private customer','A','B','2027-02-14','09:00','Hall','Welcome')`,[pid]);
+ await expect(db.query(`INSERT INTO public.projects(title,username,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ('Duplicate active name','sql-story','Private','A','B','2027-02-14','09:00','Hall','Welcome')`)).rejects.toThrow('Username is already in use');
  await db.query(`UPDATE public.projects SET schedule='[{"time":"08:30","label":"Doors open"}]'::jsonb WHERE id=$1`,[pid]);
  expect((await db.query<{ available:boolean }>(`SELECT public.username_available('sql-story',$1) available`,[pid])).rows[0].available).toBe(true);
  expect((await db.query<{ available:boolean }>(`SELECT public.username_available('sql-story') available`)).rows[0].available).toBe(false);
@@ -72,12 +74,24 @@ test('SQL migration: owner isolation, private storage, publication and edit revo
  const published2=await db.query<{p:any}>(`SELECT public.publish_project($1) AS p`,[pid]);
  expect(published2.rows[0].p.public_key).not.toBe(key);
  await db.query(`SELECT public.revoke_project($1)`,[pid]);
- await db.query(`DELETE FROM public.project_photos WHERE id=$1`,[photo]);
- expect((await db.query(`SELECT * FROM public.project_photos`)).rows).toHaveLength(0);
+ await db.query(`DELETE FROM storage.objects WHERE bucket_id='project-photos' AND name=$1`,[path]);
  await db.query(`DELETE FROM public.projects WHERE id=$1`,[pid]);
+ expect((await db.query(`SELECT * FROM public.project_photos`)).rows).toHaveLength(0);
  expect((await db.query<{ available:boolean }>(`SELECT public.username_available('sql-story') available`)).rows[0].available).toBe(true);
  expect((await db.query<{ available:boolean }>(`SELECT public.username_available('renamed-story') available`)).rows[0].available).toBe(true);
- await db.query(`INSERT INTO public.projects(title,username,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ('Replacement','sql-story','Private','A','B','2027-02-14','09:00','Hall','Welcome')`);
+ const replacementId='66666666-6666-4666-a666-666666666666', replacementPhoto='77777777-7777-4777-a777-777777777777';
+ await db.query(`INSERT INTO public.projects(id,title,username,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ($1,'Replacement','sql-story','Private','New A','New B','2027-02-14','09:00','New Hall','New welcome')`,[replacementId]);
  expect((await db.query<{ available:boolean }>(`SELECT public.username_available('sql-story') available`)).rows[0].available).toBe(false);
+ await expect(db.query(`INSERT INTO public.projects(title,username,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ('Still duplicate','sql-story','Private','A','B','2027-02-14','09:00','Hall','Welcome')`)).rejects.toThrow('Username is already in use');
+ const replacementPath=`11111111-1111-4111-a111-111111111111/${replacementId}/${replacementPhoto}.jpeg`;
+ await db.query(`INSERT INTO storage.objects(bucket_id,name) VALUES ('project-photos',$1)`,[replacementPath]);
+ await db.query(`INSERT INTO public.project_photos(id,project_id,storage_path) VALUES ($1,$2,$3)`,[replacementPhoto,replacementId,replacementPath]);
+ const replacementPublished=await db.query<{p:any}>(`SELECT public.publish_project($1) AS p`,[replacementId]);
+ expect(replacementPublished.rows[0].p.title).toBe('Replacement');
+ await db.exec(`SET ROLE anon`);
+ const reusedShortLink=(await db.query<{p:any}>(`SELECT public.public_project('sql-story',null) AS p`)).rows[0].p;
+ expect(reusedShortLink.title).toBe('Replacement');
+ expect((await db.query<{p:any}>(`SELECT public.public_project('sql-story',$1) AS p`,[key])).rows[0].p).toBeNull();
+ expect((await db.query<{p:any}>(`SELECT public.public_project('sql-story',$1) AS p`,[replacementPublished.rows[0].p.public_key])).rows[0].p.title).toBe('Replacement');
  }finally{await db.close();}
 },20000);

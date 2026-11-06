@@ -24,6 +24,17 @@ describe('repository validation and local demo mode', () => {
     expect(() => validateUploadFile(new File([new Uint8Array(4_490_001)], 'x.jpg', { type: 'image/jpeg' }))).toThrow()
     expect(() => validateUploadFile(new File([new Uint8Array(4_490_000)], 'x.jpg', { type: 'image/jpeg' }))).not.toThrow()
   })
+  test('deleting permanently releases a username while an active invitation still blocks duplicates', async () => {
+    const username = `delete-${Date.now()}`
+    const project = await repository.save({ ...valid, title: 'Remove me', username })
+    await expect(repository.save({ ...valid, title: 'Duplicate', username })).rejects.toThrow('already in use')
+    await expect(repository.deleteProject(project.id, 'wrong-name')).rejects.toThrow('confirmation')
+    await repository.deleteProject(project.id, username)
+    expect(await repository.usernameAvailable(username)).toBe(true)
+    const replacement = await repository.save({ ...valid, title: 'Replacement', username })
+    expect(replacement.username).toBe(username)
+    await expect(repository.get(project.id)).rejects.toThrow('Project not found')
+  })
   test('saves, publishes, hides customer details publicly, and revokes', async () => {
     const username = `test-${Date.now()}`
     const project = await repository.save({ ...valid, title: 'Demo', username, customer_name: 'Private Person', customer_email: 'private@example.com' })

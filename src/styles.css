@@ -156,3 +156,22 @@
   .app-shell .topbar{background:#fff}
   .app-shell .workspace-footer{border-color:#e4e8f1}
 }
+
+.delete-project-dialog{width:min(520px,calc(100% - 32px));max-height:min(90dvh,760px);margin:auto;border:1px solid #e2e5ed;border-radius:16px;padding:24px;background:#fff;color:#20252b;box-shadow:0 24px 80px #10182830;overflow:auto}
+.delete-project-dialog::backdrop{background:#11182780;backdrop-filter:blur(2px)}
+.delete-project-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.delete-project-warning{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#fff0f0;color:#b33b4a}
+.delete-project-dialog h2{font-size:21px;line-height:1.35;color:#20283a;margin:0 0 9px}
+.delete-project-summary{font-size:13px;line-height:1.7;color:#5f6878;margin:0 0 16px}
+.delete-project-link-warning{border:1px solid #efe2cb;background:#fffaf1;border-radius:10px;padding:13px 14px;margin-bottom:17px;color:#64563f}
+.delete-project-link-warning strong{font-size:12px;color:#54442c}
+.delete-project-link-warning p{font-size:12px;line-height:1.7;margin-top:4px}
+.delete-project-confirm-label{display:grid;gap:7px;font-size:12px;font-weight:600;color:#39445a}
+.delete-project-confirm-label strong{font:600 12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:#5746c4}
+.delete-project-confirm-label input{width:100%;height:42px;border:1px solid #dfe3eb;border-radius:8px;padding:9px 11px;color:#222b3d;background:#fff}
+.delete-project-confirm-label input:focus{border-color:#7666d9;box-shadow:0 0 0 3px #6654d91a;outline:0}
+.delete-project-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}
+.danger-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:8px 13px;border:1px solid #a82e3c;border-radius:7px;background:#b73846;color:#fff;font-size:12px;font-weight:600;white-space:nowrap}
+.danger-primary:hover:not(:disabled){background:#982d3b}
+.danger-primary:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:480px){.delete-project-dialog{width:calc(100% - 20px);padding:20px 17px;border-radius:14px}.delete-project-dialog h2{font-size:18px}.delete-project-actions .secondary,.delete-project-actions .danger-primary{flex:1;padding-inline:8px;font-size:11px}}

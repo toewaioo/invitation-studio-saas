@@ -12,12 +12,14 @@ const project = {
   customer_phone: '555', private_notes: 'private', person_a: 'A', person_b: 'B', parent_a: '', parent_b: '',
   event_date: '2030-01-01', event_time: '12:00', venue: 'Venue', message: 'Welcome', map_url: '', username: 'our-day',
   template: 'thazin', theme: 'sage', project_type: 'wedding', status: 'draft', public_key: 'share-key',
-  storage_path: 'private/project.json', project_photos: [{ id: 'photo-1', caption: 'one', position: 0, storage_path: 'private/photo.jpg' }],
+  storage_path: 'private/project.json', project_photos: [{ id: 'photo-1', caption: 'one', position: 0, storage_path: `${OWNER}/project-1/photo-1.jpg` }],
 }
 
 let currentProject = structuredClone(project)
 let usernameFree = true
 let failPhotoInsert = false
+let failStorageDelete = false
+let projectDeleted = false
 let calls: Array<{ url: string; init?: RequestInit }> = []
 let publicMode: 'valid' | 'missing' | 'guest-fallback' = 'valid'
 let server: ReturnType<typeof createServer>
@@ -41,8 +43,9 @@ function mockFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respon
   if (u.pathname === '/auth/v1/logout') return Promise.resolve(new Response(null, { status: 204 }))
   if (u.pathname === '/rest/v1/projects') {
     if (token !== access && token !== 'refreshed-access') return Promise.resolve(json({ message: 'RLS' }, 401))
+    if (init?.method === 'DELETE') { projectDeleted = true; return Promise.resolve(json([{ id: currentProject.id }])) }
     if (init?.method === 'POST' || init?.method === 'PATCH') { currentProject = { ...currentProject, ...JSON.parse(String(init.body)) }; return Promise.resolve(json(currentProject)) }
-    if (u.searchParams.has('id')) return Promise.resolve(json(currentProject))
+    if (u.searchParams.has('id')) return Promise.resolve(projectDeleted ? json([]) : json(currentProject))
     return Promise.resolve(json([currentProject]))
   }
   if (u.pathname === '/rest/v1/project_photos') {
@@ -63,7 +66,7 @@ function mockFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Respon
   }
   if (u.pathname.startsWith('/storage/v1/object/')) {
     if (init?.method === 'POST') return Promise.resolve(json({ Key: u.pathname.split('/object/')[1] }))
-    if (init?.method === 'DELETE') return Promise.resolve(json([]))
+    if (init?.method === 'DELETE') return Promise.resolve(failStorageDelete ? json({ message: 'storage cleanup failed' }, 500) : json([]))
     return Promise.resolve(new Response(new Uint8Array([255, 216, 255]), { headers: { 'content-type': 'image/jpeg' } }))
   }
   if (u.pathname.startsWith('/functions/v1/guest-invitation')) return Promise.resolve(json({ project: { username: 'guest-abc', public_key: 'guest-key', title: 'Guest', status: 'published' } }, 201))
@@ -106,14 +109,14 @@ beforeAll(async () => {
   await start()
 })
 afterAll(async () => { await stop(); for (const [k, v] of Object.entries(savedEnv)) v === undefined ? delete process.env[k] : process.env[k] = v })
-beforeEach(() => { calls = []; publicMode = 'valid'; currentProject = structuredClone(project); usernameFree = true; failPhotoInsert = false; process.env.GUEST_UPLOAD_BRIDGE_SECRET = 'test-bridge-secret-test-bridge-secret'; delete process.env.VERCEL; delete process.env.APP_ORIGIN })
+beforeEach(() => { calls = []; publicMode = 'valid'; currentProject = structuredClone(project); usernameFree = true; failPhotoInsert = false; failStorageDelete = false; projectDeleted = false; process.env.GUEST_UPLOAD_BRIDGE_SECRET = 'test-bridge-secret-test-bridge-secret'; delete process.env.VERCEL; delete process.env.APP_ORIGIN })
 
 describe('studio server API', () => {
   test('anonymous requests cannot access owner list/get or mutate actions', async () => {
     for (const [path, init] of [
       ['/api/studio?action=list', {}], ['/api/studio?action=get&projectId=project-1', {}],
       ['/api/studio?action=save', { method: 'POST', body: '{}' }], ['/api/studio?action=publish', { method: 'POST', body: '{}' }],
-      ['/api/studio?action=revoke', { method: 'POST', body: '{}' }], ['/api/studio?action=upload&projectId=project-1', { method: 'POST', body: Buffer.from([255,216,255]), headers: { 'content-type': 'image/jpeg' } }],
+      ['/api/studio?action=revoke', { method: 'POST', body: '{}' }], ['/api/studio?action=deleteProject', { method: 'POST', body: JSON.stringify({ projectId: 'project-1', confirmUsername: 'our-day' }) }], ['/api/studio?action=upload&projectId=project-1', { method: 'POST', body: Buffer.from([255,216,255]), headers: { 'content-type': 'image/jpeg' } }],
       ['/api/studio?action=ownerPhoto&projectId=project-1&photoId=photo-1', {}],
     ] as Array<[string, RequestInit]>) { const r = await request(path, init); expect(r.status).toBe(401) }
     expect(calls).toHaveLength(0)
@@ -130,8 +133,8 @@ describe('studio server API', () => {
     const api = calls.find((x) => x.url.includes('/rest/v1/projects')); expect(bearer(api?.init)).toBe(access); expect(bearer(api?.init)).not.toBe('service-role')
   })
 
-  test('non-owner JWT is denied', async () => {
-    const r = await request('/api/studio?action=list', { headers: { cookie: 'studio_access=other-token' } }); expect(r.status).toBe(403); expect(calls.some((x) => x.url.endsWith('/auth/v1/user'))).toBe(true); expect(calls.some(x => x.url.includes('/rest/'))).toBe(false)
+  test('non-owner JWT is denied for private delete before any database request', async () => {
+    const r = await request('/api/studio?action=deleteProject', { method: 'POST', headers: { cookie: 'studio_access=other-token', 'content-type': 'application/json' }, body: JSON.stringify({ projectId: 'project-1', confirmUsername: 'our-day' }) }); expect(r.status).toBe(403); expect(calls.some((x) => x.url.endsWith('/auth/v1/user'))).toBe(true); expect(calls.some(x => x.url.includes('/rest/') || x.url.includes('/storage/'))).toBe(false)
   })
 
   test('login sets secure HttpOnly cookies and never returns tokens', async () => {
@@ -282,6 +285,48 @@ describe('server gateway behavior preservation', () => {
     expect(await r.json()).toEqual({ error: 'Username is already in use' });
     expect(calls.some(x => x.url.includes('/rest/v1/projects') && x.init?.method === 'POST')).toBe(false);
   });
+
+  test('permanent deletion requires the exact current username confirmation before any destructive action', async () => {
+    for (const confirmation of ['', 'another-name']) {
+      const r = await post('/api/studio?action=deleteProject', { projectId: project.id, confirmUsername: confirmation })
+      expect(r.status).toBe(400)
+      expect(await r.json()).toEqual({ error: 'Username confirmation does not match' })
+      expect(calls.some(x => x.url.endsWith('/rpc/revoke_project'))).toBe(false)
+      expect(calls.some(x => x.url.includes('/storage/v1/object/') && x.init?.method === 'DELETE')).toBe(false)
+      expect(calls.some(x => x.url.includes('/rest/v1/projects') && x.init?.method === 'DELETE')).toBe(false)
+      calls = []
+    }
+  })
+
+  test('owner can hard-delete a published invitation after revoking and cleaning only its own photos', async () => {
+    currentProject = { ...structuredClone(project), status: 'published', public_key: 'share-key' }
+    const r = await post('/api/studio?action=deleteProject', { projectId: project.id, confirmUsername: 'our-day' })
+    expect(r.status).toBe(200)
+    expect(await r.json()).toEqual({ data: { deleted: true } })
+    const revokeIndex = calls.findIndex(x => x.url.endsWith('/rpc/revoke_project'))
+    const assetIndex = calls.findIndex(x => x.url.includes('/storage/v1/object/project-photos') && x.init?.method === 'DELETE')
+    const deleteIndex = calls.findIndex(x => x.url.includes('/rest/v1/projects') && x.init?.method === 'DELETE')
+    expect(revokeIndex).toBeGreaterThanOrEqual(0)
+    expect(assetIndex).toBeGreaterThan(revokeIndex)
+    expect(deleteIndex).toBeGreaterThan(assetIndex)
+    const assetCall = calls[assetIndex]
+    expect(JSON.parse(String(assetCall.init?.body)).prefixes).toEqual([`${OWNER}/project-1/photo-1.jpg`])
+    expect(bearer(assetCall.init)).toBe(access)
+    const dbDelete = calls[deleteIndex]
+    expect(new URL(dbDelete.url).searchParams.get('owner_id')).toBe(`eq.${OWNER}`)
+    expect(bearer(dbDelete.init)).toBe(access)
+  })
+
+  test('failed photo storage cleanup leaves the invitation row intact and reports the completed revoke', async () => {
+    currentProject = { ...structuredClone(project), status: 'published', public_key: 'share-key' }
+    failStorageDelete = true
+    const r = await post('/api/studio?action=deleteProject', { projectId: project.id, confirmUsername: 'our-day' })
+    expect(r.status).toBe(400)
+    expect(await r.json()).toEqual({ error: 'Sharing was stopped, but deletion did not complete. Please retry.' })
+    expect(calls.some(x => x.url.endsWith('/rpc/revoke_project'))).toBe(true)
+    expect(calls.some(x => x.url.includes('/rest/v1/projects') && x.init?.method === 'DELETE')).toBe(false)
+    expect(projectDeleted).toBe(false)
+  })
 
   test('owner publish and revoke still use existing RLS-scoped RPCs and return updated state', async () => {
     const published = await post('/api/studio?action=publish', { projectId: project.id });
