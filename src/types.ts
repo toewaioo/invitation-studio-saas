@@ -1,5 +1,7 @@
+import type { InvitationTemplateId } from './templates/registry';
+
 export type Language = 'my' | 'en';
-export type Design = 'thazin' | 'noir' | 'rose';
+export type Design = InvitationTemplateId;
 export type Theme = 'sage' | 'midnight' | 'rose' | 'blue';
 export interface Photo { id: string; url: string; path?: string; caption: string; position: number }
 export interface ScheduleMilestone { time: string; label: string }

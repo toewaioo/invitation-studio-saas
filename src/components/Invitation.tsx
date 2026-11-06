@@ -1,5 +1,7 @@
 import { useCallback, useId, useMemo, useRef, type CSSProperties } from "react";
-import type { Design, Photo, Project } from "../types";
+import type { Photo, Project } from "../types";
+import { getInvitationTemplate } from "../templates/registry";
+import TemplatePopups from "../templates/scenes/TemplatePopups";
 import useInvitationMotion from "./useInvitationMotion";
 import DayCountdown from "./DayCountdown";
 import {
@@ -23,42 +25,6 @@ import "./invitation-opening.css";
 import "./invitation-formal.css";
 
 type Props = { project: Project; preview?: boolean; onClose?: () => void };
-const DESIGNS: Record<
-  Design,
-  {
-    eyebrow: string;
-    title: string;
-    heading: string;
-    kicker: string;
-    foot: string;
-    scene: string;
-  }
-> = {
-  thazin: {
-    eyebrow: "A LETTER SEALED WITH LOVE",
-    title: "မေတ္တာနဲ့ ရောက်လာတဲ့ ဖိတ်စာလေး",
-    heading: "မေတ္တာပန်းမုခ်ဦး",
-    kicker: "A LITTLE WORLD OF OUR LOVE",
-    foot: "နှစ်ယောက်တည်းကနေ တစ်ဘဝတည်းသို့",
-    scene: "စာရွက်မှ ထောင်တက်လာသော ပန်းမုခ်ဦး",
-  },
-  noir: {
-    eyebrow: "A LOVE WORTH ITS WEIGHT IN GOLD",
-    title: "ရွှေရောင် အမှတ်တရတစ်စောင်",
-    heading: "ရွှေရောင် ကတိစကား",
-    kicker: "THE GOLDEN VOW",
-    foot: "A timeless love. A golden beginning.",
-    scene: "သုံးဖက်ခေါက် Art Deco ဓာတ်ပုံနှင့် ရွှေရောင်ဘောင်",
-  },
-  rose: {
-    eyebrow: "TWO HEARTS. ONE BEAUTIFUL STORY.",
-    title: "နှလုံးသားနှစ်ခုရဲ့ ပန်းပွင့်ချိန်",
-    heading: "အချစ်တို့ ပွင့်လန်းရာ",
-    kicker: "A BLOSSOM MADE OF MEMORIES",
-    foot: "ချစ်ခြင်းမေတ္တာနဲ့ အတူ ပွင့်လန်းကြမယ်",
-    scene: "ပန်းပွင့်ပုံ စာရွက်အလွှာများကြားမှ ထောင်တက်လာသည့် စုံတွဲဓာတ်ပုံ",
-  },
-};
 const SAMPLE_PHOTOS: Photo[] = [1, 2, 3].map((n, position) => ({
   id: `sample-${n}`,
   url: `/assets/wedding-${n}.jpg`,
@@ -94,7 +60,8 @@ export default function Invitation({
   const stamp = calendar
     ? `${String(calendar.day).padStart(2, "0")} · ${String(calendar.month).padStart(2, "0")} · ${calendar.year}`
     : "WITH LOVE";
-  const design = project.template || "thazin";
+  const template = getInvitationTemplate(project.template);
+  const design = template.id;
   const arrivalPhoto = photos[Math.min(2, photos.length - 1)];
   // Event time is planning-only. The calendar uses an independent date-only
   // countdown; no timed calendar export is exposed to guests.
@@ -221,8 +188,8 @@ export default function Invitation({
       <div className="invitation-experience">
         <div className="arrival" id="arrival" data-has-photo={photos.length > 0}>
           <span className="arrival-crest" aria-hidden="true"><i /><b>❧</b><i /></span>
-          <p className="arrival-overline">{DESIGNS[design].eyebrow}</p>
-          <p className="handwritten">{DESIGNS[design].title}</p>
+          <p className="arrival-overline">{template.arrival.eyebrow}</p>
+          <p className="handwritten">{template.arrival.title}</p>
           <p className="to-guest">
             <span>{firstName}</span><i>&</i><span>{secondName}</span>
           </p>
@@ -338,43 +305,24 @@ export default function Invitation({
                 <article
                   className="paper popup-paper active"
                   data-page="0"
-                  aria-label={DESIGNS[design].heading}
+                  aria-label={template.arrival.heading}
                 >
                   <PaperFiligree design={design} />
-                  <p className="tiny-caps">{DESIGNS[design].kicker}</p>
-                  <h2>{DESIGNS[design].heading}</h2>
+                  <p className="tiny-caps">{template.arrival.kicker}</p>
+                  <h2>{template.arrival.heading}</h2>
                   <div
                     className="popup-stage"
                     id="popup-stage"
                     role="img"
-                    aria-label={DESIGNS[design].scene}
+                    aria-label={template.arrival.scene}
                   >
                     <div className="template-popups" aria-hidden="true">
-                      {design === "noir" && (
-                        <div className="noir-scene">
-                          <div className="deco-wing wing-left" />
-                          <div className="deco-wing wing-right" />
-                          <div className="deco-portrait" hidden={!photos.length}>
-                            {portrait(arrivalPhoto)}
-                            <div className="deco-foil" />
-                          </div>
-                          <div className="deco-plinth">THE GOLDEN VOW</div>
-                        </div>
-                      )}
-                      {design === "rose" && (
-                        <div className="rose-scene">
-                          <div className="rose-orbit" />
-                          <div className="rose-petal petal-one" />
-                          <div className="rose-petal petal-two" />
-                          <div className="rose-petal petal-three" />
-                          <div className="rose-photo" hidden={!photos.length}>
-                            {portrait(photos[Math.min(1, photos.length - 1)])}
-                          </div>
-                          <div className="rose-ribbon">
-                            Two hearts. One beautiful story.
-                          </div>
-                        </div>
-                      )}
+                      <TemplatePopups
+                        design={design}
+                        photos={photos}
+                        arrivalPhoto={arrivalPhoto}
+                        renderPortrait={portrait}
+                      />
                     </div>
                     <div className="popup-halo" />
                     <div className="popup-world">
@@ -411,7 +359,7 @@ export default function Invitation({
                   </div>
                   <div className="popup-couple-names">{namePair()}</div>
                   <div className="popup-footer">
-                    <p>{DESIGNS[design].foot}</p>
+                    <p>{template.arrival.foot}</p>
                     <button
                       type="button"
                       id="popup-replay"
@@ -690,7 +638,7 @@ export default function Invitation({
               ←
             </button>
             <p>
-              <span id="page-title">{DESIGNS[design].heading}</span>
+              <span id="page-title">{template.arrival.heading}</span>
               <small id="page-number" aria-live="polite">
                 ၁ / {myDigits(PAGE_COUNT)}
               </small>

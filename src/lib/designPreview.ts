@@ -1,4 +1,5 @@
 import type { Design, Language, Photo, Project } from "../types";
+import { getInvitationTemplate } from "../templates/registry";
 
 /** The map in this fixture is a valid Google Maps directions URL for sample coordinates only. */
 export const SAMPLE_MAP_NOTICE =
@@ -58,7 +59,7 @@ export function createDesignPreview(design: Design, language: Language): Project
     map_url: SAMPLE.map_url,
     username: "design-preview",
     template: design,
-    theme: design === "noir" ? "midnight" : design === "rose" ? "rose" : "sage",
+    theme: getInvitationTemplate(design).defaultTheme,
     project_type: "wedding",
     status: "draft",
     public_key: null,

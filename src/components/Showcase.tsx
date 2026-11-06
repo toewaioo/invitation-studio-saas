@@ -1,24 +1,15 @@
 import { useEffect, useState } from 'react';
 import { ArrowRight, ArrowUpRight, BookOpen, Check, ChevronLeft, ChevronRight, Heart, LockKeyhole, MessageCircle, Pause, Play, Sparkles } from 'lucide-react';
 import type { Design, Language } from '../types';
+import { INVITATION_TEMPLATES } from '../templates/registry';
 import './showcase.css';
 
+const invitationPreviewAssets = Object.fromEntries(
+  INVITATION_TEMPLATES.map(({ id, preview }) => [id, preview]),
+) as Record<Design, (typeof INVITATION_TEMPLATES)[number]['preview']>;
+
 export const showcasePreviewAssets = {
-  thazin: {
-    src: '/assets/showcase-preview/thazin.webp',
-    enAlt: 'Rendered Thazin wedding invitation with a botanical pop-up arch and Burmese couple names.',
-    myAlt: 'ပန်းမုခ်ဦးနှင့် မြန်မာစုံတွဲအမည်များ ပါဝင်သော သဇင် မင်္ဂလာဖိတ်စာ နမူနာ။',
-  },
-  noir: {
-    src: '/assets/showcase-preview/golden-vow.webp',
-    enAlt: 'Rendered Golden Vow wedding invitation with an art-deco frame and a couple portrait.',
-    myAlt: 'Art deco ဘောင်နှင့် စုံတွဲပုံပါဝင်သော Golden Vow မင်္ဂလာဖိတ်စာ နမူနာ။',
-  },
-  rose: {
-    src: '/assets/showcase-preview/rose-reverie.webp',
-    enAlt: 'Rendered Rose Reverie wedding invitation with layered rose paper and a couple portrait.',
-    myAlt: 'အလွှာလိုက် ပန်းရောင်စက္ကူနှင့် စုံတွဲပုံပါဝင်သော Rose Reverie မင်္ဂလာဖိတ်စာ နမူနာ။',
-  },
+  ...invitationPreviewAssets,
   'love-galaxy': {
     src: '/assets/showcase-preview/love-galaxy-shared-journey.webp',
     enAlt: 'Current shared-journey sample at arrival, with photo memories and an in-scene neighboring-planet label.',
@@ -26,7 +17,7 @@ export const showcasePreviewAssets = {
   },
 } as const;
 
-type ShowcasePreviewId = keyof typeof showcasePreviewAssets;
+type ShowcasePreviewId = Design | 'love-galaxy';
 type PreviewLoading = 'eager' | 'lazy';
 export type ShowcaseFeaturedProject = {
   id: string;
@@ -63,11 +54,9 @@ export const showcaseCategories = [
 export type ShowcaseCategoryId = (typeof showcaseCategories)[number]['id'];
 export type CategoryFilter = ShowcaseCategoryId | 'all';
 
-export const showcaseDesigns: { id: Design; name: string; en: string; my: string; category: ShowcaseCategoryId }[] = [
-  { id: 'thazin', name: 'Thazin', en: 'Botanical · Paper book', my: 'ပန်းအလှဆင် စာအုပ်', category: 'wedding' },
-  { id: 'noir', name: 'Golden Vow', en: 'Geometric · Art deco', my: 'ရွှေရောင် Art deco', category: 'wedding' },
-  { id: 'rose', name: 'Rose Reverie', en: 'Floral · Layered paper', my: 'ပန်းရောင် စက္ကူပန်း', category: 'wedding' },
-];
+export const showcaseDesigns = INVITATION_TEMPLATES.map(({ id, name, descriptionEn, descriptionMy }) => ({
+  id, name, en: descriptionEn, my: descriptionMy, category: 'wedding' as const,
+}));
 
 // Keep the review journey on this preview build instead of the production build where its flag is off.
 const loveGalaxyReviewPreviewUrl = '/love-galaxy?review=shared-journey&sample=1';
@@ -92,7 +81,7 @@ export const showcaseFeaturedProjects: readonly ShowcaseFeaturedProject[] = [
     actionMy: 'ဖိတ်စာများ ကြည့်ရန်',
     secondaryAction: { kind: 'create-invitation', labelEn: 'Create your invitation', labelMy: 'ဖိတ်စာဖန်တီးမယ်' },
     href: '#featured',
-    previewIds: ['thazin', 'noir', 'rose'],
+    previewIds: INVITATION_TEMPLATES.map(({ id }) => id),
     theme: 'invitation',
   },
   {
