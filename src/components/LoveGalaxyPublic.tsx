@@ -12,10 +12,10 @@ export default function LoveGalaxyPublic() {
     let active = true;
     const username = decodeURIComponent(location.pathname.replace(/^\/love\//, '').replace(/\/+$/, ''));
     const key = new URLSearchParams(location.search).get('key') || '';
-    if (!/^galaxy-[a-z0-9-]{8,39}$/.test(username) || !key) {
+    if (!/^galaxy-[a-z0-9-]{8,39}$/.test(username)) {
       setUnavailable(true); setLoading(false); return;
     }
-    fetchPublicLoveGalaxy(username, key)
+    fetchPublicLoveGalaxy(username, key || undefined)
       .then(value => {
         if (value.status !== 'published' || !Array.isArray(value.photos) || value.photos.length !== 4) {
           throw new Error('This Love Galaxy is incomplete or unavailable.');
@@ -36,5 +36,5 @@ export default function LoveGalaxyPublic() {
     musicSrc: galaxy.music_track === 'custom' ? galaxy.music_url || undefined : undefined,
   } : undefined, [galaxy]);
   if (galaxy && story) return <LoveGalaxyExperience story={story} journeyEnabled />;
-  return <main className="lg-share-status" role={loading ? 'status' : 'alert'}>{loading ? <LoaderCircle size={23} className="lg-spin"/> : <LockKeyhole size={23}/>}<h1>{loading ? 'Opening your Love Galaxy…' : 'This Love Galaxy is private or unavailable.'}</h1><p>{loading ? 'Preparing the published memories.' : 'Check that you have the complete share link, including its key.'}</p></main>;
+  return <main className="lg-share-status" role={loading ? 'status' : 'alert'}>{loading ? <LoaderCircle size={23} className="lg-spin"/> : <LockKeyhole size={23}/>}<h1>{loading ? 'Opening your Love Galaxy…' : 'This Love Galaxy is private or unavailable.'}</h1><p>{loading ? 'Preparing the published memories.' : 'Check the Love Galaxy name or ask its creator for the correct share name.'}</p></main>;
 }

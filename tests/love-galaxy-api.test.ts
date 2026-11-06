@@ -98,11 +98,25 @@ describe('dedicated Vercel Love Galaxy gateway',()=>{
     expect(new Uint8Array(await photo.arrayBuffer())).toEqual(new Uint8Array([0xff,0xd8,0xff,0x00]));
   });
 
+  test('username-only Love Galaxy links fetch published metadata and private photos without a key',async()=>{
+    const lookup=await fetch(`${origin}/api/love-galaxy?action=public&username=galaxy-0123456789abcdef`);
+    expect(lookup.status).toBe(200);
+    const result=await lookup.json() as any;
+    expect(result.data.public_key).toBeNull();
+    expect(new URL(result.data.photos[0].url,origin).searchParams.has('key')).toBe(false);
+    const photoUrl=new URL(result.data.photos[0].url,origin);
+    const photo=await fetch(`${origin}${photoUrl.pathname}${photoUrl.search}`);
+    expect(photo.status).toBe(200);
+    expect(new Uint8Array(await photo.arrayBuffer())).toEqual(new Uint8Array([0xff,0xd8,0xff,0x00]));
+    const edge=JSON.parse(String(calls.at(-1)?.init.body));
+    expect(edge.action).toBe('media'); expect(edge.username).toBe('galaxy-0123456789abcdef'); expect(edge.key).toBe('');
+  });
   test('isolated discovery route exposes only validated title and share identifiers',async()=>{
     const response=await fetch(`${origin}/api/love-galaxy?action=discoverable`);
     expect(response.status).toBe(200);
     const result=await response.json() as any;
-    expect(result.data.worlds).toEqual([{username:'galaxy-0123456789abcdef',title:'Our Day',public_key:pubKey}]);
+    expect(result.data.worlds).toEqual([{username:'galaxy-0123456789abcdef',title:'Our Day'}]);
+    expect(JSON.stringify(result)).not.toContain('public_key');
     expect(JSON.stringify(result)).not.toContain('private-photo');
     expect(JSON.stringify(result)).not.toContain('private ring');
     expect(JSON.stringify(result)).not.toContain('private-music');

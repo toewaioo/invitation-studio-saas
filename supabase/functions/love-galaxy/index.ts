@@ -238,8 +238,10 @@ async function cancelUpload(service: any, body: Record<string, unknown>) {
   return { canceled: ['canceled','missing'].includes(result.data?.status) }
 }
 async function publishedByLink(service: any, username: unknown, key: unknown) {
-  if (typeof username !== 'string' || !/^galaxy-[a-z0-9-]{8,39}$/.test(username) || typeof key !== 'string' || !/^[0-9a-f]{64}$/.test(key)) return null
-  const result = await service.rpc('public_love_galaxy', { p_username: username, p_public_key: key })
+  if (typeof username !== 'string' || !/^galaxy-[a-z0-9-]{8,39}$/.test(username)) return null
+  const publicKey = key === undefined || key === null || key === '' ? null : typeof key === 'string' && /^[0-9a-f]{64}$/.test(key) ? key : undefined
+  if (publicKey === undefined) return null
+  const result = await service.rpc('public_love_galaxy', { p_username: username, p_public_key: publicKey })
   if (result.error || !result.data) return null
   return result.data as Record<string, unknown>
 }

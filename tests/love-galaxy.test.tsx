@@ -330,11 +330,11 @@ describe("standalone Love Galaxy experience", () => {
     expect(publishedLayout.worlds).toHaveLength(0);
     expect(publishedLayout.galaxies).toHaveLength(0);
     const optedInLayout = createPublishedSharedJourneyLayout(12345, [
-      { username: "galaxy-opted00001", title: "Only the title is public", public_key: "a".repeat(64) },
-      { username: "invalid", title: "Not a world", public_key: "b".repeat(64) },
+      { username: "galaxy-opted00001", title: "Only the title is public" },
+      { username: "invalid", title: "Not a world" },
     ]);
     expect(optedInLayout.worlds).toHaveLength(1);
-    expect(optedInLayout.worlds[0]).toMatchObject({ id: "galaxy-opted00001", label: "Only the title is public", source: "owner-opted-in", href: `/love/galaxy-opted00001?key=${"a".repeat(64)}` });
+    expect(optedInLayout.worlds[0]).toMatchObject({ id: "galaxy-opted00001", label: "Only the title is public", source: "owner-opted-in", href: `/love/galaxy-opted00001` });
     expect(optedInLayout.worlds[0]).not.toHaveProperty("photos");
     expect(optedInLayout.worlds[0]).not.toHaveProperty("ringTextOne");
     expect(optedInLayout.worlds[0]).not.toHaveProperty("musicSrc");
@@ -357,11 +357,11 @@ describe("standalone Love Galaxy experience", () => {
     const optedIn = { username: "galaxy-opted00001", title: "Only the title is public", public_key: "a".repeat(64) };
     const source = readFileSync(new URL("../src/components/LoveGalaxyExperience.tsx", import.meta.url), "utf8");
     const css = readFileSync(new URL("../src/components/love-galaxy.css", import.meta.url), "utf8");
-    const href = `/love/${optedIn.username}?key=${optedIn.public_key}`;
+    const href = `/love/${optedIn.username}`;
     expect(createPublishedJourneyShareHref(optedIn)).toBe(href);
     expect(createPublishedJourneyShareHref({ ...optedIn, username: "not-a-galaxy" })).toBeNull();
     expect(createPublishedJourneyShareHref({ ...optedIn, title: " " })).toBeNull();
-    expect(createPublishedJourneyShareHref({ ...optedIn, public_key: "private-or-invalid" })).toBeNull();
+    expect(createPublishedJourneyShareHref({ ...optedIn, public_key: "private-or-invalid" })).toBe(href);
     expect(source).toContain('journeyEnabled && !reviewSharedJourneyPrototypeEnabled');
     expect(source).not.toContain("lg-shared-planet-picker");
     expect(source).not.toContain("selectedSharedWorldId");
@@ -478,7 +478,6 @@ describe("standalone Love Galaxy experience", () => {
     const optedIn = Array.from({ length: SHARED_JOURNEY_WORLD_COUNT }, (_, index) => ({
       username: `galaxy-opted-in-${String(index + 1).padStart(2, "0")}`,
       title: `Opted-in test destination ${index + 1}`,
-      public_key: String(index + 1).padStart(64, "0"),
     }));
     const layout = createPublishedSharedJourneyLayout(24680, optedIn);
     expect(layout.worlds.map(world => world.id)).toEqual(optedIn.map(world => world.username));

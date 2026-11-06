@@ -34,7 +34,6 @@ export interface LoveGalaxy {
 export interface DiscoverableLoveGalaxy {
   username: string;
   title: string;
-  public_key: string;
 }
 
 type UploadFile = { kind: 'photo' | 'music'; file: File };
@@ -131,7 +130,7 @@ export async function createLoveGalaxy(input: LoveGalaxyInput, photos: File[], m
     const galaxy = await galaxyRequest<LoveGalaxy>('finalize', {
       body: { sessionId: session.sessionId, sessionToken: session.sessionToken },
     });
-    if (galaxy?.status !== 'published' || !galaxy.public_key || galaxy.photos?.length !== LOVE_GALAXY_PHOTO_COUNT) {
+    if (galaxy?.status !== 'published' || galaxy.photos?.length !== LOVE_GALAXY_PHOTO_COUNT) {
       throw new Error('Publishing could not be confirmed. Keep this page open and retry only after checking your connection.');
     }
     return galaxy;
@@ -144,16 +143,14 @@ export async function createLoveGalaxy(input: LoveGalaxyInput, photos: File[], m
 }
 
 export function publishedLoveGalaxyUrl(galaxy: Pick<LoveGalaxy, 'status' | 'username' | 'public_key'>, origin: string): string | null {
-  if (galaxy.status !== 'published' || !galaxy.public_key || !/^galaxy-[a-z0-9-]{8,39}$/.test(galaxy.username)) return null;
+  if (galaxy.status !== 'published' || !/^galaxy-[a-z0-9-]{8,39}$/.test(galaxy.username)) return null;
   const base = new URL(origin);
   if (!['http:', 'https:'].includes(base.protocol)) throw new Error('A valid website origin is required');
-  const url = new URL(`/love/${galaxy.username}`, base.origin);
-  url.searchParams.set('key', galaxy.public_key);
-  return url.href;
+  return new URL(`/love/${galaxy.username}`, base.origin).href;
 }
 
-export async function fetchPublicLoveGalaxy(username: string, key: string): Promise<LoveGalaxy> {
-  return galaxyRequest<LoveGalaxy>('public', { query: { username, key } });
+export async function fetchPublicLoveGalaxy(username: string, key?: string): Promise<LoveGalaxy> {
+  return galaxyRequest<LoveGalaxy>('public', { query: { username, ...(key ? { key } : {}) } });
 }
 
 export async function fetchDiscoverableLoveGalaxies(): Promise<DiscoverableLoveGalaxy[]> {

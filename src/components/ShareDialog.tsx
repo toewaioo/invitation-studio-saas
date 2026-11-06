@@ -31,7 +31,7 @@ function PublishedShareDialog({ project, lang, onClose, onProjectChanged, url, g
   const validateLatest = useCallback(async () => {
     try {
       if (guest) {
-        await repository.publicProject(project.username, project.public_key!);
+        await repository.publicProject(project.username);
         setValidationError('');
         return true;
       }
@@ -116,6 +116,6 @@ function PublishedShareDialog({ project, lang, onClose, onProjectChanged, url, g
     {activeQr && <p className="share-scan-verified"><Check size={14}/>{t('Scan verified · Exact link · Maximum error correction (H)', 'Scan စစ်ပြီး · လင့်ခ်တူညီ · H error correction')}</p>}
     <div className="share-link-field"><label htmlFor="published-share-url">{t('Final share link', 'နောက်ဆုံးမျှဝေရန်လင့်ခ်')}</label><div><input id="published-share-url" value={url} readOnly onFocus={event => event.target.select()} spellCheck={false}/><button type="button" className="icon-button" aria-label={t('Copy final share link', 'နောက်ဆုံးလင့်ခ်ကူးရန်')} disabled={actionBusy || !!validationError} onClick={() => void copy()}>{copied ? <Check size={17}/> : <Copy size={17}/>}</button></div>{copyError && <small role="status">{copyError}</small>}{copied && <small role="status">{t('Link copied.', 'လင့်ခ်ကူးပြီးပါပြီ။')}</small>}</div>
     <div className="share-dialog-actions"><button type="button" className="primary" disabled={!activeQr || actionBusy} onClick={() => void download()}><Download size={16}/>{t('Download heart QR', 'Heart QR download')}</button><button type="button" className="share-open-link" disabled={actionBusy || !!validationError} onClick={() => void open()}>{t('Open invitation', 'ဖိတ်စာဖွင့်ရန်')}<ExternalLink size={14}/></button></div>
-    <p className="share-expiry-note">{guest ? t('Keep your share link. There is no account, saved draft or edit link. Anyone with this link can view your invitation. Keep the white margin intact when printing.', 'မျှဝေရန်လင့်ခ်ကို သိမ်းထားပါ။ အကောင့်၊ မူကြမ်းနှင့် ပြန်ပြင်ရန်လင့်ခ် မရှိပါ။ လင့်ခ်ရသူတိုင်းက ဖိတ်စာကို ကြည့်နိုင်ပါသည်။ ပုံနှိပ်ရာတွင် အဖြူရောင်ဘောင်ကို မဖြတ်ပါနှင့်။') : t('Saving an edit or stopping sharing disables this link and QR. After republishing, download the new QR. Keep the white margin intact when printing.', 'ပြင်ဆင်သိမ်းခြင်း သို့မဟုတ် မျှဝေမှုရပ်ခြင်းက ဤလင့်ခ်နှင့် QR ကို ပိတ်မည်။ ပြန် publish လုပ်ပြီး QR အသစ် download လုပ်ပါ။ ပုံနှိပ်ရာတွင် အဖြူရောင်ဘောင်ကို မဖြတ်ပါနှင့်။')}</p>
+    <p className="share-expiry-note">{guest ? t('Keep your share name. There is no account, saved draft or edit link. Anyone who knows or guesses the name can view your invitation. Keep the white margin intact when printing.', 'မျှဝေအမည်ကို သိမ်းထားပါ။ အကောင့်၊ မူကြမ်းနှင့် ပြန်ပြင်ရန်လင့်ခ် မရှိပါ။ အမည်ကို သိသူ သို့မဟုတ် ခန့်မှန်းမိသူတိုင်း ဖိတ်စာကို ကြည့်နိုင်ပါသည်။ ပုံနှိပ်ရာတွင် အဖြူရောင်ဘောင်ကို မဖြတ်ပါနှင့်။') : t('Editing or stopping sharing hides this link while the project is a draft. Republishing under the same share name reactivates the same short link; a prior key-bearing link stays invalid. Keep the white margin intact when printing.', 'ပြင်ဆင်ခြင်း သို့မဟုတ် မျှဝေမှုရပ်ခြင်းဖြင့် မူကြမ်းကာလအတွင်း လင့်ခ်ကို ပိတ်ထားမည်။ အမည်တူဖြင့် ပြန်မျှဝေပါက လင့်ခ်တူကို ပြန်ဖွင့်မည်၊ ယခင်သော့ပါလင့်ခ်ကတော့ မဖွင့်နိုင်ပါ။ ပုံနှိပ်ရာတွင် အဖြူရောင်ဘောင်ကို မဖြတ်ပါနှင့်။')}</p>
   </dialog>;
 }

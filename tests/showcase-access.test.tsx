@@ -40,6 +40,7 @@ describe("public and management access", () => {
     expect(studioRoute("/")).toBe("showcase");
     expect(studioRoute("/create")).toBe("create");
     expect(studioRoute("/manage")).toBe("manage");
+    expect(studioRoute("/i/sample")).toBe("invitation");
     expect(studioRoute("/i/sample?key=public")).toBe("invitation");
     expect(workspaceAccess("showcase", "admin", "admin")).toBe(false);
     expect(workspaceAccess("create", "admin", "admin")).toBe(false);

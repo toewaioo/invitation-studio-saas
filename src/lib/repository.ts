@@ -38,7 +38,7 @@ export class ServerRepository implements StudioRepository {
   removePhoto(projectId: string, photoId: string) { return apiRequest<Project>('removePhoto', { body: { projectId, photoId } }) }
   publish(projectId: string) { return apiRequest<Project>('publish', { body: { projectId } }) }
   revoke(projectId: string) { return apiRequest<Project>('revoke', { body: { projectId } }) }
-  publicProject(username: string, key: string) { return apiRequest<Project>('publicProject', { query: { username, key } }) }
+  publicProject(username: string, key?: string) { return apiRequest<Project>('publicProject', { query: { username, ...(key ? { key } : {}) } }) }
   usernameAvailable(username: string, exceptId?: string) { return apiRequest<boolean>('usernameAvailable', { query: { username, exceptId } }) }
 }
 export const repository: StudioRepository = localDemo ? localRepository : new ServerRepository();

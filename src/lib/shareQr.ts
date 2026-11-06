@@ -23,13 +23,12 @@ export function hasHighContrastQrColor(color: string): boolean {
 
 type ShareableProject = Pick<Project, 'status' | 'username' | 'public_key'>;
 
-/** Only a successfully published project with its real returned key can be shared. */
+/** Only a successfully published project with a valid username can be shared. */
 export function publishedShareUrl(project: ShareableProject, origin: string): string | null {
-  if (project.status !== 'published' || !project.public_key || !/^[a-z][a-z0-9-]{2,39}$/.test(project.username)) return null;
+  if (project.status !== 'published' || !/^[a-z][a-z0-9-]{2,39}$/.test(project.username)) return null;
   const base = new URL(origin);
   if (!['http:', 'https:'].includes(base.protocol)) throw new Error('A valid website origin is required');
   const url = new URL(`/i/${project.username}`, base.origin);
-  url.searchParams.set('key', project.public_key);
   return url.href;
 }
 

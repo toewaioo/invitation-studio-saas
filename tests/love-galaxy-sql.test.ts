@@ -19,6 +19,7 @@ const uuid = (digit: string) => `${digit.repeat(8)}-${digit.repeat(4)}-4${digit.
     // Simulate an already-published legacy world before applying the additive migration.
     await db.query(`INSERT INTO public.love_galaxies(username,public_key,title,ring_text_one,ring_text_two,music_track,photos) VALUES ($1,$2,'Legacy world','private ring one','private ring two','cosmic-orbit','[]'::jsonb || jsonb_build_array('{}'::jsonb,'{}'::jsonb,'{}'::jsonb,'{}'::jsonb))`, ['galaxy-legacy0001','e'.repeat(64)]);
     await db.exec(await Bun.file(new URL('../supabase/migrations/202611030001_love_galaxy_journey_discovery_consent.sql', import.meta.url)).text());
+    await db.exec(await Bun.file(new URL('../supabase/migrations/202611060003_username_only_love_galaxy.sql', import.meta.url)).text());
 
     const legacy = await db.query<{ journey_discovery_enabled: boolean }>(`SELECT journey_discovery_enabled FROM public.love_galaxies WHERE username='galaxy-legacy0001' LIMIT 1`);
     expect(legacy.rows[0].journey_discovery_enabled).toBe(false);
@@ -64,6 +65,11 @@ const uuid = (digit: string) => `${digit.repeat(8)}-${digit.repeat(4)}-4${digit.
     expect(publicRow.rows[0].value).not.toHaveProperty('public_key');
     expect(publicRow.rows[0].value).not.toHaveProperty('journey_discovery_enabled');
     expect(publicRow.rows[0].value).not.toHaveProperty('ip_hash');
+    const shortLookup=await db.query<{ value:any }>(`SELECT public.public_love_galaxy($1,null) value`,[optedOutPublished.rows[0].value.username]);
+    expect(shortLookup.rows[0].value.title).toBe(input.title);
+    expect((await db.query<{ value:any }>(`SELECT public.public_love_galaxy($1,$2) value`,[optedOutPublished.rows[0].value.username,'0'.repeat(64)])).rows[0].value).toBeNull();
+    const legacyLookup=await db.query<{ value:any }>(`SELECT public.public_love_galaxy($1,$2) value`,['galaxy-legacy0001','e'.repeat(64)]);
+    expect(legacyLookup.rows[0].value.title).toBe('Legacy world');
 
     const optedInSession = await startSession('a',['5','6','7','8'],true);
     const optedInPublished=await db.query<{ value:any }>(`SELECT public.finalize_love_galaxy_upload_session($1::uuid,$2) value`,[optedInSession.session,optedInSession.tokenHash]);

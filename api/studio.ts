@@ -297,7 +297,7 @@ function projectRow(row: any, publicView = false, username = '', key = '') {
       value.url = publicView && typeof photo.url === 'string' && photo.url.startsWith('data:image/')
         ? photo.url
         : publicView
-          ? `/api/studio?action=publicPhoto&username=${encodeURIComponent(username)}&key=${encodeURIComponent(key)}&photo=${encodeURIComponent(photo.id)}`
+          ? `/api/studio?action=publicPhoto&username=${encodeURIComponent(username)}${key ? `&key=${encodeURIComponent(key)}` : ''}&photo=${encodeURIComponent(photo.id)}`
           : `/api/studio?action=ownerPhoto&projectId=${encodeURIComponent(row.id)}&photoId=${encodeURIComponent(photo.id)}`
       return value
     })
@@ -433,10 +433,10 @@ async function handle(
       const sb = client(fetcher)
       const username = url.searchParams.get('username') || ''
       const key = url.searchParams.get('key') || ''
-      if (!username || username.length > 40 || !key || key.length > 128) { fail(res, 404, 'Invitation not found or revoked'); return }
-      let result = await sb.rpc('public_project', { p_username: username, p_public_key: key })
+      if (!username || username.length > 40 || key.length > 128) { fail(res, 404, 'Invitation not found or revoked'); return }
+      let result = await sb.rpc('public_project', { p_username: username, p_public_key: key || null })
       if ((result.error || !result.data) && username.startsWith('guest-')) {
-        result = await sb.rpc('guest_public_project', { p_username: username, p_public_key: key })
+        result = await sb.rpc('guest_public_project', { p_username: username, p_public_key: key || null })
       }
       if (result.error || !result.data) {
         fail(res, 404, 'Invitation not found or revoked')
@@ -560,12 +560,12 @@ async function handle(
 async function proxyPhoto(fetcher: typeof fetch, url: URL, res: ServerResponse) {
   const c = getConfig()
   if (!c.url || !c.key) throw Object.assign(new Error('Service unavailable'), { status: 503 })
-  const params = new URLSearchParams({
-    username: url.searchParams.get('username') || '',
-    key: url.searchParams.get('key') || '',
-    photo: url.searchParams.get('photo') || '',
-  })
-  if ([...params.values()].some(value => !value || value.length > 128) || params.get('username')!.length > 40) { fail(res, 404, 'Not found'); return }
+  const username = url.searchParams.get('username') || ''
+  const key = url.searchParams.get('key') || ''
+  const photo = url.searchParams.get('photo') || ''
+  const params = new URLSearchParams({ username, photo })
+  if (key) params.set('key', key)
+  if (!username || username.length > 40 || !photo || photo.length > 128 || key.length > 128) { fail(res, 404, 'Not found'); return }
   const result = await fetcher(`${c.url}/functions/v1/invitation-photo?${params}`, { headers: { apikey: c.key } })
   if (!result.ok) {
     fail(res, 404, 'Not found')

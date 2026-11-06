@@ -9,15 +9,19 @@ Deno.serve(async (request) => {
   const username = url.searchParams.get('username')?.trim() || ''
   const publicKey = url.searchParams.get('key') || ''
   const photoId = url.searchParams.get('photo') || ''
-  if (!username || !publicKey || !photoId || username.length > 40 || publicKey.length > 128 || photoId.length > 128) return fail()
+  if (!username || !photoId || username.length > 40 || publicKey.length > 128 || photoId.length > 128) return fail()
   const service = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } })
-  const { data: project } = await service.from('projects').select('id,status,public_key').eq('username', username).eq('public_key', publicKey).eq('status', 'published').maybeSingle()
+  let projectQuery = service.from('projects').select('id,status,public_key').eq('username', username).eq('status', 'published')
+  if (publicKey) projectQuery = projectQuery.eq('public_key', publicKey)
+  const { data: project } = await projectQuery.maybeSingle()
   let storagePath = ''
   if (project) {
     const { data: photo } = await service.from('project_photos').select('storage_path').eq('id', photoId).eq('project_id', project.id).maybeSingle()
     storagePath = photo?.storage_path || ''
   } else {
-    const { data: guest } = await service.from('guest_invitations').select('photos').eq('username', username).eq('public_key', publicKey).eq('status', 'published').maybeSingle()
+    let guestQuery = service.from('guest_invitations').select('photos').eq('username', username).eq('status', 'published')
+    if (publicKey) guestQuery = guestQuery.eq('public_key', publicKey)
+    const { data: guest } = await guestQuery.maybeSingle()
     const photos = Array.isArray(guest?.photos) ? guest.photos : []
     const photo = photos.find((item: Record<string, unknown>) => item?.id === photoId)
     const candidate = typeof photo?.storage_path === 'string' ? photo.storage_path : ''

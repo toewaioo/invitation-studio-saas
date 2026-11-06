@@ -13,10 +13,10 @@ test('Love Galaxy input trims text, validates fields, and defaults journey conse
   expect(() => normalizeLoveGalaxyInput({ ...input, music_track:'external-url' as never })).toThrow('Choose a supported music option');
 });
 
-test('published Love Galaxy URL is a separate /love/ link and carries only the opaque share key', () => {
+test('published Love Galaxy URL is a separate /love/ link using username alone', () => {
   const url = publishedLoveGalaxyUrl({ status:'published', username:'galaxy-0123456789abcdef', public_key:'a'.repeat(64) },'https://love.example');
-  expect(url).toBe(`https://love.example/love/galaxy-0123456789abcdef?key=${'a'.repeat(64)}`);
+  expect(url).toBe('https://love.example/love/galaxy-0123456789abcdef');
   expect(url).not.toContain('/i/');
-  expect(publishedLoveGalaxyUrl({ status:'published', username:'galaxy-0123456789abcdef', public_key:null },'https://love.example')).toBeNull();
+  expect(publishedLoveGalaxyUrl({ status:'published', username:'galaxy-0123456789abcdef', public_key:null },'https://love.example')).toBe(url);
   expect(publishedLoveGalaxyUrl({ status:'draft' as 'published', username:'galaxy-0123456789abcdef', public_key:'a'.repeat(64) },'https://love.example')).toBeNull();
 });

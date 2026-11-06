@@ -16,13 +16,12 @@ async function raster(svg: string, width: number) {
 }
 
 describe('published heart QR', () => {
-  test('one URL builder encodes the exact returned key, without changing usernames or inventing links', () => {
-    expect(publishedShareUrl(project, origin)).toBe(`${origin}/i/${project.username}?key=${project.public_key}`);
-    const withReserved = publishedShareUrl({ ...project, public_key: 'a+b/&?=' }, origin)!;
-    expect(new URL(withReserved).searchParams.get('key')).toBe('a+b/&?=');
+  test('published share URLs use only the stable username, even when no public key is present', () => {
+    expect(publishedShareUrl(project, origin)).toBe(`${origin}/i/${project.username}`);
+    expect(publishedShareUrl({ ...project, public_key: null }, origin)).toBe(`${origin}/i/${project.username}`);
+    expect(new URL(publishedShareUrl(project, origin)!).search).toBe('');
     expect(publishedShareUrl({ ...project, status: 'draft' }, origin)).toBeNull();
-    expect(publishedShareUrl({ ...project, public_key: null }, origin)).toBeNull();
-    expect(publishedShareUrl({ ...project, public_key: '' }, origin)).toBeNull();
+    expect(publishedShareUrl({ ...project, public_key: '' }, origin)).toBe(`${origin}/i/${project.username}`);
     expect(publishedShareUrl({ ...project, username: '../bad' }, origin)).toBeNull();
     expect(() => publishedShareUrl(project, 'javascript:alert(1)')).toThrow();
   });
@@ -31,7 +30,7 @@ describe('published heart QR', () => {
     Object.defineProperty(globalThis, 'location', { value: { origin }, configurable: true });
     try {
       expect(renderToStaticMarkup(<ShareDialog project={{ ...project, status: 'draft' }} lang="en" onClose={() => {}} />)).toBe('');
-      expect(renderToStaticMarkup(<ShareDialog project={{ ...project, public_key: null }} lang="my" onClose={() => {}} />)).toBe('');
+      expect(renderToStaticMarkup(<ShareDialog project={{ ...project, status: 'draft', public_key: null }} lang="my" onClose={() => {}} />)).toBe('');
     } finally { Object.defineProperty(globalThis, 'location', { value: oldLocation, configurable: true }); }
   });
   test('full generated red heart-silhouette PNG independently decodes at print, desktop and compact sizes', async () => {
@@ -177,10 +176,10 @@ describe('published heart QR', () => {
       expect((await raster(heartQrSvg(url), 800)).decoded?.data).toBe(url);
     }
   }, 30000);
-  test('republishing produces a new QR/link, not the revoked link', async () => {
+  test('republishing the same username reuses its short link, while legacy keys remain out of it', async () => {
     const old = publishedShareUrl(project, origin)!;
     const current = publishedShareUrl({ ...project, public_key: 'new-demo-only-' + 'b'.repeat(64) }, origin)!;
-    expect(current).not.toBe(old);
+    expect(current).toBe(old);
     expect((await raster(heartQrSvg(current), 1200)).decoded?.data).toBe(current);
     expect(() => heartQrSvg('javascript:alert(1)')).toThrow();
   });

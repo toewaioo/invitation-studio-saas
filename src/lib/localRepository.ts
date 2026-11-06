@@ -44,9 +44,9 @@ class LocalRepository implements StudioRepository {
   async revoke(id: string): Promise<Project> {
     const p = await this.get(id), previous = new Map(memory); p.status = 'draft'; p.public_key = null; p.updated_at = now(); memory.set(id, p); writeLocal(previous); return p;
   }
-  async publicProject(username: string, key: string): Promise<Project> {
-    if (!username || !key) throw new Error('Invalid invitation link');
-    const p = [...getLocal().values()].find(x => x.username === username && x.status === 'published' && x.public_key === key);
+  async publicProject(username: string, key?: string): Promise<Project> {
+    if (!username) throw new Error('Invalid invitation link');
+    const p = [...getLocal().values()].find(x => x.username === username && x.status === 'published' && (!key || x.public_key === key));
     if (!p) throw new Error('Invitation not found or revoked');
     return { ...clone(p), customer_name: '', customer_email: '', customer_phone: '', private_notes: '', public_key: null };
   }

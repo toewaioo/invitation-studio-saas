@@ -5,7 +5,7 @@ test('SQL migration: owner isolation, private storage, publication and edit revo
  const db=new PGlite();
  try{
  await db.exec(`
- CREATE ROLE anon; CREATE ROLE authenticated;
+ CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
  CREATE SCHEMA auth; CREATE SCHEMA storage;
  ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated;
  CREATE TABLE auth.users(id uuid PRIMARY KEY);
@@ -20,11 +20,33 @@ test('SQL migration: owner isolation, private storage, publication and edit revo
  `);
  await db.exec(await Bun.file(new URL('../supabase/migrations/202610210001_invitation_studio.sql',import.meta.url)).text());
  await db.exec(await Bun.file(new URL('../supabase/migrations/202610210002_rpc_privileges.sql',import.meta.url)).text());
+ await db.exec(await Bun.file(new URL('../supabase/migrations/202610220001_guest_invitations.sql',import.meta.url)).text());
+ await db.exec(await Bun.file(new URL('../supabase/migrations/202610220002_schedule.sql',import.meta.url)).text());
+ await db.exec(await Bun.file(new URL('../supabase/migrations/202611060001_username_only_public_projects.sql',import.meta.url)).text());
  const privileges=await db.query<{owner_rpc:boolean;public_rpc:boolean}>(`SELECT has_function_privilege('anon','public.publish_project(uuid)','EXECUTE') AS owner_rpc,has_function_privilege('anon','public.public_project(text,text)','EXECUTE') AS public_rpc`);
  expect(privileges.rows[0].owner_rpc).toBe(false);expect(privileges.rows[0].public_rpc).toBe(true);
+ const management=await db.query<{owner_read:boolean;photo_read:boolean}>(`SELECT has_table_privilege('anon','public.projects','SELECT') owner_read,has_table_privilege('anon','public.project_photos','SELECT') photo_read`);
+ expect(management.rows[0]).toEqual({owner_read:false,photo_read:false});
+ expect((await db.query<{ claims_read:boolean }>(`SELECT has_table_privilege('anon','public.share_username_claims','SELECT') claims_read`)).rows[0].claims_read).toBe(false);
  await db.exec(`SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','11111111-1111-4111-a111-111111111111',false);`);
  const pid='33333333-3333-4333-a333-333333333333', photo='44444444-4444-4444-a444-444444444444';
  await db.query(`INSERT INTO public.projects(id,title,username,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ($1,'Story','sql-story','Private customer','A','B','2027-02-14','09:00','Hall','Welcome')`,[pid]);
+ await db.query(`UPDATE public.projects SET schedule='[{"time":"08:30","label":"Doors open"}]'::jsonb WHERE id=$1`,[pid]);
+ expect((await db.query<{ available:boolean }>(`SELECT public.username_available('sql-story',$1) available`,[pid])).rows[0].available).toBe(true);
+ expect((await db.query<{ available:boolean }>(`SELECT public.username_available('sql-story') available`)).rows[0].available).toBe(false);
+ await db.query(`UPDATE public.projects SET username='renamed-story' WHERE id=$1`,[pid]);
+ expect((await db.query<{ available:boolean }>(`SELECT public.username_available('sql-story',$1) available`,[pid])).rows[0].available).toBe(true);
+ expect((await db.query<{ available:boolean }>(`SELECT public.username_available('sql-story','55555555-5555-4555-a555-555555555555') available`)).rows[0].available).toBe(false);
+ await db.query(`UPDATE public.projects SET username='sql-story' WHERE id=$1`,[pid]);
+ await db.exec(`SET ROLE service_role`);
+ await db.query(`INSERT INTO public.guest_invitations(username,public_key,title,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ('guest-from-guest','guest-legacy-key','Guest','', 'A','B','2027-02-14','09:00','Hall','Welcome')`);
+ await db.exec(`SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','11111111-1111-4111-a111-111111111111',false);`);
+ expect((await db.query<{ available:boolean }>(`SELECT public.username_available('guest-from-guest') available`)).rows[0].available).toBe(false);
+ await expect(db.query(`INSERT INTO public.projects(title,username,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ('Collision','guest-from-guest','Private','A','B','2027-02-14','09:00','Hall','Welcome')`)).rejects.toThrow('Username is already in use');
+ await db.query(`INSERT INTO public.projects(title,username,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ('Claimed project','guest-from-project','Private','A','B','2027-02-14','09:00','Hall','Welcome')`);
+ await db.exec(`SET ROLE service_role`);
+ await expect(db.query(`INSERT INTO public.guest_invitations(username,public_key,title,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ('guest-from-project','another-legacy-key','Guest','', 'A','B','2027-02-14','09:00','Hall','Welcome')`)).rejects.toThrow('Username is already in use');
+ await db.exec(`SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','11111111-1111-4111-a111-111111111111',false);`);
  await expect(db.query(`SELECT public.publish_project($1)`,[pid])).rejects.toThrow();
  const path=`11111111-1111-4111-a111-111111111111/${pid}/${photo}.jpeg`;
  await db.query(`INSERT INTO storage.objects(bucket_id,name) VALUES ('project-photos',$1)`,[path]);
@@ -36,6 +58,10 @@ test('SQL migration: owner isolation, private storage, publication and edit revo
  await expect(db.query(`SELECT * FROM public.projects`)).rejects.toThrow();
  const pub=await db.query<{p:any}>(`SELECT public.public_project('sql-story',$1) AS p`,[key]);
  expect(pub.rows[0].p.customer_name).toBe('');expect(pub.rows[0].p.photos).toHaveLength(1);
+ const byUsername=await db.query<{p:any}>(`SELECT public.public_project('sql-story',null) AS p`);
+ expect(byUsername.rows[0].p.username).toBe('sql-story');expect(byUsername.rows[0].p.public_key).toBeNull();
+ expect(byUsername.rows[0].p.schedule).toEqual([{time:'08:30',label:'Doors open'}]);
+ expect((await db.query<{p:any}>(`SELECT public.public_project('sql-story',$1) AS p`,['wrong-key'])).rows[0].p).toBeNull();
  await db.exec(`SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','22222222-2222-4222-a222-222222222222',false);`);
  expect((await db.query(`SELECT * FROM public.projects`)).rows).toHaveLength(0);
  expect((await db.query(`SELECT * FROM storage.objects`)).rows).toHaveLength(0);

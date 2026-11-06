@@ -148,9 +148,12 @@ describe('studio server API', () => {
     const r = await post('/api/studio?action=logout', {}); expect(r.status).toBe(200); expect(calls.some((x) => x.url.includes('/auth/v1/logout'))).toBe(true); expect(r.headers.get('set-cookie')).toContain('studio_access=;'); expect(r.headers.get('set-cookie')).toContain('studio_refresh=;')
   })
 
-  test('public project redacts customer, owner, storage metadata and nested photo fields', async () => {
-    const r = await request('/api/studio?action=publicProject&username=our-day&key=share-key'); const b = await r.json() as any; const p = b.data
-    expect(r.status).toBe(200); for (const key of ['customer_name','customer_email','customer_phone','private_notes']) expect(p[key]).toBe(''); for (const key of ['owner_id','storage_path','path','project_photos']) expect(p[key]).toBeUndefined(); expect(p.public_key).toBeNull(); expect(p.photos[0]).toEqual({ id: 'photo-1', caption: 'one', position: 0, url: expect.stringContaining('publicPhoto') })
+  test('username-only public projects stay redacted, and old key-bearing links remain compatible', async () => {
+    const r = await request('/api/studio?action=publicProject&username=our-day'); const b = await r.json() as any; const p = b.data
+    expect(r.status).toBe(200); for (const key of ['customer_name','customer_email','customer_phone','private_notes']) expect(p[key]).toBe(''); for (const key of ['owner_id','storage_path','path','project_photos']) expect(p[key]).toBeUndefined(); expect(p.public_key).toBeNull(); expect(p.photos[0]).toEqual({ id: 'photo-1', caption: 'one', position: 0, url: expect.stringContaining('publicPhoto') }); expect(p.photos[0].url).not.toContain('key=')
+    expect(JSON.parse(String(calls.at(-1)?.init?.body))).toEqual({ p_username: 'our-day', p_public_key: null })
+    const legacy = await request('/api/studio?action=publicProject&username=our-day&key=share-key'); const oldProject = (await legacy.json() as any).data
+    expect(legacy.status).toBe(200); expect(oldProject.photos[0].url).toContain('key=share-key'); expect(JSON.parse(String(calls.at(-1)?.init?.body))).toEqual({ p_username: 'our-day', p_public_key: 'share-key' })
   })
 
   test('guest endpoint forwards only server identity and preserves upstream share key', async () => {
@@ -323,22 +326,28 @@ describe('server gateway behavior preservation', () => {
     expect(JSON.parse(String(cleanup?.init?.body)).prefixes).toHaveLength(1);
   });
 
-  test('guest share lookup falls back to guest RPC without owner session or tokens', async () => {
+  test('guest share lookup falls back by username and retains legacy key validation', async () => {
     publicMode = 'guest-fallback';
-    const r = await request('/api/studio?action=publicProject&username=guest-abc&key=guest-key');
+    const r = await request('/api/studio?action=publicProject&username=guest-abc');
     expect(r.status).toBe(200);
     const p = (await r.json() as any).data;
     expect(p.username).toBe('guest-abc');
     expect(p.public_key).toBeNull();
+    expect(JSON.parse(String(calls.at(-1)?.init?.body))).toEqual({ p_username: 'guest-abc', p_public_key: null });
     expect(calls.some(x => x.url.endsWith('/rpc/guest_public_project'))).toBe(true);
     expect(calls.some(x => x.url.includes('/auth/'))).toBe(false);
+    const legacy = await request('/api/studio?action=publicProject&username=guest-abc&key=guest-key');
+    expect(legacy.status).toBe(200); expect(JSON.parse(String(calls.at(-1)?.init?.body))).toEqual({ p_username: 'guest-abc', p_public_key: 'guest-key' });
   });
 
   test('both public and owner photos use binary same-origin no-store delivery', async () => {
-    const publicPhoto = await request('/api/studio?action=publicPhoto&username=our-day&key=share-key&photo=photo-1');
+    const publicPhoto = await request('/api/studio?action=publicPhoto&username=our-day&photo=photo-1');
     expect(publicPhoto.status).toBe(200);
     expect(publicPhoto.headers.get('cache-control')).toContain('no-store');
     expect(new Uint8Array(await publicPhoto.arrayBuffer())).toEqual(new Uint8Array([1,2]));
+    expect(new URL(calls.at(-1)!.url).searchParams.has('key')).toBe(false);
+    const oldPhoto = await request('/api/studio?action=publicPhoto&username=our-day&key=share-key&photo=photo-1');
+    expect(oldPhoto.status).toBe(200); expect(new URL(calls.at(-1)!.url).searchParams.get('key')).toBe('share-key');
     const ownerPhoto = await request(`/api/studio?action=ownerPhoto&projectId=${project.id}&photoId=photo-1`, { headers: ownerHeaders() });
     expect(ownerPhoto.status).toBe(200);
     expect(ownerPhoto.headers.get('content-type')).toContain('image/jpeg');

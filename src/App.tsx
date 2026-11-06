@@ -74,7 +74,7 @@ function InvitationStudioApp() {
       const key=new URLSearchParams(location.search).get('key')||'';
       setPublicLoading(true);
       setPublicState(null);
-      repository.publicProject(username,key)
+      repository.publicProject(username,key||undefined)
         .then(project=>{if(active)setPublicState({project});})
         .catch(()=>{if(active)setPublicState({error:'This invitation is private or unavailable. / ဤဖိတ်စာကို မရရှိနိုင်ပါ။'});})
         .finally(()=>{if(active)setPublicLoading(false);});
@@ -100,7 +100,7 @@ function InvitationStudioApp() {
   const customerMap=new Map<string,Project[]>();for(const p of projects){const key=(p.customer_email||p.customer_phone||p.customer_name).trim().toLowerCase();customerMap.set(key,[...(customerMap.get(key)||[]),p]);}
   const customers=[...customerMap.entries()].filter(([,ps])=>`${ps[0].customer_name} ${ps[0].customer_email} ${ps[0].customer_phone}`.toLowerCase().includes(query.trim().toLowerCase()));
   const selectedCustomer=customerKey?customerMap.get(customerKey):undefined;
-  const shareProject=projects.find(p=>p.id===shareProjectId&&p.status==='published'&&p.public_key);
+  const shareProject=projects.find(p=>p.id===shareProjectId&&p.status==='published');
   const nav=[{id:'projects' as const,label:t('Projects','ပရောဂျက်များ'),icon:FolderOpen},{id:'customers' as const,label:t('Customers','အပ်နှံသူများ'),icon:Users},{id:'designs' as const,label:t('Design library','ဒီဇိုင်းများ'),icon:LayoutTemplate}];
   const currentTitle=nav.find(n=>n.id===view)!.label;
   const go=(next:typeof view)=>{setView(next);setQuery('');};
@@ -140,7 +140,7 @@ function InvitationStudioApp() {
     </div>
     {authDialog}
     {selectedCustomer&&<dialog className="customer-dialog" aria-labelledby="customer-title" ref={node=>{if(node&&!node.open)node.showModal();}} onCancel={()=>setCustomerKey(null)}><div className="dialog-heading"><div><span className="eyebrow">{t('Customer details','အပ်နှံသူအချက်အလက်')}</span><h2 id="customer-title">{selectedCustomer[0].customer_name}</h2></div><button className="icon-button" aria-label={t('Close customer details','အပ်နှံသူအချက်အလက်ပိတ်ရန်')} onClick={()=>setCustomerKey(null)}><X size={18}/></button></div><dl><dt>{t('Email','အီးမေးလ်')}</dt><dd>{selectedCustomer[0].customer_email||'—'}</dd><dt>{t('Phone','ဖုန်း')}</dt><dd>{selectedCustomer[0].customer_phone||'—'}</dd></dl><h3>{t('Invitations','ဖိတ်စာများ')}</h3>{selectedCustomer.map(p=><div className="customer-project" key={p.id}><div><strong>{p.title}</strong><p>{p.private_notes||t('No private notes','သီးသန့်မှတ်စုမရှိပါ')}</p></div><button className="secondary small" onClick={()=>{setCustomerKey(null);setEditor(p);}}>{t('Edit','ပြင်ရန်')}<Pencil size={14}/></button></div>)}</dialog>}
-    {editor&&<Editor project={editor==='new'?null:editor} lang={lang} onClose={()=>setEditor(null)} onSaved={async p=>{await refresh();setEditor(null);if(p.status==='published'&&p.public_key)setShareProjectId(p.id);setToast(p.status==='published'?t('Invitation published. Your link and heart QR are ready.','ဖိတ်စာမျှဝေပြီးပါပြီ။ လင့်ခ်နှင့် Heart QR ကို ရယူနိုင်ပါပြီ။'):t('Draft saved.','မူကြမ်းသိမ်းပြီးပါပြီ။'));}} onPreview={p=>setPreview(p)}/>}
+    {editor&&<Editor project={editor==='new'?null:editor} lang={lang} onClose={()=>setEditor(null)} onSaved={async p=>{await refresh();setEditor(null);if(p.status==='published')setShareProjectId(p.id);setToast(p.status==='published'?t('Invitation published. Your link and heart QR are ready.','ဖိတ်စာမျှဝေပြီးပါပြီ။ လင့်ခ်နှင့် Heart QR ကို ရယူနိုင်ပါပြီ။'):t('Draft saved.','မူကြမ်းသိမ်းပြီးပါပြီ။'));}} onPreview={p=>setPreview(p)}/>}
     {shareProject&&<ShareDialog project={shareProject} lang={lang} onProjectChanged={refresh} onClose={()=>setShareProjectId(null)}/>}
     {toast&&<div className="toast" role="status"><Check size={16}/><span>{toast}</span><button aria-label={t('Dismiss notification','အကြောင်းကြားစာပိတ်ရန်')} onClick={()=>setToast('')}><X size={15}/></button></div>}
     {previewDialog}

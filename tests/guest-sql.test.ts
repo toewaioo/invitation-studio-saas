@@ -10,6 +10,7 @@ test('guest SQL: private anonymous records, redacted lookup, immutability and ra
       CREATE SCHEMA auth; CREATE SCHEMA storage;
       ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO anon, authenticated;
       CREATE TABLE auth.users(id uuid PRIMARY KEY);
+      INSERT INTO auth.users VALUES ('11111111-1111-4111-a111-111111111111');
       CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
       CREATE TABLE storage.buckets(id text PRIMARY KEY,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
       CREATE TABLE storage.objects(id uuid DEFAULT gen_random_uuid(),bucket_id text,name text,metadata jsonb);
@@ -22,13 +23,21 @@ test('guest SQL: private anonymous records, redacted lookup, immutability and ra
     await db.exec(await Bun.file(new URL('../supabase/migrations/202610210002_rpc_privileges.sql', import.meta.url)).text());
     await db.exec(await Bun.file(new URL('../supabase/migrations/202610220001_guest_invitations.sql', import.meta.url)).text());
     await db.exec(await Bun.file(new URL('../supabase/migrations/202610220002_schedule.sql', import.meta.url)).text());
+    await db.exec(await Bun.file(new URL('../supabase/migrations/202611060001_username_only_public_projects.sql', import.meta.url)).text());
     await db.exec(await Bun.file(new URL('../supabase/migrations/202610280002_guest_signed_upload_sessions.sql', import.meta.url)).text());
+    await db.exec(await Bun.file(new URL('../supabase/migrations/202611060002_username_only_guest_shares.sql', import.meta.url)).text());
+
+    await db.exec(`SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','11111111-1111-4111-a111-111111111111',false);`);
+    await db.query(`INSERT INTO public.projects(title,username,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ('Claimed first','guest-project-first','Private','A','B','2027-02-14','09:00','Hall','Welcome')`);
+    await db.exec(`SET ROLE service_role`);
+    await expect(db.query(`INSERT INTO public.guest_invitations(username,public_key,title,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ('guest-project-first','collision-key','Guest','', 'A','B','2027-02-14','09:00','Hall','Welcome')`)).rejects.toThrow('Username is already in use');
 
     const privileges = await db.query<{ direct_read: boolean; create_anon: boolean; guest_read: boolean; upload_read: boolean; upload_start_anon: boolean }>(`SELECT has_table_privilege('anon','public.guest_invitations','SELECT') direct_read, has_function_privilege('anon','public.create_guest_invitation(text,jsonb,jsonb)','EXECUTE') create_anon, has_function_privilege('anon','public.guest_public_project(text,text)','EXECUTE') guest_read, has_table_privilege('anon','public.guest_upload_sessions','SELECT') upload_read, has_function_privilege('anon','public.create_guest_upload_session(uuid,text,text,jsonb,jsonb,jsonb,timestamptz)','EXECUTE') upload_start_anon`);
     expect(privileges.rows[0]).toEqual({ direct_read: false, create_anon: false, guest_read: true, upload_read: false, upload_start_anon: false });
     await db.exec(`SET ROLE anon`);
     await expect(db.query(`SELECT * FROM public.guest_invitations`)).rejects.toThrow();
     await expect(db.query(`SELECT * FROM public.guest_upload_sessions`)).rejects.toThrow();
+    await expect(db.query(`SELECT * FROM public.share_username_claims`)).rejects.toThrow();
     await expect(db.query(`INSERT INTO public.guest_invitations(username,public_key,title,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ('guest-x','k','x','private','a','b','2027-01-01','09:00','v','m')`)).rejects.toThrow();
     await db.exec(`RESET ROLE; SET ROLE service_role; SELECT set_config('request.jwt.claim.role','service_role',false)`);
     const input = { title: 'Guest story', customer_name: 'Secret customer', customer_email: 'secret@example.com', customer_phone: '123', private_notes: 'do not expose', person_a: 'A', person_b: 'B', parent_a: '', parent_b: '', event_date: '2027-02-14', event_time: '09:00', venue: 'Hall', message: 'Welcome', map_url: '', template: 'thazin', theme: 'sage', project_type: 'wedding' };
@@ -50,9 +59,16 @@ test('guest SQL: private anonymous records, redacted lookup, immutability and ra
     await expect(db.query(`SELECT public.create_guest_upload_session($1::uuid,$2,$3,$4::jsonb,'[]'::jsonb,$5::jsonb,now()+interval '2 hours')`, ['dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'a'.repeat(64), 'g'.repeat(64), JSON.stringify({ ...publicInput, customer_name: 'not allowed' }), JSON.stringify(files)])).rejects.toThrow();
     const created = await db.query<{ p: any }>(`SELECT public.create_guest_invitation($1,$2::jsonb,$3::jsonb) p`, ['a'.repeat(64), JSON.stringify(input), JSON.stringify([{ id: 'photo-1', url: 'data:image/png;base64,iVBORw0KGgo=', caption: 'one', position: 0 }])]);
     const project = created.rows[0].p; expect(project.username).toStartWith('guest-'); expect(project.username.length).toBeLessThanOrEqual(40); expect(publishedShareUrl(project,'https://app.example')).toContain('/i/guest-'); expect(project.public_key).toHaveLength(64); expect(project.customer_name).toBe(''); expect(project.customer_email).toBe(''); expect(project.private_notes).toBe(''); expect(project.photos).toHaveLength(1);
+    expect(project.schedule).toEqual([]);
     expect((await db.query<{ count: number }>(`SELECT count(*)::int count FROM public.guest_invitations`)).rows[0].count).toBe(2);
+    await db.exec(`SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','11111111-1111-4111-a111-111111111111',false);`);
+    expect((await db.query<{ available:boolean }>(`SELECT public.username_available($1) available`, [project.username])).rows[0].available).toBe(false);
+    await expect(db.query(`INSERT INTO public.projects(title,username,customer_name,person_a,person_b,event_date,event_time,venue,message) VALUES ('Collision','${project.username}','Private','A','B','2027-02-14','09:00','Hall','Welcome')`)).rejects.toThrow('Username is already in use');
+    await db.exec(`SET ROLE service_role; SELECT set_config('request.jwt.claim.role','service_role',false)`);
     await db.exec(`SET ROLE anon`);
-    expect((await db.query<{ p: any }>(`SELECT public.guest_public_project($1,$2) p`, [project.username, project.public_key])).rows[0].p.customer_name).toBe('');
+    const guestByName=(await db.query<{ p: any }>(`SELECT public.guest_public_project($1,null) p`, [project.username])).rows[0].p;
+    expect(guestByName.customer_name).toBe('');expect(guestByName.username).toBe(project.username);
+    expect((await db.query<{ p: any }>(`SELECT public.guest_public_project($1,$2) p`, [project.username, project.public_key])).rows[0].p.public_key).toBe(project.public_key);
     expect((await db.query<{ p: any }>(`SELECT public.guest_public_project($1,'bad-key') p`, [project.username])).rows[0].p).toBeNull();
     await expect(db.query(`UPDATE public.guest_invitations SET title='changed' WHERE username=$1`, [project.username])).rejects.toThrow();
     await expect(db.query(`DELETE FROM public.guest_invitations WHERE username=$1`, [project.username])).rejects.toThrow();

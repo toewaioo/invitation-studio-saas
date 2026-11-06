@@ -137,11 +137,8 @@ export function normalizeSharedJourneySampleId(value: string | null | undefined)
 
 export function createPublishedJourneyShareHref(world: { username?: unknown; title?: unknown; public_key?: unknown }) {
   if (!world || typeof world.username !== "string" || !/^galaxy-[a-z0-9-]{8,39}$/.test(world.username)
-    || typeof world.title !== "string" || !world.title.trim() || world.title.trim().length > 120
-    || typeof world.public_key !== "string" || !/^[0-9a-f]{64}$/.test(world.public_key)) return null;
-  const shareUrl = new URL(`/love/${world.username}`, "https://love.invalid");
-  shareUrl.searchParams.set("key", world.public_key);
-  return `${shareUrl.pathname}${shareUrl.search}`;
+    || typeof world.title !== "string" || !world.title.trim() || world.title.trim().length > 120) return null;
+  return `/love/${world.username}`;
 }
 
 export function createSharedJourneyLayout(sampleId: string, visitSeed: number): SharedJourneyLayout {
@@ -190,7 +187,7 @@ export function createSharedJourneyLayout(sampleId: string, visitSeed: number): 
   return { sampleId: safeId, destination: [destinationX, destinationY, 0], worlds, galaxies, visitSeed: visitSeed >>> 0 };
 }
 
-export function createPublishedSharedJourneyLayout(visitSeed: number, discoverableWorlds: readonly { username: string; title: string; public_key: string }[] = []): SharedJourneyLayout {
+export function createPublishedSharedJourneyLayout(visitSeed: number, discoverableWorlds: readonly { username: string; title: string }[] = []): SharedJourneyLayout {
   const seen = new Set<string>();
   const positions = createSurroundingWorldPositions(SHARED_JOURNEY_WORLD_COUNT, visitSeed, [0, 0, 0]);
   let placementIndex = 0;
@@ -200,7 +197,7 @@ export function createPublishedSharedJourneyLayout(visitSeed: number, discoverab
     seen.add(world.username);
     if (index >= SHARED_JOURNEY_WORLD_COUNT) return [];
     const style = TEST_WORLD_STYLES[index % TEST_WORLD_STYLES.length];
-    const worldSeed = hashString(`${world.username}:${world.public_key}`);
+    const worldSeed = hashString(world.username);
     const random = seeded((visitSeed ^ worldSeed) >>> 0);
     return [{
       id: world.username,

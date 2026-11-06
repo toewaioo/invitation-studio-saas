@@ -2065,7 +2065,6 @@ export default function LoveGalaxyExperience({ story, onBack, journeyEnabled = f
         const safe = value.filter(world => !!world
           && typeof world.username === "string" && /^galaxy-[a-z0-9-]{8,39}$/.test(world.username)
           && typeof world.title === "string" && !!world.title.trim() && world.title.trim().length <= 120
-          && typeof world.public_key === "string" && /^[0-9a-f]{64}$/.test(world.public_key)
           && world.username !== story?.username).slice(0, SHARED_JOURNEY_WORLD_COUNT);
         if (active) setDiscoverableWorlds(safe);
       })

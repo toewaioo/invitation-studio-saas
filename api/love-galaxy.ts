@@ -47,7 +47,7 @@ function publicGalaxy(row: any, key: string | null, origin: string, linkKey: str
   if (!row || row.status !== 'published' || typeof row.username !== 'string' || !/^galaxy-[a-z0-9-]{8,39}$/.test(row.username) || !Array.isArray(row.photos) || row.photos.length !== 4) throw new Error('Unable to confirm Love Galaxy')
   const photos = row.photos.map((photo: any, position: number) => {
     if (!photo || !validUuid(photo.id) || !Number.isInteger(photo.position) || photo.position !== position) throw new Error('Unable to confirm Love Galaxy')
-    return { id: photo.id, position, url: jsonUrl(origin,'photo',{ username: row.username, key: linkKey || '', fileId: photo.id }) }
+    return { id: photo.id, position, url: jsonUrl(origin,'photo',{ username: row.username, ...(linkKey ? { key: linkKey } : {}), fileId: photo.id }) }
   })
   const musicTrack = row.music_track === 'custom' ? 'custom' : row.music_track === 'cosmic-orbit' ? 'cosmic-orbit' : null
   if (!musicTrack) throw new Error('Unable to confirm Love Galaxy')
@@ -55,15 +55,15 @@ function publicGalaxy(row: any, key: string | null, origin: string, linkKey: str
     id: String(row.id || ''), username: row.username, public_key: key, status: 'published',
     title: String(row.title || ''), ring_text_one: String(row.ring_text_one || ''), ring_text_two: String(row.ring_text_two || ''),
     music_track: musicTrack,
-    music_url: musicTrack === 'custom' ? jsonUrl(origin,'music',{ username: row.username, key: linkKey || '' }) : null,
+    music_url: musicTrack === 'custom' ? jsonUrl(origin,'music',{ username: row.username, ...(linkKey ? { key: linkKey } : {}) }) : null,
     photos, created_at: String(row.created_at || ''),
   }
 }
 function publicJourneyWorlds(rows: unknown) {
   if (!Array.isArray(rows)) throw new Error('Unable to load journey worlds')
   return rows.slice(0, 20).flatMap((row: any) => {
-    if (!row || typeof row.username !== 'string' || !/^galaxy-[a-z0-9-]{8,39}$/.test(row.username) || typeof row.title !== 'string' || !row.title.trim() || row.title.trim().length > 120 || typeof row.public_key !== 'string' || !/^[0-9a-f]{64}$/.test(row.public_key)) return []
-    return [{ username: row.username, title: row.title.trim(), public_key: row.public_key }]
+    if (!row || typeof row.username !== 'string' || !/^galaxy-[a-z0-9-]{8,39}$/.test(row.username) || typeof row.title !== 'string' || !row.title.trim() || row.title.trim().length > 120) return []
+    return [{ username: row.username, title: row.title.trim() }]
   })
 }
 function statusError(status: number, text: string) {
@@ -158,7 +158,7 @@ export function createLoveGalaxyHandler(deps: { fetch?: typeof fetch } = {}) {
     if (action === 'photo' || action === 'music') {
       const username = url.searchParams.get('username') || ''; const key = url.searchParams.get('key') || ''
       const fileId = url.searchParams.get('fileId') || ''
-      if (!/^galaxy-[a-z0-9-]{8,39}$/.test(username) || !/^[0-9a-f]{64}$/.test(key) || (action === 'photo' && !validUuid(fileId))) { send(res,404,{error:'Love Galaxy media not found'}); return }
+      if (!/^galaxy-[a-z0-9-]{8,39}$/.test(username) || (key && !/^[0-9a-f]{64}$/.test(key)) || (action === 'photo' && !validUuid(fileId))) { send(res,404,{error:'Love Galaxy media not found'}); return }
       const upstream = await edgeRequest(fetcher,req,'media',{username,key,kind:action === 'photo' ? 'photo' : 'music',fileId})
       if (!upstream.ok) { const text=await upstream.text(); send(res,upstream.status,{error:statusError(upstream.status,text)}); return }
       const contentType = upstream.headers.get('content-type') || 'application/octet-stream'
@@ -168,11 +168,11 @@ export function createLoveGalaxyHandler(deps: { fetch?: typeof fetch } = {}) {
     }
     if (action === 'public') {
       const username = url.searchParams.get('username') || ''; const key = url.searchParams.get('key') || ''
-      if (!/^galaxy-[a-z0-9-]{8,39}$/.test(username) || !/^[0-9a-f]{64}$/.test(key)) { send(res,404,{error:'Love Galaxy not found or unavailable'}); return }
+      if (!/^galaxy-[a-z0-9-]{8,39}$/.test(username) || (key && !/^[0-9a-f]{64}$/.test(key))) { send(res,404,{error:'Love Galaxy not found or unavailable'}); return }
       const upstream = await edgeRequest(fetcher,req,'public',{username,key})
       const text = await upstream.text()
       if (!upstream.ok) { send(res,upstream.status,{error:statusError(upstream.status,text)}); return }
-      const value:any = JSON.parse(text); const payload = publicGalaxy(value?.galaxy,null,`${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`,key)
+      const value:any = JSON.parse(text); const payload = publicGalaxy(value?.galaxy,null,`${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`,key || null)
       send(res,200,{data:payload}); return
     }
     if (action === 'discoverable') {
@@ -222,7 +222,7 @@ export function createLoveGalaxyHandler(deps: { fetch?: typeof fetch } = {}) {
       if (!upstream.ok) { send(res,upstream.status,{error:statusError(upstream.status,text)}); return }
       const value:any=JSON.parse(text)
       const origin=`${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`
-      send(res,201,{data:publicGalaxy(value?.galaxy,value?.galaxy?.public_key || null,origin)}); return
+      send(res,201,{data:publicGalaxy(value?.galaxy,value?.galaxy?.public_key || null,origin,null)}); return
     }
     if (action === 'cancel') {
       if (!validUuid(body.sessionId) || typeof body.sessionToken!=='string' || !/^[0-9a-f]{64}$/.test(body.sessionToken)) throw Object.assign(new Error('Invalid upload authorization'),{status:400})

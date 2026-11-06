@@ -21,7 +21,7 @@ function makeHarness(photoPath = storagePath, validShare = true) {
         eq: (key: string, value: string) => { filters[key] = value; return builder; },
         maybeSingle: async () => {
           if (table === 'projects') return { data: null, error: null };
-          if (table === 'guest_invitations' && validShare && filters.username === username && filters.public_key === shareKey && filters.status === 'published') {
+          if (table === 'guest_invitations' && validShare && filters.username === username && (filters.public_key === undefined || filters.public_key === shareKey) && filters.status === 'published') {
             return { data: { photos: [{ id: photoId, storage_path: photoPath }] }, error: null };
           }
           return { data: null, error: null };
@@ -36,7 +36,11 @@ function makeHarness(photoPath = storagePath, validShare = true) {
   });
   new Function('Deno', 'createClient', compiled)(DenoStub, createClient);
   if (!handler) throw new Error('Photo proxy did not register a handler');
-  const request = (user = username, key = shareKey, photo = photoId) => new Request(`https://edge.example/invitation-photo?username=${user}&key=${key}&photo=${photo}`);
+  const request = (user = username, key: string | null = shareKey, photo = photoId) => {
+    const params = new URLSearchParams({ username: user, photo });
+    if (key) params.set('key', key);
+    return new Request(`https://edge.example/invitation-photo?${params}`);
+  };
   return { handler, request, downloads };
 }
 
@@ -51,6 +55,13 @@ describe('private guest photo proxy', () => {
     expect(h.downloads).toEqual([storagePath]);
   });
 
+  test('username-only photo lookup works without the legacy key parameter', async () => {
+    const h = makeHarness();
+    const response = await h.handler(h.request(username, null));
+    expect(response.status).toBe(200);
+    expect(h.downloads).toEqual([storagePath]);
+  });
+
   test('rejects arbitrary storage paths and invalid or revoked share keys without downloading', async () => {
     const badPath = makeHarness('private/other-project/photo.jpg');
     expect((await badPath.handler(badPath.request())).status).toBe(404);
@@ -58,5 +69,8 @@ describe('private guest photo proxy', () => {
     const revoked = makeHarness(storagePath, false);
     expect((await revoked.handler(revoked.request())).status).toBe(404);
     expect(revoked.downloads).toHaveLength(0);
+    const wrongKey = makeHarness();
+    expect((await wrongKey.handler(wrongKey.request(username, 'wrong-key'))).status).toBe(404);
+    expect(wrongKey.downloads).toHaveLength(0);
   });
 });
