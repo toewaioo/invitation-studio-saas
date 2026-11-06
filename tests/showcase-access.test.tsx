@@ -220,9 +220,12 @@ describe("public and management access", () => {
       expect(html).toContain(lang === "en" ? "Guests can create without an account" : "ဧည့်သည်များ အကောင့်မဖွင့်ဘဲ ဖန်တီးနိုင်သောကြောင့်");
       expect(html).toContain('id="reviews"');
       expect((html.match(/class="showcase-review"/g) ?? []).length).toBe(3);
+      expect((html.match(/data-demo-review="true"/g) ?? []).length).toBe(3);
       expect(html).toContain(lang === "en" ? "SAMPLE REVIEWS · DEMO COPY" : "နမူနာသုံးသပ်ချက်");
-      expect(html).toContain(lang === "en" ? "not reviews from real users" : "တကယ့်အသုံးပြုသူများထံမှ ကောက်ယူထားခြင်း မဟုတ်ပါ");
-      expect(html).toContain(lang === "en" ? "DEMO SAMPLE TEXT" : "နမူနာစာသား");
+      expect(html).toContain(lang === "en" ? "not a real customer review, rating or verified user" : "တကယ့်ဖောက်သည်သုံးသပ်ချက်၊ အဆင့်သတ်မှတ်ချက် သို့မဟုတ် အတည်ပြုအသုံးပြုသူ မဟုတ်ပါ");
+      expect(html).toContain(lang === "en" ? "Sample author" : "နမူနာအမည်");
+      expect(html).toContain(lang === "en" ? "SAMPLE ONLY" : "နမူနာသာ");
+      expect(html).toContain(lang === "en" ? "Create an invitation of your own" : "ကိုယ်ပိုင်ဖိတ်စာ ဖန်တီးကြည့်ပါ");
       expect(html).toContain('id="faq"');
       expect((html.match(/class="showcase-faq-item"/g) ?? []).length).toBe(showcaseFaqs[lang].length);
       expect(html).toContain(lang === "en" ? "Which photos can I upload?" : "ဘယ်လိုဓာတ်ပုံတွေ တင်နိုင်ပါသလဲ။");

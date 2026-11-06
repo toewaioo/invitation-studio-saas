@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, ArrowUpRight, BookOpen, Check, ChevronLeft, ChevronRight, LockKeyhole, Pause, Play, Sparkles } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, BookOpen, Check, ChevronLeft, ChevronRight, Heart, LockKeyhole, MessageCircle, Pause, Play, Sparkles } from 'lucide-react';
 import type { Design, Language } from '../types';
 import './showcase.css';
 
@@ -151,14 +151,14 @@ export const showcaseFaqs: Record<Language, readonly { question: string; answer:
 
 export const showcaseDemoReviews: Record<Language, readonly { quote: string }[]> = {
   en: [
-    { quote: 'The event details and photos come together in one invitation that is easy to share.' },
-    { quote: 'Choosing a style and adding our own details feels simple, then one link is ready to send.' },
-    { quote: 'Seeing a preview first makes it easier to picture the invitation we want to create.' },
+    { quote: 'Event details and favorite photos come together in one invitation. Previewing the layout before sharing makes it easier to picture the day, and the finished design is ready to send with one simple link.' },
+    { quote: 'Choosing a style, adding event details and photos, then reviewing the finished invitation all feel straightforward. Everything stays together in one place before the share link is ready.' },
+    { quote: 'Seeing the invitation preview before sharing makes it easier to imagine the final design. The names, event date and photos are easy to review together, then the finished invitation can be shared with one link.' },
   ],
   my: [
-    { quote: 'ပွဲအချက်အလက်နဲ့ ဓာတ်ပုံတွေကို ဖိတ်စာတစ်ခုထဲမှာ စုစည်းပြီး လင့်ခ်တစ်ခုတည်းနဲ့ မျှဝေနိုင်တာ အဆင်ပြေတယ်။' },
-    { quote: 'ဒီဇိုင်းရွေးပြီး ကိုယ်ပိုင်အချက်အလက်တွေ ထည့်ပြင်ဆင်တာ ရိုးရှင်းတယ်။ ဧည့်သည်တွေဆီ လင့်ခ်တစ်ခု ပို့ရုံပါပဲ။' },
-    { quote: 'ဖိတ်စာကို မျှဝေမီ နမူနာကြည့်နိုင်တာက ကိုယ်လိုချင်တဲ့ပုံစံကို စဉ်းစားရလွယ်စေတယ်။' },
+    { quote: 'ပွဲအချက်အလက်နဲ့ ဓာတ်ပုံတွေကို ဖိတ်စာတစ်ခုထဲမှာ စုစည်းပြီး လင့်ခ်တစ်ခုတည်းနဲ့ မျှဝေနိုင်တာ အဆင်ပြေတယ်။ မျှဝေမီ နမူနာကို ကြည့်ပြီး စာသားနဲ့ ဒီဇိုင်းပုံစံကို တစ်နေရာတည်းမှာ စစ်ဆေးနိုင်တာလည်း သဘောကျတယ်။' },
+    { quote: 'ဒီဇိုင်းရွေးပြီး ကိုယ်ပိုင်အချက်အလက်တွေ ထည့်ပြင်ဆင်တာ ရိုးရှင်းတယ်။ ပွဲရက်၊ နေရာနဲ့ ဓာတ်ပုံတွေကို တစ်နေရာတည်းမှာ စီစဉ်ပြီး နောက်ဆုံးနမူနာကို ကြည့်နိုင်တယ်။ ပြီးသွားရင် ဧည့်သည်တွေဆီ လင့်ခ်တစ်ခု ပို့ရုံပါပဲ။' },
+    { quote: 'ဖိတ်စာကို မမျှဝေမီ နမူနာကြည့်နိုင်တာက ကိုယ်လိုချင်တဲ့ပုံစံကို စဉ်းစားရလွယ်စေတယ်။ အမည်၊ ပွဲနေ့နဲ့ ဓာတ်ပုံတွေကို တစ်ခါတည်း စစ်ဆေးနိုင်သလို ပြီးသွားရင် လင့်ခ်တစ်ခုနဲ့ မျှဝေနိုင်တာလည်း အဆင်ပြေတယ်။' },
   ],
 };
 
@@ -347,14 +347,16 @@ export default function Showcase({ lang, onLanguage, onPreview, workspace, onSig
 
       <section className="showcase-reviews" id="reviews" aria-labelledby="showcase-reviews-title">
         <div className="showcase-reviews-heading">
-          <div><span className="showcase-section-kicker">{t('SAMPLE REVIEWS · DEMO COPY', 'နမူနာသုံးသပ်ချက်')}</span><h2 id="showcase-reviews-title">{t('User review examples', 'အသုံးပြုသူသုံးသပ်ချက် နမူနာများ')}</h2></div>
-          <p>{t('Illustrative demo data only—these are not reviews from real users.', 'ဤသုံးသပ်ချက်များသည် ဒီမိုအတွက် ဖန်တီးထားသော နမူနာစာသားများသာဖြစ်ပြီး တကယ့်အသုံးပြုသူများထံမှ ကောက်ယူထားခြင်း မဟုတ်ပါ။')}</p>
+          <span className="showcase-section-kicker">{t('SAMPLE REVIEWS · DEMO COPY', 'နမူနာသုံးသပ်ချက်များ · သရုပ်ပြစာသား')}</span>
+          <h2 id="showcase-reviews-title">{t('A few kind words, as a sample', 'သုံးသပ်ချက် နမူနာများ')}<MessageCircle aria-hidden="true" size={28} strokeWidth={1.7}/></h2>
+          <p>{t('Every card below is fictional demo copy for layout preview—not a real customer review, rating or verified user.', 'အောက်ပါကတ်အားလုံးသည် ဒီဇိုင်းပြသရန် ဖန်တီးထားသော စိတ်ကူးယဉ်နမူနာစာသားများသာ ဖြစ်ပြီး တကယ့်ဖောက်သည်သုံးသပ်ချက်၊ အဆင့်သတ်မှတ်ချက် သို့မဟုတ် အတည်ပြုအသုံးပြုသူ မဟုတ်ပါ။')}</p>
         </div>
-        <div className="showcase-review-grid">{showcaseDemoReviews[lang].map((review, index) => <article className="showcase-review" key={`demo-review-${index}`}>
-          <span className="showcase-review-mark" aria-hidden="true">“</span>
+        <div className="showcase-review-grid" role="region" aria-label={t('Sample review cards; scroll horizontally to browse', 'နမူနာသုံးသပ်ချက်ကတ်များ၊ ဘေးတိုက်ရွှေ့၍ ကြည့်နိုင်သည်')} tabIndex={0}>{showcaseDemoReviews[lang].map((review, index) => <article className="showcase-review" data-demo-review="true" key={`demo-review-${index}`}>
+          <div className="showcase-review-hearts" role="img" aria-label={t('Decorative demo hearts only; not a real user rating', 'အလှဆင်သရုပ်ပြနှလုံးပုံများသာဖြစ်ပြီး တကယ့်အသုံးပြုသူအဆင့်သတ်မှတ်ချက် မဟုတ်ပါ')}>{Array.from({ length: 5 }, (_, heartIndex) => <Heart key={heartIndex} aria-hidden="true" size={20} fill="currentColor" strokeWidth={1.5}/>)}</div>
           <blockquote>{review.quote}</blockquote>
-          <div className="showcase-review-meta"><span>{t('DEMO SAMPLE TEXT', 'နမူနာစာသား')}</span><span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span></div>
+          <footer className="showcase-review-footer"><div className="showcase-review-byline"><strong>{t('Sample author', 'နမူနာအမည်')} {lang === 'my' ? ['၀၁', '၀၂', '၀၃'][index] : String(index + 1).padStart(2, '0')}</strong><span>{t('Invitation Studio · fictional example', 'ဖိတ်စာစတူဒီယို · သရုပ်ပြနမူနာ')}</span></div><span className="showcase-review-sample-tag">{t('SAMPLE ONLY', 'နမူနာသာ')}</span></footer>
         </article>)}</div>
+        <button type="button" className="showcase-reviews-cta" onClick={onCreate}>{t('Create an invitation of your own', 'ကိုယ်ပိုင်ဖိတ်စာ ဖန်တီးကြည့်ပါ')}<ArrowRight size={17} aria-hidden="true"/></button>
       </section>
 
       <section className="showcase-faq" id="faq" aria-labelledby="showcase-faq-title">
