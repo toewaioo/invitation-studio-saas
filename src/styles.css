@@ -20,3 +20,139 @@
 
 /* Template samples use complete display names, never hard-coded initials. */
 .cover-names{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;max-width:calc(100% - 24px);font-size:12px;line-height:1.6;overflow-wrap:anywhere}.cover-names>span{max-width:100%;min-width:0}.cover-names>i{font-size:10px;line-height:1}.cover-arch{height:52px;margin-bottom:7px}.cover-caption{margin-top:8px}.compact .cover-names{font-size:3.4px;line-height:1.2;gap:1px;max-width:calc(100% - 6px)}.compact .cover-names>i{font-size:3px;line-height:1}.compact .cover-arch{height:9px;margin-bottom:2px}.action-menu>div{width:190px}
+
+
+/* Toewaioo's Studio management workspace: navy, violet, and white. */
+.app-shell{
+  --ink:#17233c;
+  --muted:#657089;
+  --line:#e4e8f1;
+  --accent:#6654d9;
+  --surface:#fff;
+  --canvas:#f8f9fc;
+  color:var(--ink);
+  background:var(--canvas);
+}
+.app-shell .sidebar{background:#17233c;border-color:#27334d;box-shadow:8px 0 24px #17233c0a}
+.app-shell .workspace-brand{color:#fff}
+.app-shell .workspace-brand small{color:#aeb8ce}
+.app-shell .brand-mark{background:#fff;border-color:#ddd9f7;color:#6654d9;box-shadow:0 3px 12px #0d173126}
+.app-shell .workspace-label{color:#9ca9c2}
+.app-shell .sidebar nav button{color:#c1c9d9;border-radius:8px}
+.app-shell .sidebar nav button:hover:not(:disabled){background:#ffffff0d;color:#fff}
+.app-shell .sidebar nav button.active{color:#fff;background:#6654d9;font-weight:600;box-shadow:0 5px 14px #6654d934}
+.app-shell .sidebar nav button.active>svg{color:#fff}
+.app-shell .nav-count{color:#e2ddff}
+.app-shell .workspace-security{border-color:#ffffff20;color:#c4ccdc}
+.app-shell .workspace-security small{color:#98a5bd}
+.app-shell .sidebar-version{color:#c4ccdc}
+.app-shell .sidebar-version>span{color:#98a5bd}
+.app-shell .workspace-content{background:#f8f9fc}
+.app-shell .topbar{background:#fff;border-color:var(--line)}
+.app-shell .breadcrumb{color:#78839a}
+.app-shell .breadcrumb strong{color:#273653;font-weight:600}
+.app-shell .connection-state{color:#73809a}
+.app-shell .connection-state i{background:#6654d9;box-shadow:0 0 0 3px #6654d91c}
+.app-shell .language-switch{border-color:#e2e6ef}
+.app-shell .language-switch button[aria-pressed=true]{color:#5341c2;background:#f0edff}
+.app-shell .primary{background:#5948c8;border-color:#5948c8;color:#fff;box-shadow:0 5px 14px #5545c31c}
+.app-shell .primary:hover:not(:disabled){background:#4938b5;border-color:#4938b5}
+.app-shell .secondary{border-color:#e0e5ef;color:#465573}
+.app-shell .secondary:hover:not(:disabled){background:#f6f5ff;border-color:#d8d2f5;color:#5140bc}
+.app-shell .text-button{color:#5b4bc7}
+.app-shell .text-button:hover:not(:disabled){color:#4535ad}
+.app-shell .icon-button{color:#73809a}
+.app-shell .icon-button:hover{background:#f1efff;color:#5645c1}
+.app-shell :is(button,a,input,textarea,summary):focus-visible{outline-color:#735fe0}
+.app-shell .workspace-main{max-width:1620px}
+.app-shell .page-heading h1{color:#17233c}
+.app-shell .page-heading p{color:#657089}
+.app-shell .environment-notice{background:#f4f2ff;border-color:#e2ddfa;color:#5e6380;border-radius:9px}
+.app-shell .error-banner{border-color:#f0d6dc;background:#fff5f6;color:#914c60}
+.app-shell .list-toolbar{border-color:#e4e8f1}
+.app-shell .status-tabs button{color:#73809a}
+.app-shell .status-tabs button.selected{color:#5746c4;border-color:#6654d9}
+.app-shell .status-tabs button:hover{color:#5140bc}
+.app-shell .search-control{border-color:#e1e5ef;border-radius:8px;background:#fff;color:#75819a}
+.app-shell .search-control:focus-within{border-color:#8879e4;box-shadow:0 0 0 3px #6654d91a}
+.app-shell .search-control input{color:#273653}
+.app-shell .search-control input::placeholder{color:#8a95aa}
+.app-shell .project-table-wrap{border:1px solid #e4e8f1;border-top:0;border-radius:0 0 12px 12px;background:#fff;box-shadow:0 8px 24px #17233c08}
+.app-shell .project-table th,.app-shell .customer-table th{background:#f7f8fc;border-color:#e9ecf3;color:#69758e}
+.app-shell .project-table td,.app-shell .customer-table td{border-color:#edf0f6;color:#596680}
+.app-shell .project-table tbody tr:hover{background:#fafaff}
+.app-shell .project-thumbnail{background:#f1efff;border-color:#e1def5;color:#6554cd;border-radius:7px}
+.app-shell .thumb-noir{background:#29324a;border-color:#39445d;color:#cbc3ff}
+.app-shell .thumb-rose{background:#faf0f4;border-color:#f0dce7;color:#a45578}
+.app-shell .project-title{color:#263552}
+.app-shell .project-meta,.app-shell .date-cell{color:#75819a}
+.app-shell .project-meta>span{color:#a0a9ba}
+.app-shell .project-status{color:#7b859a}
+.app-shell .project-status.published{color:#527d68}
+.app-shell .project-status.published i{background:#5e9b79}
+.app-shell .action-menu summary{color:#75819a}
+.app-shell .action-menu[open] summary,.app-shell .action-menu summary:hover{background:#f1efff;color:#5848c4}
+.app-shell .action-menu>div{border-color:#e1e5ef;box-shadow:0 10px 28px #17233c18;border-radius:9px}
+.app-shell .action-menu button:hover{background:#f7f6ff}
+.app-shell .table-state{background:#fff}
+.app-shell .empty-document{background:#f5f3ff;border-color:#e4e0f6;color:#6654d9;box-shadow:none}
+.app-shell .table-state h2{color:#273653}
+.app-shell .table-state p,.app-shell .empty-caption,.app-shell .loading-state{color:#73809a}
+.app-shell .table-footer{color:#7a859a}
+.app-shell .project-reference{border-color:#e4e8f1}
+.app-shell .aside-title h2,.app-shell .reference-design strong,.app-shell .workflow-note h3{color:#273653}
+.app-shell .aside-title>span,.app-shell .project-reference>p,.app-shell .reference-design small,.app-shell .workflow-note p{color:#75819a}
+.app-shell .reference-design{border-radius:8px}
+.app-shell .reference-design:hover{background:#f4f2ff!important}
+.app-shell .reference-design>svg,.app-shell .workflow-note>svg{color:#6654d9}
+.app-shell .design-cover{background:#efedfb}
+.app-shell .cover-arch{border-color:#8e83d2}
+.app-shell .cover-names i{color:#6c5bc8}
+.app-shell .cover-noir{background:#e9ebf2}
+.app-shell .cover-noir .cover-paper{color:#ece9f8}
+.app-shell .cover-rose{background:#f7eef3}
+.app-shell .project-reference .cover-paper{box-shadow:2px 4px 10px #17233c12}
+.app-shell .workspace-footer{border-color:#e4e8f1;color:#75819a}
+.app-shell .workspace-footer>span:last-child svg{color:#6654d9}
+.app-shell .library-cover{border-color:#e2e5f0;border-radius:10px;background:#efedfb}
+.app-shell .library-cover:hover{border-color:#c8c0f0}
+.app-shell .library-design-info h2,.app-shell .library-details h2{color:#273653}
+.app-shell .library-design-info p,.app-shell .library-details p{color:#75819a}
+.app-shell .design-index{color:#6355bf}
+.app-shell .library-swatches i{outline-color:#e2e5ef}
+.app-shell .library-swatches i:first-child{background:#8f83d1}
+.app-shell .library-swatches i:nth-child(2){background:#29324a}
+.app-shell .library-swatches i:nth-child(3){background:#d28fa9}
+.app-shell .library-swatches i:nth-child(4){background:#8ba5cf}
+.app-shell .project-type-registry h2{color:#273653}
+.app-shell .project-type-registry>div{border-color:#edf0f6;color:#75819a}
+.app-shell .project-type-registry>div>span:first-child{color:#5e6b86}
+.app-shell .available-type{color:#6654d9}
+.app-shell .customer-workspace{border-color:#e4e8f1;background:#fff}
+.app-shell .customer-toolbar{border-color:#e4e8f1;color:#6d7992}
+.app-shell .customer-avatar{background:#f0edff;color:#5d4bc7}
+.app-shell .customer-name{color:#273653}
+.app-shell .customer-name>svg{color:#818ba0}
+.app-shell .customer-dialog,.app-shell .auth-dialog{border-color:#e2e5ef;box-shadow:0 24px 70px #17233c2b}
+.app-shell .auth-dialog::backdrop,.app-shell .customer-dialog::backdrop{background:#17233c66;backdrop-filter:blur(3px)}
+.app-shell .auth-symbol{background:#f0edff;color:#6654d9}
+.app-shell .auth-dialog h2,.app-shell .dialog-heading h2{color:#17233c}
+.app-shell .auth-dialog>p,.app-shell .auth-dialog label,.app-shell .dialog-heading .eyebrow{color:#657089}
+.app-shell .auth-dialog input{border-color:#e0e5ef;color:#273653;border-radius:8px}
+.app-shell .auth-dialog input:focus{border-color:#8879e4;box-shadow:0 0 0 3px #6654d91a}
+.app-shell .toast{border-color:#dcd7f6;background:#fff;color:#273653;box-shadow:0 14px 35px #17233c20}
+.app-shell .toast>svg{color:#6654d9}
+.app-shell .sidebar-version{gap:8px}
+@media(max-width:760px){
+  .app-shell .sidebar{background:#17233c;border-bottom-color:#27334d}
+  .app-shell .sidebar nav{border-top:1px solid #ffffff20}
+  .app-shell .sidebar nav button{color:#c1c9d9}
+  .app-shell .sidebar nav button.active{background:transparent;border-color:#9b8be9;color:#fff;box-shadow:none}
+  .app-shell .sidebar nav button.active>svg{color:#fff}
+  .app-shell .sidebar nav button:hover:not(:disabled){background:#ffffff0d}
+  .app-shell .workspace-main{background:#f8f9fc}
+}
+@media(max-width:480px){
+  .app-shell .topbar{background:#fff}
+  .app-shell .workspace-footer{border-color:#e4e8f1}
+}
